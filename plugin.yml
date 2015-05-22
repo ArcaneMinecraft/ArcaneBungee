@@ -1,5 +1,5 @@
 name: Arcane_Chat_Utils
-version: 2.3
+version: 2.3.1
 author: Morios / Mark Talrey
 description: Local chat and AFK functions, written for Arcane Survival.
 
@@ -13,11 +13,11 @@ commands:
     description: Sends a chat message to all players within range.
     usage: "use /local -h for help."
   l:
-    description: Shortened version of /shout. See that command.
+    description: Shortened version of /local. See that command.
     usage: "use /local -h for help."
   afk:
     description: Sets your [AFK] state.
     usage: "/afk"
 #  unafk:
-#    description: Unsets your [AFK] state.
+#    description: Unsets your [AFK] state. Now redundant.
 #    usage: "/unafk"

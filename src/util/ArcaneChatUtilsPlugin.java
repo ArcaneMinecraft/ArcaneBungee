@@ -31,7 +31,8 @@ import java.util.Collection;
 
 public final class ArcaneChatUtilsPlugin extends JavaPlugin
 {
-	private static final int DIST_MAX = 40;
+	private static final int DIST_DEF = 40;
+	private static int DIST_MAX = 200;
 	
 	private static final String FORMAT_LOCAL_PRE = "§A(local) ";
 	private static final String FORMAT_LOCAL = "Local Chat: ";
@@ -50,7 +51,11 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		FORMAT_LOCAL + 
 		"Use /local or /l. Either enter a message afterward, " + 
 		"or use -r and a whole number to specify the range of the message. " +
-		"The default range (radius) of a message is " + DIST_MAX + " blocks.";
+		"The default range (radius) of a message is " + DIST_DEF + " blocks.";
+		
+	private static final String LOCAL_RANGE =
+		FORMAT_LOCAL +
+		"(warning) The maximum range is " + DIST_MAX + "blocks.";
 
 	
 	private HashMap<UUID, Boolean> afkState = new HashMap<>();
@@ -120,6 +125,13 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		{
 			Player pl = (Player)sender;
 			Location center = pl.getLocation();
+			int rad = Integer.parseInt(args[1]);
+			
+			if (rad > DIST_MAX)
+			{
+				sender.sendMessage(LOCAL_RANGE);
+				rad = DIST_MAX;
+			}
 			
 			StringBuilder msg = new StringBuilder();
 			for (int i=2; i<args.length; i++)
@@ -136,7 +148,8 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 				try {
 					if (!(center.getWorld().equals(him.getLocation().getWorld()))) continue;
 					
-					if (center.distance(him.getLocation()) <= Integer.parseInt(args[1]))
+					// moving to a less intensive function (doesn't need to do square root)
+					if (center.distanceSquared(him.getLocation()) <= rad^2)
 					{
 						him.sendRawMessage(
 							FORMAT_LOCAL_PRE + 
@@ -172,7 +185,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			{
 				if (!(center.getWorld().equals(him.getLocation().getWorld()))) continue;
 				
-				if (center.distance(him.getLocation()) <= DIST_MAX)
+				if (center.distance(him.getLocation()) <= DIST_DEF)
 				{
 					him.sendRawMessage(
 						FORMAT_LOCAL_PRE + 

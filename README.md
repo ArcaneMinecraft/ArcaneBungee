@@ -6,6 +6,8 @@ Local chat
 * optional range setting <i>-r</i> [integer]
   * defaults to 40
   * maximum of 200
+* help setting <i>-h</i>
+  * lists usage information.
 
 AFK tag
 * <i>/afk</i>

@@ -1,5 +1,5 @@
-name: Arcane_Chat_Utils
-version: 2.3.1
+name: ArcaneChatUtils
+version: 2.4.0
 author: Morios / Mark Talrey
 description: Local chat and AFK functions, written for Arcane Survival.
 
@@ -15,6 +15,9 @@ commands:
   l:
     description: Shortened version of /local. See that command.
     usage: "use /local -h for help."
+  ltoggle:
+    description: Toggles your chat state to local only.
+    usage: "ltoggle <range> (range is optional)"
   afk:
     description: Sets your [AFK] state.
     usage: "/afk"

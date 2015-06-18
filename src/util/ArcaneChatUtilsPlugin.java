@@ -2,7 +2,7 @@
  * ArcaneChatUtilPlugin.java
  * Close-chat function for the Arcane Survival server.
  * @author Morios (Mark Talrey)
- * @version 2.3 for Minecraft 1.8.*
+ * @version 2.4 for Minecraft 1.8.*
  */
 
 package util;
@@ -21,7 +21,7 @@ import org.bukkit.Location;
 
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
@@ -44,6 +44,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 	
 	private static final String LOCAL_SHORT = "l";
 	private static final String LOCAL = "local";
+	private static final String LOCAL_TOGGLE = "ltoggle";
 	private static final String AFK = "afk";
 	private static final String UNAFK = "unafk";
 	
@@ -59,6 +60,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 
 	
 	private HashMap<UUID, Boolean> afkState = new HashMap<>();
+	private HashMap<UUID, Integer> ltogState = new HashMap<>();
 	
 	@Override
 	public boolean onCommand (CommandSender sender, Command cmd, String label, String[] args)
@@ -76,6 +78,10 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		else if (cmd.getName().equals(LOCAL))
 		{
 			ret = shoutFunction(args, sender);
+		}
+		else if (cmd.getName().equals(LOCAL_TOGGLE))
+		{
+			ret = shoutToggle(args, sender);
 		}
 		else if (cmd.getName().equals(AFK))
 		{
@@ -149,7 +155,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 					if (!(center.getWorld().equals(him.getLocation().getWorld()))) continue;
 					
 					// moving to a less intensive function (doesn't need to do square root)
-					if (center.distanceSquared(him.getLocation()) <= rad^2)
+					if (center.distanceSquared(him.getLocation()) <= (rad^2))
 					{
 						him.sendRawMessage(
 							FORMAT_LOCAL_PRE + 
@@ -197,6 +203,38 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 				}
 			}
 		}	
+		return true;
+	}
+	
+	private boolean shoutToggle (String[] args, CommandSender sender)
+	{
+		int dist = DIST_DEF;
+		
+		if (!(sender instanceof Player))
+		{
+			sender.sendMessage(FORMAT_LOCAL + "You must be a player.");
+			return true;
+		}
+		if (args.length != 0)
+		{
+			dist = Integer.parseInt(args[0]);
+			if (dist > DIST_MAX)
+			{
+				sender.sendMessage("Range too large, setting to " + DIST_MAX);
+				dist = DIST_MAX;
+			}
+		}
+		Player pl = (Player)sender;
+		UUID me = pl.getUniqueId();
+		
+		if (ltogState.get(me) < 0)
+		{
+			ltogState.put(me,0);
+		}
+		else
+		{
+			ltogState.put(me,dist);
+		}
 		return true;
 	}
 	
@@ -255,8 +293,12 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 	private void _disableAFK(Player pl)
 	{
 		String temp = pl.getPlayerListName();
-		
-		pl.setPlayerListName(temp.substring(8, temp.length()));
+		if (temp.isEmpty() || temp == null)
+		{
+			getLogger().info("ArcaneChatUtils: empty player name? " + temp);
+			temp = "I Am Error";
+		}
+		pl.setPlayerListName(temp.substring(8)); // magic number much? TAG_AFK is odd.
 		afkState.put(pl.getUniqueId(), false);
 		pl.sendRawMessage(FORMAT_AFK + "You are no longer AFK.");
 	}
@@ -292,7 +334,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		}
 		
 		@EventHandler
-		public void detectChat (PlayerChatEvent pce)
+		public void detectChat (AsyncPlayerChatEvent pce)
 		{
 			Player pl = pce.getPlayer();
 			UUID pID = pl.getUniqueId();
@@ -305,6 +347,15 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			{
 				_disableAFK(pl);
 			}
+			
+			if ((ltogState.get(pID) != null) && (ltogState.get(pID) > 0))
+			{
+				String msg = pce.getMessage();
+				pce.setCancelled(true);
+				
+				String[] chat = { "-r", ltogState.get(pID) + "", msg };
+				shoutFunction(chat, (CommandSender)pl);
+			}	
 		}
 		
 		@EventHandler

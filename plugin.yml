@@ -1,5 +1,5 @@
 name: ArcaneChatUtils
-version: 2.4.0
+version: 3.0.0
 author: Morios / Mark Talrey
 description: Local chat and AFK functions, written for Arcane Survival.
 
@@ -24,3 +24,8 @@ commands:
 #  unafk:
 #    description: Unsets your [AFK] state. Now redundant.
 #    usage: "/unafk"
+
+permissions:
+  acu.nokillself:
+    description: "/kill requests won't turn on you."
+    default: op

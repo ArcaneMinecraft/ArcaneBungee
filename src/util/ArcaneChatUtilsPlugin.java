@@ -2,7 +2,7 @@
  * ArcaneChatUtilPlugin.java
  * Close-chat function for the Arcane Survival server.
  * @author Morios (Mark Talrey)
- * @version 2.4 for Minecraft 1.8.*
+ * @version 3.0.0 for Minecraft 1.8.*
  */
 
 package util;
@@ -24,6 +24,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -215,9 +216,17 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			sender.sendMessage(FORMAT_LOCAL + "You must be a player.");
 			return true;
 		}
+		
 		if (args.length != 0)
 		{
-			dist = Integer.parseInt(args[0]);
+			if (args[0].matches("^-?\\d+$"))
+			{
+				dist = Integer.parseInt(args[0]);
+			}
+			else if (args[0].equals("-r") && args[1].matches("^-?\\d+$"))
+			{
+				dist = Integer.parseInt(args[1]);
+			}
 			if (dist > DIST_MAX)
 			{
 				sender.sendMessage("Range too large, setting to " + DIST_MAX);
@@ -227,13 +236,15 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		Player pl = (Player)sender;
 		UUID me = pl.getUniqueId();
 		
-		if (ltogState.get(me) < 0)
+		if (ltogState.get(me) == null || ltogState.get(me) == 0)
 		{
-			ltogState.put(me,0);
+			ltogState.put(me,dist);
+			sender.sendMessage(FORMAT_GRAY + "Local chat toggled on.");
 		}
 		else
 		{
-			ltogState.put(me,dist);
+			ltogState.put(me,0);
+			sender.sendMessage(FORMAT_GRAY + "Local chat toggled off.");
 		}
 		return true;
 	}
@@ -293,7 +304,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 	private void _disableAFK(Player pl)
 	{
 		String temp = pl.getPlayerListName();
-		if (temp.isEmpty() || temp == null)
+		if (temp.isEmpty() || temp == null || temp.length() < 8)
 		{
 			getLogger().info("ArcaneChatUtils: empty player name? " + temp);
 			temp = "I Am Error";
@@ -322,6 +333,17 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		{
 			Player pl = pcpe.getPlayer();
 			UUID pID = pl.getUniqueId();
+			
+			if (pcpe.getMessage().startsWith("/kill"))
+			{
+				if (pl.hasPermission("acu.nokillself")) return;
+				
+				getServer().dispatchCommand(
+					getServer().getConsoleSender(),
+					"minecraft:kill " + pl.getDisplayName()
+				);
+				pcpe.setCancelled(true);
+			}
 			
 			if (afkState.get(pID) == null)
 			{
@@ -362,6 +384,22 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		public void detectMotion (PlayerMoveEvent pme)
 		{
 			Player pl = pme.getPlayer();
+			UUID pID = pl.getUniqueId();
+			
+			if (afkState.get(pID) == null)
+			{
+				afkState.put(pID, false);
+			}
+			if (afkState.get(pID) == true)
+			{
+				_disableAFK(pl);
+			}
+		}
+		
+		@EventHandler
+		public void detectDiscon (PlayerQuitEvent pqe)
+		{
+			Player pl = pqe.getPlayer();
 			UUID pID = pl.getUniqueId();
 			
 			if (afkState.get(pID) == null)

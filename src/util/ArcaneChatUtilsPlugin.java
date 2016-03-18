@@ -2,7 +2,7 @@
  * ArcaneChatUtilPlugin.java
  * Close-chat function for the Arcane Survival server.
  * @author Morios (Mark Talrey)
- * @version 3.0.0 for Minecraft 1.8.*
+ * @version 3.2.0 for Minecraft 1.9.*
  */
 
 package util;
@@ -33,7 +33,7 @@ import java.util.Collection;
 public final class ArcaneChatUtilsPlugin extends JavaPlugin
 {
 	private static final int DIST_DEF = 40;
-	private static int DIST_MAX = 200;
+	private static int DIST_MAX = 500;
 	
 	private static final String FORMAT_LOCAL_PRE = "§A(local) ";
 	private static final String FORMAT_LOCAL = "Local Chat: ";
@@ -42,23 +42,36 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 	private static final String FORMAT_ITALIC = "§o";
 	private static final String FORMAT_AFK = "§7";
 	private static final String TAG_AFK = "§5[AFK] §r§f";
+	private static final String TAG_GLOBAL = "§g";
 	
 	private static final String LOCAL_SHORT = "l";
 	private static final String LOCAL = "local";
 	private static final String LOCAL_TOGGLE = "ltoggle";
+	private static final String LOCAL_G_SHORT = "g";
+	private static final String LOCAL_GLOBAL = "global";
 	private static final String AFK = "afk";
 	private static final String UNAFK = "unafk";
 	
 	private static final String LOCAL_HELP = 
-		FORMAT_LOCAL + 
-		"Use /local or /l. Either enter a message afterward, " + 
-		"or use -r and a whole number to specify the range of the message. " +
-		"The default range (radius) of a message is " + DIST_DEF + " blocks.";
+		"§2" + FORMAT_LOCAL + "§r" + FORMAT_GRAY + FORMAT_ITALIC + 
+		"Use /local or /l. Sends a message only to players within a radius.\n" + 
+		"§2-h§r§7§o displays this help message.\n" +
+		"§2-r NUMBER§r§7§o will set the broadcast radius to NUMBER. Must be positive and " +
+		"less than " + DIST_MAX + ", larger values will be treated as this maximum.\n" +
+		"The default radius (if §2-r§r§7§o is not used) is " + DIST_DEF + ".";
+		
+	private static final String LTOGG_HELP = 
+		"§2" + FORMAT_LOCAL + "§r" + FORMAT_GRAY + FORMAT_ITALIC + 
+		"/ltoggle turns on or off automatic local chatting.\n" +
+		"§2-h§r§7§o displays this help message.\n" +
+		"§2-r NUMBER§r§7§o will set the broadcast radius to NUMBER. Must be positive and " +
+		"less than " + DIST_MAX + ", larger values will be treated as this maximum.\n" +
+		"The default radius (if §2-r§r§7§o is not used) is " + DIST_DEF + ".";
 		
 	private static final String LOCAL_RANGE =
-		FORMAT_LOCAL +
-		"(warning) The maximum range is " + DIST_MAX + "blocks.";
-
+		"§2" + FORMAT_LOCAL + "§r" + FORMAT_GRAY + FORMAT_ITALIC + 
+		"(warning) The message radius is capped at " + DIST_MAX + " blocks.";
+		
 	
 	private HashMap<UUID, Boolean> afkState = new HashMap<>();
 	private HashMap<UUID, Integer> ltogState = new HashMap<>();
@@ -83,6 +96,14 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		else if (cmd.getName().equals(LOCAL_TOGGLE))
 		{
 			ret = shoutToggle(args, sender);
+		}
+		else if (cmd.getName().equals(LOCAL_GLOBAL))
+		{
+			ret = true;
+		}
+		else if (cmd.getName().equals(LOCAL_G_SHORT))
+		{
+			ret = true;
 		}
 		else if (cmd.getName().equals(AFK))
 		{
@@ -132,7 +153,16 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		{
 			Player pl = (Player)sender;
 			Location center = pl.getLocation();
-			int rad = Integer.parseInt(args[1]);
+			
+			int rad = DIST_DEF;
+			try { rad = Integer.parseInt(args[1]); }
+			catch (Exception e)
+			{
+				sender.sendMessage(FORMAT_LOCAL +
+					"There was an error with the radius, falling back to the default.\n" +
+					"Did you format your number correctly? See -h for help."
+				);
+			}
 			
 			if (rad > DIST_MAX)
 			{
@@ -219,17 +249,26 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		
 		if (args.length != 0)
 		{
-			if (args[0].matches("^-?\\d+$"))
+			if (args[0].equals("-h"))
 			{
-				dist = Integer.parseInt(args[0]);
+				sender.sendMessage(LTOGG_HELP);
+				return true;
 			}
-			else if (args[0].equals("-r") && args[1].matches("^-?\\d+$"))
+			else if (args[0].equals("-r"))
 			{
-				dist = Integer.parseInt(args[1]);
+				try { dist = Integer.parseInt(args[1]); }
+				catch (Exception e)
+				{
+					sender.sendMessage(FORMAT_LOCAL +
+						"There was an error with the radius, falling back to the default.\n" +
+						"Did you format your number correctly? See -h for help."
+					);
+				}
 			}
+			
 			if (dist > DIST_MAX)
 			{
-				sender.sendMessage("Range too large, setting to " + DIST_MAX);
+				sender.sendMessage(LOCAL_RANGE);
 				dist = DIST_MAX;
 			}
 		}
@@ -333,15 +372,48 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		{
 			Player pl = pcpe.getPlayer();
 			UUID pID = pl.getUniqueId();
+			String msg = pcpe.getMessage();
 			
-			if (pcpe.getMessage().startsWith("/kill"))
+			if (msg.startsWith("/kill"))
 			{
-				if (pl.hasPermission("acu.nokillself")) return;
-				
-				getServer().dispatchCommand(
-					getServer().getConsoleSender(),
-					"minecraft:kill " + pl.getDisplayName()
-				);
+				if (msg.trim().equalsIgnoreCase("/kill"))
+				{
+					getServer().dispatchCommand(
+						getServer().getConsoleSender(),
+						"minecraft:kill " + pl.getUniqueId()
+					);
+				}
+				else
+				{
+					if (pl.hasPermission("acu.murder")) return;
+					// otherwise
+					((CommandSender)pl).sendMessage("Sorry, this kind of murder is highly discouraged.");
+				}
+				pcpe.setCancelled(true);
+			}
+			else if (msg.startsWith("/minecraft:kill"))
+			{
+				if (msg.trim().equalsIgnoreCase("/minecraft:kill"))
+				{
+					getServer().dispatchCommand(
+						getServer().getConsoleSender(), "minecraft:kill" + pl.getUniqueId()
+					);
+				}
+				else
+				{
+					if (pl.hasPermission("acu.murder")) return;
+					((CommandSender)pl).sendMessage("Sorry, this kind of murder is highly discouraged.");
+				}
+				pcpe.setCancelled(true);
+			}
+			else if (msg.startsWith("/" + LOCAL_GLOBAL))
+			{
+				pl.chat(msg.replaceFirst("/" + LOCAL_GLOBAL+" ",TAG_GLOBAL));
+				pcpe.setCancelled(true);
+			}
+			else if (msg.startsWith("/" + LOCAL_G_SHORT))
+			{
+				pl.chat(msg.replaceFirst("/" + LOCAL_G_SHORT+" ",TAG_GLOBAL));
 				pcpe.setCancelled(true);
 			}
 			
@@ -360,6 +432,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		{
 			Player pl = pce.getPlayer();
 			UUID pID = pl.getUniqueId();
+			String msg = pce.getMessage();
 			
 			if (afkState.get(pID) == null)
 			{
@@ -372,12 +445,18 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			
 			if ((ltogState.get(pID) != null) && (ltogState.get(pID) > 0))
 			{
-				String msg = pce.getMessage();
-				pce.setCancelled(true);
+				if (!msg.startsWith(TAG_GLOBAL))
+				{
+					pce.setCancelled(true);
 				
-				String[] chat = { "-r", ltogState.get(pID) + "", msg };
-				shoutFunction(chat, (CommandSender)pl);
-			}	
+					String[] chat = { "-r", ltogState.get(pID) + "", msg };
+					shoutFunction(chat, (CommandSender)pl);
+				}
+				else
+				{
+					pce.setMessage(msg.replace(TAG_GLOBAL,""));
+				}
+			}
 		}
 		
 		@EventHandler

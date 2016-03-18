@@ -2,7 +2,7 @@
  * ArcaneChatUtilPlugin.java
  * Close-chat function for the Arcane Survival server.
  * @author Morios (Mark Talrey)
- * @version 3.2.0 for Minecraft 1.9.*
+ * @version 3.3.0 for Minecraft 1.9.*
  */
 
 package util;
@@ -19,6 +19,8 @@ import org.bukkit.World.Spigot;
 import org.bukkit.entity.Player;
 import org.bukkit.Location;
 
+import org.bukkit.scheduler.BukkitScheduler;
+
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -26,13 +28,16 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.Collection;
 
 public final class ArcaneChatUtilsPlugin extends JavaPlugin
 {
 	private static final int DIST_DEF = 40;
+	private static final int AFK_COUNTDOWN = 300; // 5 minute countdown to being afk
 	private static int DIST_MAX = 500;
 	
 	private static final String FORMAT_LOCAL_PRE = "§A(local) ";
@@ -73,7 +78,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		"(warning) The message radius is capped at " + DIST_MAX + " blocks.";
 		
 	
-	private HashMap<UUID, Boolean> afkState = new HashMap<>();
+	private HashMap<UUID, Integer> afkState = new HashMap<>(); // counts down toward [AFK] every second
 	private HashMap<UUID, Integer> ltogState = new HashMap<>();
 	
 	@Override
@@ -299,11 +304,11 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		
 		if (afkState.get(pl.getUniqueId()) == null)
 		{
-			afkState.put(pl.getUniqueId(), false);
+			afkState.put(pl.getUniqueId(), AFK_COUNTDOWN);
 		}
-		if (afkState.get(pl.getUniqueId()) == false)
+		if (afkState.get(pl.getUniqueId()) >= 0)
 		{
-			afkState.put(pl.getUniqueId(), true);
+			afkState.put(pl.getUniqueId(), 0);
 		
 			pl.setPlayerListName(TAG_AFK + pl.getPlayerListName());
 		
@@ -311,6 +316,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		}
 		else
 		{
+			// this shouldn't actually happen, now should it?
 			sender.sendMessage(FORMAT_AFK + "You are still AFK.");
 		}
 		return true;
@@ -327,9 +333,9 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		
 		if (afkState.get(pl.getUniqueId()) == null)
 		{
-			afkState.put(pl.getUniqueId(), false);
+			afkState.put(pl.getUniqueId(), AFK_COUNTDOWN);
 		}
-		if (afkState.get(pl.getUniqueId()) == true)
+		if (afkState.get(pl.getUniqueId()) == 0)
 		{
 			_disableAFK(pl);
 		}
@@ -349,7 +355,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			temp = "I Am Error";
 		}
 		pl.setPlayerListName(temp.substring(8)); // magic number much? TAG_AFK is odd.
-		afkState.put(pl.getUniqueId(), false);
+		afkState.put(pl.getUniqueId(), AFK_COUNTDOWN);
 		pl.sendRawMessage(FORMAT_AFK + "You are no longer AFK.");
 	}
 	
@@ -358,6 +364,32 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 	{
 		//Bukkit.getLogger().info("AFK and Local enabled.");
 		getServer().getPluginManager().registerEvents(new UtilListener(), this);
+		
+		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+		int ret = scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
+			@Override
+			public void run()
+			{
+				Iterator it = afkState.entrySet().iterator();
+				while (it.hasNext())
+				{
+					Map.Entry<UUID,Integer> pair = (Map.Entry<UUID,Integer>)it.next();
+					if (pair.getValue() > 1)
+					{
+						afkState.put(pair.getKey(), pair.getValue()-1);
+						//getLogger().info("ticked down to: " + (pair.getValue()-1));
+					}
+					else if (pair.getValue() == 1)
+					{
+						Player pl = getServer().getPlayer(pair.getKey());
+						pl.setPlayerListName(TAG_AFK + pl.getPlayerListName());
+						pl.sendRawMessage(FORMAT_AFK + "You are now AFK.");
+						afkState.put(pair.getKey(), 0);
+					}
+				}
+			}
+		}, 0L, 20L); // run every 20 ticks (~1 Hz)
+		if (ret < 0) getLogger().info("Failed to set up AFK timer.");
 	}
 	
 	@Override public void onDisable()
@@ -373,6 +405,16 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			Player pl = pcpe.getPlayer();
 			UUID pID = pl.getUniqueId();
 			String msg = pcpe.getMessage();
+			
+			if (afkState.get(pID) == null) afkState.put(pID, AFK_COUNTDOWN);
+			
+			int prevState = afkState.get(pID);
+			afkState.put(pID, AFK_COUNTDOWN);
+			
+			if (prevState == 0)
+			{
+				_disableAFK(pl);
+			}
 			
 			if (msg.startsWith("/kill"))
 			{
@@ -411,19 +453,10 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 				pl.chat(msg.replaceFirst("/" + LOCAL_GLOBAL+" ",TAG_GLOBAL));
 				pcpe.setCancelled(true);
 			}
-			else if (msg.startsWith("/" + LOCAL_G_SHORT))
+			else if (msg.startsWith("/" + LOCAL_G_SHORT + " "))
 			{
 				pl.chat(msg.replaceFirst("/" + LOCAL_G_SHORT+" ",TAG_GLOBAL));
 				pcpe.setCancelled(true);
-			}
-			
-			if (afkState.get(pID) == null)
-			{
-				afkState.put(pID, false);
-			}
-			if (afkState.get(pID) == true)
-			{
-				_disableAFK(pl);
 			}
 		}
 		
@@ -434,15 +467,17 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			UUID pID = pl.getUniqueId();
 			String msg = pce.getMessage();
 			
-			if (afkState.get(pID) == null)
-			{
-				afkState.put(pID, false);
-			}
-			if (afkState.get(pID) == true)
+			if (afkState.get(pID) == null) afkState.put(pID, AFK_COUNTDOWN);
+			
+			int prevState = afkState.get(pID);
+			afkState.put(pID, AFK_COUNTDOWN);
+			
+			if (prevState == 0)
 			{
 				_disableAFK(pl);
 			}
 			
+			// if the player's local chat is toggled on
 			if ((ltogState.get(pID) != null) && (ltogState.get(pID) > 0))
 			{
 				if (!msg.startsWith(TAG_GLOBAL))
@@ -465,11 +500,12 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			Player pl = pme.getPlayer();
 			UUID pID = pl.getUniqueId();
 			
-			if (afkState.get(pID) == null)
-			{
-				afkState.put(pID, false);
-			}
-			if (afkState.get(pID) == true)
+			if (afkState.get(pID) == null) afkState.put(pID, AFK_COUNTDOWN);
+			
+			int prevState = afkState.get(pID);
+			afkState.put(pID, AFK_COUNTDOWN);
+			
+			if (prevState == 0)
 			{
 				_disableAFK(pl);
 			}
@@ -481,11 +517,12 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			Player pl = pqe.getPlayer();
 			UUID pID = pl.getUniqueId();
 			
-			if (afkState.get(pID) == null)
-			{
-				afkState.put(pID, false);
-			}
-			if (afkState.get(pID) == true)
+			if (afkState.get(pID) == null) afkState.put(pID, AFK_COUNTDOWN);
+			
+			int prevState = afkState.get(pID);
+			afkState.put(pID, AFK_COUNTDOWN);
+			
+			if (prevState == 0)
 			{
 				_disableAFK(pl);
 			}

@@ -5,16 +5,12 @@
  * @version 3.3.0 for Minecraft 1.9.*
  */
 
-package util;
+package com.arcaneminecraft.chatutils;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-
-import org.bukkit.World.Spigot;
 
 import org.bukkit.entity.Player;
 import org.bukkit.Location;
@@ -32,9 +28,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.UUID;
-import java.util.Collection;
 
-public final class ArcaneChatUtilsPlugin extends JavaPlugin
+public final class ArcaneChatUtils extends JavaPlugin
 {
 	private static final int DIST_DEF = 40;
 	private static final int AFK_COUNTDOWN = 300; // 5 minute countdown to being afk
@@ -49,13 +44,8 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 	private static final String TAG_AFK = "§5[AFK] §r§f";
 	private static final String TAG_GLOBAL = "§g";
 	
-	private static final String LOCAL_SHORT = "l";
-	private static final String LOCAL = "local";
-	private static final String LOCAL_TOGGLE = "ltoggle";
 	private static final String LOCAL_G_SHORT = "g";
 	private static final String LOCAL_GLOBAL = "global";
-	private static final String AFK = "afk";
-	private static final String UNAFK = "unafk";
 	
 	private static final String LOCAL_HELP = 
 		"§2" + FORMAT_LOCAL + "§r" + FORMAT_GRAY + FORMAT_ITALIC + 
@@ -84,57 +74,62 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 	@Override
 	public boolean onCommand (CommandSender sender, Command cmd, String label, String[] args)
 	{
-		boolean ret = true;
-		
 		if (cmd.getName().equals("test"))
 		{
-			ret = testFunction(args, sender);
-		}
-		else if (cmd.getName().equals(LOCAL_SHORT))
-		{
-			ret = shoutFunction(args, sender);
-		}
-		else if (cmd.getName().equals(LOCAL))
-		{
-			ret = shoutFunction(args, sender);
-		}
-		else if (cmd.getName().equals(LOCAL_TOGGLE))
-		{
-			ret = shoutToggle(args, sender);
-		}
-		else if (cmd.getName().equals(LOCAL_GLOBAL))
-		{
-			ret = true;
-		}
-		else if (cmd.getName().equals(LOCAL_G_SHORT))
-		{
-			ret = true;
-		}
-		else if (cmd.getName().equals(AFK))
-		{
-			ret = enableAFK(args, sender);
-		}
-		else if (cmd.getName().equals(UNAFK))
-		{
-			// no longer needed, running a command clears your afk state already.
-			ret = disableAFK(args, sender);
-		}
-		return ret;
-	}
-	
-	private boolean testFunction (String[] args, CommandSender sender)
-	{
-		if (!(sender instanceof Player))
-		{
-			sender.sendMessage("You must be a player.");
+			if (!(sender instanceof Player))
+			{
+				sender.sendMessage("You must be a player.");
+				return true;
+			}
+			Player pl = (Player)sender;
+			
+			Location me = pl.getLocation();
+			me.getWorld().strikeLightning(me);
+			
 			return true;
 		}
-		Player pl = (Player)sender;
-		
-		Location me = pl.getLocation();
-		me.getWorld().strikeLightning(me);
-		
-		return true;
+		if (cmd.getName().equals("local"))
+		{
+			return shoutFunction(args, sender);
+		}
+		if (cmd.getName().equals("ltoggle"))
+		{
+			return shoutToggle(args, sender);
+		}
+		if (cmd.getName().equals("global"))
+		{
+			return true;
+		}
+		if (cmd.getName().equals("afk"))
+		{
+			if (!(sender instanceof Player))
+			{
+				sender.sendMessage(FORMAT_LOCAL + "You must be a player.");
+				return true;
+			}
+			Player pl = (Player)sender;
+			
+			if (afkState.get(pl.getUniqueId()) == null)
+			{
+				afkState.put(pl.getUniqueId(), AFK_COUNTDOWN);
+			}
+			if (afkState.get(pl.getUniqueId()) >= 0)
+			{
+				afkState.put(pl.getUniqueId(), 0);
+			
+				pl.setPlayerListName(TAG_AFK + pl.getPlayerListName());
+			
+				sender.sendMessage(FORMAT_AFK + "You are now AFK.");
+			}
+			else
+			{
+				// this shouldn't actually happen, now should it?
+				// yup, it wouldn't ~Simon
+				sender.sendMessage(FORMAT_AFK + "You are still AFK.");
+			}
+			return true;
+		}
+		return false;
 	}
 	
 	private boolean shoutFunction (String[] args, CommandSender sender)
@@ -185,7 +180,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 				sender.sendMessage("No message given. Use -h for details.");
 			}
 			
-			for (Player him : Bukkit.getOnlinePlayers())
+			for (Player him : getServer().getOnlinePlayers())
 			{
 				try {
 					if (!(center.getWorld().equals(him.getLocation().getWorld()))) continue;
@@ -223,7 +218,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 				sender.sendMessage("No message given.");
 			}
 			
-			for (Player him : Bukkit.getOnlinePlayers())
+			for (Player him : getServer().getOnlinePlayers())
 			{
 				if (!(center.getWorld().equals(him.getLocation().getWorld()))) continue;
 				
@@ -293,59 +288,6 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		return true;
 	}
 	
-	private boolean enableAFK (String[] args, CommandSender sender)
-	{
-		if (!(sender instanceof Player))
-		{
-			sender.sendMessage(FORMAT_LOCAL + "You must be a player.");
-			return true;
-		}
-		Player pl = (Player)sender;
-		
-		if (afkState.get(pl.getUniqueId()) == null)
-		{
-			afkState.put(pl.getUniqueId(), AFK_COUNTDOWN);
-		}
-		if (afkState.get(pl.getUniqueId()) >= 0)
-		{
-			afkState.put(pl.getUniqueId(), 0);
-		
-			pl.setPlayerListName(TAG_AFK + pl.getPlayerListName());
-		
-			sender.sendMessage(FORMAT_AFK + "You are now AFK.");
-		}
-		else
-		{
-			// this shouldn't actually happen, now should it?
-			sender.sendMessage(FORMAT_AFK + "You are still AFK.");
-		}
-		return true;
-	}
-	
-	private boolean disableAFK (String[] args, CommandSender sender)
-	{
-		if (!(sender instanceof Player))
-		{
-			sender.sendMessage(FORMAT_LOCAL + "You must be a player.");
-			return true;
-		}
-		Player pl = (Player)sender;
-		
-		if (afkState.get(pl.getUniqueId()) == null)
-		{
-			afkState.put(pl.getUniqueId(), AFK_COUNTDOWN);
-		}
-		if (afkState.get(pl.getUniqueId()) == 0)
-		{
-			_disableAFK(pl);
-		}
-		else
-		{
-			sender.sendMessage(FORMAT_AFK + "You are still not AFK.");
-		}
-		return true;
-	}
-	
 	private void _disableAFK(Player pl)
 	{
 		String temp = pl.getPlayerListName();
@@ -365,15 +307,19 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 		//Bukkit.getLogger().info("AFK and Local enabled.");
 		getServer().getPluginManager().registerEvents(new UtilListener(), this);
 		
-		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+		BukkitScheduler scheduler = getServer().getScheduler();
 		int ret = scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
 			@Override
 			public void run()
 			{
+				// This gives warning: Iterator is a raw type. References to generic type Iterator<E> should be parameterized
 				Iterator it = afkState.entrySet().iterator();
+			//  ^
 				while (it.hasNext())
 				{
+					// This gives a warning: Type safety: Unchecked cast from Object to Map.Entry<UUID,Integer>
 					Map.Entry<UUID,Integer> pair = (Map.Entry<UUID,Integer>)it.next();
+					//								^
 					if (pair.getValue() > 1)
 					{
 						afkState.put(pair.getKey(), pair.getValue()-1);
@@ -390,11 +336,6 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 			}
 		}, 0L, 20L); // run every 20 ticks (~1 Hz)
 		if (ret < 0) getLogger().info("Failed to set up AFK timer.");
-	}
-	
-	@Override public void onDisable()
-	{
-		// ze goggles
 	}
 	
 	public final class UtilListener implements Listener
@@ -416,6 +357,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 				_disableAFK(pl);
 			}
 			
+			// I don't think this is a good implementation. Command Overshadowing would be better.
 			if (msg.startsWith("/kill"))
 			{
 				if (msg.trim().equalsIgnoreCase("/kill"))
@@ -448,6 +390,7 @@ public final class ArcaneChatUtilsPlugin extends JavaPlugin
 				}
 				pcpe.setCancelled(true);
 			}
+			// This is a weird implementation.
 			else if (msg.startsWith("/" + LOCAL_GLOBAL))
 			{
 				pl.chat(msg.replaceFirst("/" + LOCAL_GLOBAL+" ",TAG_GLOBAL));

@@ -1,6 +1,6 @@
 name: ArcaneChatUtils
 version: 4.0.0-SNAPSHOT
-author: Morios / Mark Talrey
+authors: [Mark Talrey, SimonOrJ]
 description: Local chat and AFK functions, written for Arcane Survival.
 
 main: com.arcaneminecraft.chatutils.ArcaneChatUtils
@@ -9,14 +9,14 @@ commands:
   local:
     aliases: [l]
     description: Sends a chat message to all players within range.
-    usage: "use /local -h for detailed help."
+    usage: "/local -h for detailed help."
   ltoggle:
     description: Toggles your chat state to local only.
-    usage: "use /ltoggle -h for detailed help."
+    usage: "/ltoggle -h for detailed help."
   global:
     aliases: [g]
     description: Sends a chat message to the whole server, regardless of ltoggle state.
-    usage: "/global MESSAGE"
+    usage: "/global <message>"
   afk:
     aliases: [unafk]
     description: Sets you to [AFK] in the player list. Motion or chat will end it.
@@ -24,5 +24,5 @@ commands:
 
 permissions:
   acu.murder:
-    description: "this player can /kill others."
+    description: this player can /kill others.
     default: op

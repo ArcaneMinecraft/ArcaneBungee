@@ -72,6 +72,43 @@ public final class ArcaneChatUtils extends JavaPlugin
 	private HashMap<UUID, Integer> ltogState = new HashMap<>();
 	
 	@Override
+	public void onEnable ()
+	{
+		//Bukkit.getLogger().info("AFK and Local enabled.");
+		getServer().getPluginManager().registerEvents(new UtilListener(), this);
+		
+		BukkitScheduler scheduler = getServer().getScheduler();
+		int ret = scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
+			@Override
+			public void run()
+			{
+				// This gives warning: Iterator is a raw type. References to generic type Iterator<E> should be parameterized
+				Iterator it = afkState.entrySet().iterator();
+			//  ^
+				while (it.hasNext())
+				{
+					// This gives a warning: Type safety: Unchecked cast from Object to Map.Entry<UUID,Integer>
+					Map.Entry<UUID,Integer> pair = (Map.Entry<UUID,Integer>)it.next();
+					//								^
+					if (pair.getValue() > 1)
+					{
+						afkState.put(pair.getKey(), pair.getValue()-1);
+						//getLogger().info("ticked down to: " + (pair.getValue()-1));
+					}
+					else if (pair.getValue() == 1)
+					{
+						Player pl = getServer().getPlayer(pair.getKey());
+						pl.setPlayerListName(TAG_AFK + pl.getPlayerListName());
+						pl.sendRawMessage(FORMAT_AFK + "You are now AFK.");
+						afkState.put(pair.getKey(), 0);
+					}
+				}
+			}
+		}, 0L, 20L); // run every 20 ticks (~1 Hz)
+		if (ret < 0) getLogger().info("Failed to set up AFK timer.");
+	}
+	
+	@Override
 	public boolean onCommand (CommandSender sender, Command cmd, String label, String[] args)
 	{
 		if (cmd.getName().equals("test"))
@@ -288,121 +325,8 @@ public final class ArcaneChatUtils extends JavaPlugin
 		return true;
 	}
 	
-	private void _disableAFK(Player pl)
-	{
-		String temp = pl.getPlayerListName();
-		if (temp.isEmpty() || temp == null || temp.length() < 8)
-		{
-			getLogger().info("ArcaneChatUtils: empty player name? " + temp);
-			temp = "I Am Error";
-		}
-		pl.setPlayerListName(temp.substring(8)); // magic number much? TAG_AFK is odd.
-		afkState.put(pl.getUniqueId(), AFK_COUNTDOWN);
-		pl.sendRawMessage(FORMAT_AFK + "You are no longer AFK.");
-	}
-	
-	@Override
-	public void onEnable ()
-	{
-		//Bukkit.getLogger().info("AFK and Local enabled.");
-		getServer().getPluginManager().registerEvents(new UtilListener(), this);
-		
-		BukkitScheduler scheduler = getServer().getScheduler();
-		int ret = scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
-			@Override
-			public void run()
-			{
-				// This gives warning: Iterator is a raw type. References to generic type Iterator<E> should be parameterized
-				Iterator it = afkState.entrySet().iterator();
-			//  ^
-				while (it.hasNext())
-				{
-					// This gives a warning: Type safety: Unchecked cast from Object to Map.Entry<UUID,Integer>
-					Map.Entry<UUID,Integer> pair = (Map.Entry<UUID,Integer>)it.next();
-					//								^
-					if (pair.getValue() > 1)
-					{
-						afkState.put(pair.getKey(), pair.getValue()-1);
-						//getLogger().info("ticked down to: " + (pair.getValue()-1));
-					}
-					else if (pair.getValue() == 1)
-					{
-						Player pl = getServer().getPlayer(pair.getKey());
-						pl.setPlayerListName(TAG_AFK + pl.getPlayerListName());
-						pl.sendRawMessage(FORMAT_AFK + "You are now AFK.");
-						afkState.put(pair.getKey(), 0);
-					}
-				}
-			}
-		}, 0L, 20L); // run every 20 ticks (~1 Hz)
-		if (ret < 0) getLogger().info("Failed to set up AFK timer.");
-	}
-	
 	public final class UtilListener implements Listener
 	{
-		@EventHandler
-		public void detectCommand (PlayerCommandPreprocessEvent pcpe)
-		{
-			Player pl = pcpe.getPlayer();
-			UUID pID = pl.getUniqueId();
-			String msg = pcpe.getMessage();
-			
-			if (afkState.get(pID) == null) afkState.put(pID, AFK_COUNTDOWN);
-			
-			int prevState = afkState.get(pID);
-			afkState.put(pID, AFK_COUNTDOWN);
-			
-			if (prevState == 0)
-			{
-				_disableAFK(pl);
-			}
-			
-			// I don't think this is a good implementation. Command Overshadowing would be better.
-			if (msg.startsWith("/kill"))
-			{
-				if (msg.trim().equalsIgnoreCase("/kill"))
-				{
-					getServer().dispatchCommand(
-						getServer().getConsoleSender(),
-						"minecraft:kill " + pl.getUniqueId()
-					);
-				}
-				else
-				{
-					if (pl.hasPermission("acu.murder")) return;
-					// otherwise
-					((CommandSender)pl).sendMessage("Sorry, this kind of murder is highly discouraged.");
-				}
-				pcpe.setCancelled(true);
-			}
-			else if (msg.startsWith("/minecraft:kill"))
-			{
-				if (msg.trim().equalsIgnoreCase("/minecraft:kill"))
-				{
-					getServer().dispatchCommand(
-						getServer().getConsoleSender(), "minecraft:kill" + pl.getUniqueId()
-					);
-				}
-				else
-				{
-					if (pl.hasPermission("acu.murder")) return;
-					((CommandSender)pl).sendMessage("Sorry, this kind of murder is highly discouraged.");
-				}
-				pcpe.setCancelled(true);
-			}
-			// This is a weird implementation.
-			else if (msg.startsWith("/" + LOCAL_GLOBAL))
-			{
-				pl.chat(msg.replaceFirst("/" + LOCAL_GLOBAL+" ",TAG_GLOBAL));
-				pcpe.setCancelled(true);
-			}
-			else if (msg.startsWith("/" + LOCAL_G_SHORT + " "))
-			{
-				pl.chat(msg.replaceFirst("/" + LOCAL_G_SHORT+" ",TAG_GLOBAL));
-				pcpe.setCancelled(true);
-			}
-		}
-		
 		@EventHandler
 		public void detectChat (AsyncPlayerChatEvent pce)
 		{
@@ -437,38 +361,6 @@ public final class ArcaneChatUtils extends JavaPlugin
 			}
 		}
 		
-		@EventHandler
-		public void detectMotion (PlayerMoveEvent pme)
-		{
-			Player pl = pme.getPlayer();
-			UUID pID = pl.getUniqueId();
-			
-			if (afkState.get(pID) == null) afkState.put(pID, AFK_COUNTDOWN);
-			
-			int prevState = afkState.get(pID);
-			afkState.put(pID, AFK_COUNTDOWN);
-			
-			if (prevState == 0)
-			{
-				_disableAFK(pl);
-			}
-		}
-		
-		@EventHandler
-		public void detectDiscon (PlayerQuitEvent pqe)
-		{
-			Player pl = pqe.getPlayer();
-			UUID pID = pl.getUniqueId();
-			
-			if (afkState.get(pID) == null) afkState.put(pID, AFK_COUNTDOWN);
-			
-			int prevState = afkState.get(pID);
-			afkState.put(pID, AFK_COUNTDOWN);
-			
-			if (prevState == 0)
-			{
-				_disableAFK(pl);
-			}
-		}
+
 	}
 }

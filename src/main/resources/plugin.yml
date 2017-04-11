@@ -19,6 +19,14 @@ commands:
     aliases: [g]
     description: Sends a chat message to the whole server, regardless of ltoggle state.
     usage: /global <message>
+  tell:
+    aliases: [t, message, msg, m]
+    description: Private Message someone
+    usage: /tell <player> <message>
+  reply:
+    aliases: [r]
+    description: Reply to the person who sent you last message
+    usage: /reply <message>
 
 permissions:
   acu.murder:

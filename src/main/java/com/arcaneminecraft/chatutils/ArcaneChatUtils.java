@@ -74,6 +74,16 @@ public final class ArcaneChatUtils extends JavaPlugin
 	@Override
 	public void onEnable ()
 	{
+		// Command stuff
+		
+		Tell tell = new Tell(this);
+		
+		getCommand("tell").setExecutor(tell);
+		getCommand("reply").setExecutor(tell);
+
+		
+		
+		
 		//Bukkit.getLogger().info("AFK and Local enabled.");
 		getServer().getPluginManager().registerEvents(new UtilListener(), this);
 		
@@ -341,7 +351,8 @@ public final class ArcaneChatUtils extends JavaPlugin
 			
 			if (prevState == 0)
 			{
-				_disableAFK(pl);
+				// TODO: FIX
+				//_disableAFK(pl);
 			}
 			
 			// if the player's local chat is toggled on

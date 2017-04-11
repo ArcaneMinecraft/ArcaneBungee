@@ -8,11 +8,19 @@ website: https://arcaneminecraft.com/
 depend: [ArcaneSurvival]
 
 commands:
+  a:
+    description: Staff Chat Channel
+    permission: arcane.staffchat
+  atoggle:
+    aliases: [at]
+    description: Toggle Staff Chat
+    permission: arcane.staffchat
   local:
     aliases: [l]
     description: Sends a chat message to all players within range.
     usage: /local -h for detailed help.
-  ltoggle:
+  localtoggle:
+    aliases: [ltoggle, lt]
     description: Toggles your chat state to local only.
     usage: /ltoggle -h for detailed help.
   global:
@@ -29,6 +37,9 @@ commands:
     usage: /reply <message>
 
 permissions:
+  arcane.staffchat:
+    description: Send and receive messages from Staff Chat channel
+    default: op
   acu.murder:
     description: this player can /kill others.
     default: op

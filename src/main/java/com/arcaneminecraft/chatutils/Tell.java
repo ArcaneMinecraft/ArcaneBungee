@@ -8,6 +8,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -25,10 +26,8 @@ class Tell implements CommandExecutor {
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		
-		
 		if (cmd.getName().equalsIgnoreCase("tell")) {
-			if (args.length <= 2) {
+			if (args.length < 2) {
 				return false;
 			}
 			
@@ -53,7 +52,7 @@ class Tell implements CommandExecutor {
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("reply")) {
-			if (args.length <= 2) {
+			if (args.length == 0) {
 				return false;
 			}
 			
@@ -64,11 +63,7 @@ class Tell implements CommandExecutor {
 			}
 			
 			// Combine Message
-			TextComponent msg = new TextComponent();
-			for (int i = 0; i < args.length; i++) {
-				msg.addExtra(" ");
-				msg.addExtra(args[i]);
-			}
+			TextComponent msg = new TextComponent(" " + String.join(" ", args));
 			msg.setColor(ColorPalette.CONTENT);
 			
 			messanger(sender, p, msg);
@@ -88,11 +83,21 @@ class Tell implements CommandExecutor {
 	}
 	
 	private void messageSender(CommandSender player, CommandSender name, TextComponent msg, boolean isReceiving) {
-		TextComponent send = new TextComponent((isReceiving ? "From" : "To") + " ");
+		TextComponent send = new TextComponent();
+		
+		TextComponent a = new TextComponent("> ");
+		a.setColor(ChatColor.DARK_GRAY);
+		send.addExtra(a);
+		
+		send.addExtra((isReceiving ? "From" : "To") + " ");
 		send.addExtra(name.getName());
-		send.addExtra(":");
-		send.setColor(ColorPalette.HEADING);
+		
+		a = new TextComponent(":");
+		a.setColor(ChatColor.DARK_GRAY);
+		send.addExtra(a);
+		
 		send.addExtra(msg);
+		send.setColor(ColorPalette.HEADING);
 		send.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + name.getName() + " "));
 
 		// Send Messages

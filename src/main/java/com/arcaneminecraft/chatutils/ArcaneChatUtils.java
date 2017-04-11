@@ -17,6 +17,8 @@ import org.bukkit.Location;
 
 import org.bukkit.scheduler.BukkitScheduler;
 
+import net.md_5.bungee.api.ChatColor;
+
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -37,9 +39,9 @@ public final class ArcaneChatUtils extends JavaPlugin
 	
 	private static final String FORMAT_LOCAL_PRE = "§A(local) ";
 	private static final String FORMAT_LOCAL = "Local Chat: ";
-	private static final String FORMAT_WHITE = "§F";
-	private static final String FORMAT_GRAY = "§7";
-	private static final String FORMAT_ITALIC = "§o";
+	private static final String FORMAT_WHITE = ChatColor.WHITE.toString();
+	private static final String FORMAT_GRAY = ChatColor.GRAY.toString();
+	private static final String FORMAT_ITALIC = ChatColor.ITALIC.toString();
 	private static final String FORMAT_AFK = "§7";
 	private static final String TAG_AFK = "§5[AFK] §r§f";
 	private static final String TAG_GLOBAL = "§g";
@@ -76,13 +78,18 @@ public final class ArcaneChatUtils extends JavaPlugin
 	{
 		// Command stuff
 		
+		LocalChat lc = new LocalChat();
+		StaffChat sc = new StaffChat(this);
 		Tell tell = new Tell(this);
 		
+		getCommand("local").setExecutor(lc);
+		getCommand("ltoggle").setExecutor(lc);
+		getCommand("a").setExecutor(sc);
+		getCommand("atoggle").setExecutor(sc);
 		getCommand("tell").setExecutor(tell);
 		getCommand("reply").setExecutor(tell);
-
 		
-		
+		getServer().getPluginManager().registerEvents(sc.new ToggleListener(), this);
 		
 		//Bukkit.getLogger().info("AFK and Local enabled.");
 		getServer().getPluginManager().registerEvents(new UtilListener(), this);

@@ -70,6 +70,7 @@ public final class ArcaneChatUtils extends JavaPlugin
 		"(warning) The message radius is capped at " + DIST_MAX + " blocks.";
 		
 	
+	
 	private HashMap<UUID, Integer> afkState = new HashMap<>(); // counts down toward [AFK] every second
 	private HashMap<UUID, Integer> ltogState = new HashMap<>();
 	
@@ -78,18 +79,22 @@ public final class ArcaneChatUtils extends JavaPlugin
 	{
 		// Command stuff
 		
-		LocalChat lc = new LocalChat();
-		StaffChat sc = new StaffChat(this);
-		Tell tell = new Tell(this);
-		
+		LocalChat lc = new LocalChat(this);
 		getCommand("local").setExecutor(lc);
 		getCommand("ltoggle").setExecutor(lc);
+		
+		StaffChat sc = new StaffChat(this);
 		getCommand("a").setExecutor(sc);
 		getCommand("atoggle").setExecutor(sc);
+		
+		GlobalToggle gtog = new GlobalToggle(sc, lc);
+		getCommand("global").setExecutor(gtog);
+		getServer().getPluginManager().registerEvents(gtog, this);
+
+		Tell tell = new Tell(this);
 		getCommand("tell").setExecutor(tell);
 		getCommand("reply").setExecutor(tell);
 		
-		getServer().getPluginManager().registerEvents(sc.new ToggleListener(), this);
 		
 		//Bukkit.getLogger().info("AFK and Local enabled.");
 		getServer().getPluginManager().registerEvents(new UtilListener(), this);

@@ -104,6 +104,6 @@ class Tell implements CommandExecutor {
 		if (player instanceof Player)
 			((Player)player).spigot().sendMessage(send);
 		else
-			player.sendMessage(send.toPlainText());
+			player.sendMessage(send.toLegacyText());
 	}
 }

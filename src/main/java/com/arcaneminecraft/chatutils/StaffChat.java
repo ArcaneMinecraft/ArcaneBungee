@@ -7,22 +7,29 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import com.arcaneminecraft.ArcaneCommons;
 import com.arcaneminecraft.ColorPalette;
 
-class StaffChat implements CommandExecutor {
+class StaffChat implements ChatTogglable, CommandExecutor {
 	private final ArcaneChatUtils plugin;
 	private static final String PERMISSION_NODE = "arcane.staffchat";
 	private static final String TAG = "Staff";
-	private final HashSet<CommandSender> toggled = new HashSet<>();
+	private final HashSet<Player> toggled = new HashSet<>();
 	
 	StaffChat(ArcaneChatUtils plugin) {
 		this.plugin = plugin;
+	}
+	
+	@Override
+	public boolean isToggled(Player p) {
+		return toggled.contains(p);
+	}
+
+	@Override
+	public void runToggled(Player p, String msg) {
+		String[] m = { msg };
+		broadcast(p, m);
 	}
 	
 	@Override
@@ -52,12 +59,13 @@ class StaffChat implements CommandExecutor {
     			sender.sendMessage(ArcaneCommons.tag(TAG, "You must be a player."));
     			return true;
     		}
+    		Player p = (Player) sender;
     		
-    		if (toggled.add(sender))
+    		if (toggled.add(p))
     		{
     			sender.sendMessage(ArcaneCommons.tag(TAG, "Staff chat has been toggled " + ColorPalette.POSITIVE + "on" + ColorPalette.CONTENT + "."));
     		} else {
-    			toggled.remove(sender);
+    			toggled.remove(p);
     			sender.sendMessage(ArcaneCommons.tag(TAG, "Staff chat has been toggled " + ColorPalette.NEGATIVE + "off" + ColorPalette.CONTENT + "."));
     		}
     		
@@ -75,29 +83,5 @@ class StaffChat implements CommandExecutor {
 		
 		
 		plugin.getServer().broadcast(msg, PERMISSION_NODE);
-	}
-	
-	public final class ToggleListener implements Listener {
-		// Global
-		@EventHandler (priority=EventPriority.LOW)
-		public void detectChat (AsyncPlayerChatEvent e)
-		{
-			String msg = e.getMessage();
-			CommandSender p = e.getPlayer();
-			// if the player's admin chat is toggled on
-			if (toggled.contains(p))
-			{
-				if (msg.startsWith("§g")) {
-					e.setMessage(msg.substring(2));
-				}
-				else
-				{
-					e.setCancelled(true);
-					
-					String[] chat = { msg };
-					broadcast(p,chat);
-				}
-			}
-		}
 	}
 }

@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import com.arcaneminecraft.ArcaneCommons;
 
@@ -61,5 +62,12 @@ final class GlobalToggle implements CommandExecutor, Listener {
 			local.runToggled(p, msg);
 			return;
 		}
+	}
+	
+	@EventHandler (priority=EventPriority.LOW)
+	public void detectLeave (PlayerQuitEvent e) {
+		Player p = e.getPlayer();
+		local.removePlayer(p);
+		staff.removePlayer(p);
 	}
 }

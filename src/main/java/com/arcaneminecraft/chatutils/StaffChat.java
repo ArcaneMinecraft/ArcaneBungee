@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import com.arcaneminecraft.ArcaneCommons;
 import com.arcaneminecraft.ColorPalette;
 
-class StaffChat implements ChatTogglable, CommandExecutor {
+final class StaffChat implements ChatTogglable, CommandExecutor {
 	private final ArcaneChatUtils plugin;
 	private static final String PERMISSION_NODE = "arcane.staffchat";
 	private static final String TAG = "Staff";
@@ -28,8 +28,12 @@ class StaffChat implements ChatTogglable, CommandExecutor {
 
 	@Override
 	public void runToggled(Player p, String msg) {
-		String[] m = { msg };
-		broadcast(p, m);
+		broadcast(p, ChatColor.translateAlternateColorCodes('&',msg));
+	}
+
+	@Override
+	public void removePlayer(Player p) {
+		toggled.remove(p);
 	}
 	
 	@Override
@@ -40,48 +44,48 @@ class StaffChat implements ChatTogglable, CommandExecutor {
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("a")) {
-    		if (args.length == 0) {
-        		if (!(sender instanceof Player)) {
-        			sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /a <message>"));
-        			return true;
-        		}
-    			sender.sendMessage(ArcaneCommons.tag(TAG, "Your toggle is currently "
-    					+ (toggled.contains(sender)? ColorPalette.POSITIVE + "on": ColorPalette.NEGATIVE + "off")
-    					+ ColorPalette.CONTENT + ". Usage: /a <message>"));
-    			return true;
-    		}
-			broadcast(sender, args);
+			if (args.length == 0) {
+				if (!(sender instanceof Player)) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /a <message>"));
+					return true;
+				}
+				sender.sendMessage(ArcaneCommons.tag(TAG, "Your toggle is currently "
+						+ (toggled.contains(sender)? ColorPalette.POSITIVE + "on": ColorPalette.NEGATIVE + "off")
+						+ ColorPalette.CONTENT + ". Usage: /a <message>"));
+				return true;
+			}
+			broadcast(sender, ChatColor.translateAlternateColorCodes('&',String.join(" ", args)));
 			return true;
 		}
 		
-    	if (cmd.getName().equalsIgnoreCase("atoggle") && sender.hasPermission("simonplugin.a")) {
-    		if (!(sender instanceof Player)) {
-    			sender.sendMessage(ArcaneCommons.tag(TAG, "You must be a player."));
-    			return true;
-    		}
-    		Player p = (Player) sender;
-    		
-    		if (toggled.add(p))
-    		{
-    			sender.sendMessage(ArcaneCommons.tag(TAG, "Staff chat has been toggled " + ColorPalette.POSITIVE + "on" + ColorPalette.CONTENT + "."));
-    		} else {
-    			toggled.remove(p);
-    			sender.sendMessage(ArcaneCommons.tag(TAG, "Staff chat has been toggled " + ColorPalette.NEGATIVE + "off" + ColorPalette.CONTENT + "."));
-    		}
-    		
-    		return true;
-    	}
-    	
-    	return false;
+		if (cmd.getName().equalsIgnoreCase("atoggle")) {
+			if (!(sender instanceof Player)) {
+				sender.sendMessage(ArcaneCommons.tag(TAG, "You must be a player."));
+				return true;
+			}
+			Player p = (Player) sender;
+			
+			if (toggled.add(p))
+			{
+				sender.sendMessage(ArcaneCommons.tag(TAG, "Staff chat has been toggled " + ColorPalette.POSITIVE + "on" + ColorPalette.CONTENT + "."));
+			} else {
+				toggled.remove(p);
+				sender.sendMessage(ArcaneCommons.tag(TAG, "Staff chat has been toggled " + ColorPalette.NEGATIVE + "off" + ColorPalette.CONTENT + "."));
+			}
+			
+			return true;
+		}
+		
+		return false;
 	}
 	
-	private void broadcast (CommandSender sender, String[] args) {
-		String msg = ColorPalette.HEADING + "Staff // "
+	private void broadcast (CommandSender sender, String msg) {
+		String send = ColorPalette.HEADING + "Staff // "
 				+ ColorPalette.RESET + sender.getName()
 				+ ": "
-				+ ChatColor.GOLD + ChatColor.translateAlternateColorCodes('&',String.join(" ", args));
+				+ ChatColor.GOLD + msg;
 		
 		
-		plugin.getServer().broadcast(msg, PERMISSION_NODE);
+		plugin.getServer().broadcast(send, PERMISSION_NODE);
 	}
 }

@@ -1,5 +1,5 @@
 name: ArcaneChatUtils
-version: 4.0.0-SNAPSHOT
+version: 2.0.0-SNAPSHOT
 authors: [Mark Talrey, SimonOrJ]
 description: Local chat and AFK functions, written for Arcane Survival.
 main: com.arcaneminecraft.chatutils.ArcaneChatUtils
@@ -22,7 +22,11 @@ commands:
   localtoggle:
     aliases: [ltoggle, lt]
     description: Toggles your chat state to local only.
-    usage: /ltoggle -h for detailed help.
+    usage: /localtoggle -h for detailed help.
+  localradius:
+    aliases: [lradius, lr]
+    descriptioni: Sets a new radius
+    usage: /localradius <radius>
   global:
     aliases: [g]
     description: Sends a chat message to the whole server, regardless of ltoggle state.

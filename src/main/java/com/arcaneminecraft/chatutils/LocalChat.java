@@ -105,7 +105,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 	}
 	
 	private void broadcast (Player p, int r, String msg) {
-		String send = CHAT_TAG + " <" + p.getDisplayName() + "> " + ChatColor.GRAY + ChatColor.ITALIC + msg;
+		String send = CHAT_TAG + ChatColor.RESET + " <" + p.getDisplayName() + "> " + ChatColor.GRAY + ChatColor.ITALIC + msg;
 		World w = p.getWorld();
 		Location l = p.getLocation();
 		// Who to send the message to?

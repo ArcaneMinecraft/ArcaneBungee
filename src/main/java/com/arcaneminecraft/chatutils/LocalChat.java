@@ -59,6 +59,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("localradius")) {
 			if (args.length == 0) {
 				sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /localradius <radius>"));
+				return true;
 			}
 			
 			Integer r;

@@ -40,7 +40,7 @@ final class GlobalToggle implements CommandExecutor, Listener {
 	}
 	
 	// Listener
-	@EventHandler (priority=EventPriority.LOW)
+	@EventHandler (priority=EventPriority.HIGH)
 	public void detectChat (AsyncPlayerChatEvent e)
 	{
 		String msg = e.getMessage();
@@ -64,7 +64,7 @@ final class GlobalToggle implements CommandExecutor, Listener {
 		}
 	}
 	
-	@EventHandler (priority=EventPriority.LOW)
+	@EventHandler (priority=EventPriority.MONITOR)
 	public void detectLeave (PlayerQuitEvent e) {
 		Player p = e.getPlayer();
 		local.removePlayer(p);

@@ -10,19 +10,32 @@ depend: [ArcaneSurvival]
 commands:
   a:
     description: Staff Chat Channel
-    permission: arcane.staffchat
   atoggle:
     aliases: [at]
     description: Toggle Staff Chat
-    permission: arcane.staffchat
+  badge:
+    aliases: [b]
+    description: Show badge status.
+    usage: /badge [list | <use|off> [preset ID]]
+  badgetoggle:
+    aliases: [bt]
+    description: Toggle badge status. If multiple badges, choose from list.
+    usage: /badgetoggle
+  badgeadmin:
+    aliases: [ba, nt]
+    description: Administration of player tags
+    usage: |
+             /badgeadmin <add|remove|set>  [player]
+             /badgeadmin preset <add|remove> <preset ID> <literal>
+             /badgeadmin reload
   local:
     aliases: [l]
     description: Sends a chat message to all players within range.
-    usage: /local -h for detailed help.
+    usage: /local <message>
   localtoggle:
     aliases: [ltoggle, lt]
     description: Toggles your chat state to local only.
-    usage: /localtoggle -h for detailed help.
+    usage: /localtoggle
   localradius:
     aliases: [lradius, lr]
     descriptioni: Sets a new radius
@@ -32,7 +45,7 @@ commands:
     description: Sends a chat message to the whole server, regardless of ltoggle state.
     usage: /global <message>
   tell:
-    aliases: [t, message, msg, m]
+    aliases: [t, message, msg, m, whisper, w]
     description: Private Message someone
     usage: /tell <player> <message>
   reply:
@@ -44,6 +57,7 @@ permissions:
   arcane.staffchat:
     description: Send and receive messages from Staff Chat channel
     default: op
-  acu.murder:
-    description: this player can /kill others.
-    default: op
+  arcane.badgeadmin:
+    description: Administer badge functionality 
+    default: op 
+    

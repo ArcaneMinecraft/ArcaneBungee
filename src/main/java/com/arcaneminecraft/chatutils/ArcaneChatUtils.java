@@ -13,6 +13,12 @@ public final class ArcaneChatUtils extends JavaPlugin
 {
 	@Override
 	public void onEnable () {
+		Badge badge = new Badge(this);
+		getCommand("badge").setExecutor(badge);
+		getCommand("badgetoggle").setExecutor(badge);
+		getCommand("badgeadmin").setExecutor(badge);
+		getServer().getPluginManager().registerEvents(badge, this);
+		
 		LocalChat lc = new LocalChat(this);
 		getCommand("local").setExecutor(lc);
 		getCommand("localtoggle").setExecutor(lc);

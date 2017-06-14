@@ -1,7 +1,7 @@
 name: ArcaneChatUtils
 version: 2.0.0-SNAPSHOT
 authors: [Mark Talrey, SimonOrJ]
-description: Local chat and AFK functions, written for Arcane Survival.
+description: Local chat, private messaging, and badge, written for Arcane Survival.
 main: com.arcaneminecraft.chatutils.ArcaneChatUtils
 website: https://arcaneminecraft.com/
 
@@ -26,6 +26,10 @@ commands:
     description: Administration of player tags
     usage: |
              /badgeadmin <add|remove|set>  [player]
+  global:
+    aliases: [g]
+    description: Sends a chat message to the whole server, regardless of ltoggle state.
+    usage: /global <message>
   local:
     aliases: [l]
     description: Sends a chat message to all players within range.
@@ -38,10 +42,6 @@ commands:
     aliases: [lradius, lr]
     descriptioni: Sets a new radius
     usage: /localradius <radius>
-  global:
-    aliases: [g]
-    description: Sends a chat message to the whole server, regardless of ltoggle state.
-    usage: /global <message>
   tell:
     aliases: [t, message, msg, m, whisper, w]
     description: Private Message someone

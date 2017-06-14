@@ -1,5 +1,5 @@
 name: ArcaneChatUtils
-version: 2.0.0-SNAPSHOT
+version: ${project.version}
 authors: [Mark Talrey, SimonOrJ]
 description: Local chat, private messaging, and badge, written for Arcane Survival.
 main: com.arcaneminecraft.chatutils.ArcaneChatUtils

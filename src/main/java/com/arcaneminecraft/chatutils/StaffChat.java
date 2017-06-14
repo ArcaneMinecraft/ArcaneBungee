@@ -39,7 +39,7 @@ final class StaffChat implements ChatTogglable, CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (!sender.hasPermission(PERMISSION_NODE)) {
-			sender.sendMessage(ArcaneCommons.noPermissionMsg());
+			sender.sendMessage(ArcaneCommons.noPermissionMsg(label));
 			return true;
 		}
 		

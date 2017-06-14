@@ -296,11 +296,6 @@ final class Badge implements Listener, CommandExecutor {
 			if (args[0].equalsIgnoreCase("library")) {
 				// Books!... er, tags!
 				// TODO
-				
-				String  s = "Usage: /badgeadmin library add <badge> <tag...>";
-				s = "Usage: /badgeadmin library remove <badge>";
-				
-				config.set("players."+u.toString()+".tag", b);
 				return true;
 			}
 			return false;

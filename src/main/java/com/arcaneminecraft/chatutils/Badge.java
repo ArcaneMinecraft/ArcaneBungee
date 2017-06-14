@@ -43,7 +43,7 @@ final class Badge implements Listener, CommandExecutor {
 	/** Presetted Badges*/
 	private final HashMap<String, String> tagPreset = new HashMap<>();
 	
-	private static final String BADGE_TAG_PERMISSION = "arcane.badgeadmin";
+	private static final String BADGE_TAG_PERMISSION = "arcane.command.badgeadmin";
 	
 	private static final String[][] BADGE_HELP = {
 			{"badge", "show this screen", "Alias:\n /b"},

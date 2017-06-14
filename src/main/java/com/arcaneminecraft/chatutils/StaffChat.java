@@ -13,7 +13,7 @@ import com.arcaneminecraft.ColorPalette;
 
 final class StaffChat implements ChatTogglable, CommandExecutor {
 	private final ArcaneChatUtils plugin;
-	private static final String PERMISSION_NODE = "arcane.staffchat";
+	private static final String PERMISSION_NODE = "arcane.command.a";
 	private static final String TAG = "Staff";
 	private final HashSet<Player> toggled = new HashSet<>();
 	

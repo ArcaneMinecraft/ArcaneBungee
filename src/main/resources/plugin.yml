@@ -52,10 +52,10 @@ commands:
     usage: /reply <message>
 
 permissions:
-  arcane.staffchat:
-    description: Send and receive messages from Staff Chat channel
+  arcane.command.a:
+    description: Allows staff chat functionality (/a, /atoggle)
     default: op
-  arcane.badgeadmin:
+  arcane.command.badgeadmin:
     description: Administer badge functionality 
     default: op 
     

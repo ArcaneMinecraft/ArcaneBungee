@@ -11,9 +11,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ArcaneChatUtils extends JavaPlugin
 {
+	private Badge badge;
+	
 	@Override
 	public void onEnable () {
-		Badge badge = new Badge(this);
+		badge = new Badge(this);
 		getCommand("badge").setExecutor(badge);
 		getCommand("badgetoggle").setExecutor(badge);
 		getCommand("badgeadmin").setExecutor(badge);
@@ -35,5 +37,10 @@ public final class ArcaneChatUtils extends JavaPlugin
 		Tell tell = new Tell(this);
 		getCommand("tell").setExecutor(tell);
 		getCommand("reply").setExecutor(tell);
+	}
+	
+	@Override
+	public void onDisable() {
+		badge.saveConfig();
 	}
 }

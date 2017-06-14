@@ -56,12 +56,12 @@ final class Badge implements Listener, CommandExecutor {
 		};
 	private static final String[][] BADGE_TAG_HELP = {
 			{"badgeadmin", "show this screen", "Aliases:\n /ba\n /nt"},
-			{"badgeadmin allow", "give new badge option", "Usage: /badgetag allow <badge> <player>"},
-			{"badgeadmin disallow", "remove existing badge option", "Usage: /badgetag disallow <badge> <player>"},
-			{"badgeadmin set", "set player custom tag", "Usage: /badgetag set <tag...> <player>\n Tag may contain multiple spaces."},
-			{"badgeadmin clear", "clear player tag", "Usage: /badgetag clear <player>"},
-			{"badgeadmin library add", "add new badge type", "Usage: /badgetag library add <badge> <tag...>"},
-			{"badgeadmin library remove", "remove existing badge", "Usage: /badgetag library remove <badge>"}
+			{"badgeadmin allow", "give new badge option", "Usage: /badgeadmin allow <badge> <player>"},
+			{"badgeadmin disallow", "remove existing badge option", "Usage: /badgeadmin disallow <badge> <player>"},
+			{"badgeadmin set", "set player custom tag", "Usage: /badgeadmin set <tag...> <player>\n Tag may contain multiple spaces."},
+			{"badgeadmin clear", "clear player tag", "Usage: /badgeadmin clear <player>"},
+			{"badgeadmin library add", "add new badge type", "Usage: /badgeadmin library add <badge> <tag...>"},
+			{"badgeadmin library remove", "remove existing badge", "Usage: /badgeadmin library remove <badge>"},
 		};
 	
 	//@SuppressWarnings("unchecked")
@@ -77,29 +77,28 @@ final class Badge implements Listener, CommandExecutor {
 		
 		this.config = YamlConfiguration.loadConfiguration(configFile);
 		
-		ConfigurationSection tl = config.getConfigurationSection("tags");
+		ConfigurationSection cs = config.getConfigurationSection("badges");
 		
 		// Load default list of tags
-		for (String tag : tl.getKeys(false)) {
-			tagPreset.put(tag, ChatColor.translateAlternateColorCodes('&',tl.getString(tag)));
+		for (String tag : cs.getKeys(false)) {
+			tagPreset.put(tag, ChatColor.translateAlternateColorCodes('&',cs.getString(tag)));
 		}
 		
-		//config.set("", ""); // TODO: set it to the configuration file.
+		cs = config.getConfigurationSection("players");
 		
 		// Load player's badge status
-		for (Map<?,?> tag : config.getMapList("players")) {
-			UUID u = (UUID) tag.get("player");
-			tagAllowed.put(u,(List<String>)tag.get("allow"));
-			String using = String.valueOf(tag.get("using"));
+		for (String uuid : cs.getKeys(false)) {
+			UUID u = UUID.fromString(uuid);
+			tagAllowed.put(u, cs.getStringList("badges"));
+			String using = cs.getString("tag");
 			if (using == null || using == "")
 				continue;
 			// If player has a tag applied already
-			badgeOn.put(u, tagPreset.get(using));
+			badgeOn.put(u, using);
 		}
 	}
 	
-	// TODO: Link everything to the config.
-	private void saveConfig() {
+	void saveConfig() {
         try {
             config.save(configFile);
         } catch (IOException e) {
@@ -107,15 +106,15 @@ final class Badge implements Listener, CommandExecutor {
         }
 	}
 	
-	private UUID getUUIDFromName(String pname) {
+	private OfflinePlayer getPlayerFromName(String pname) {
 		Player p = plugin.getServer().getPlayer(pname);
 		if (p != null)
-			return p.getUniqueId();
+			return p;
 		
 		@SuppressWarnings("deprecation")
 		OfflinePlayer op = plugin.getServer().getOfflinePlayer(pname);
 		if (op.hasPlayedBefore())
-			return op.getUniqueId();
+			return op;
 		
 		return null;
 	}
@@ -151,6 +150,21 @@ final class Badge implements Listener, CommandExecutor {
 		return ret;
 	}
 	
+	private String setBadge(UUID u, String b) {
+		// Set badge to configuration file
+		config.set("players."+u.toString()+".tag", b);
+		
+		String c = ChatColor.translateAlternateColorCodes('&', b);
+		badgeOn.put(u, c);
+		
+		return c;
+	}
+	
+	private boolean removeBadge(UUID u) {
+		config.set("players."+u.toString()+".tag", null);
+		return badgeOn.remove(u) != null;
+	}
+	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (cmd.getName().equalsIgnoreCase("badgeadmin")) {
@@ -169,12 +183,13 @@ final class Badge implements Listener, CommandExecutor {
 			//{"badgetag library remove", "remove existing badge", "Usage: /badgetag library remove <Badge ID>"}
 			if (args[0].equalsIgnoreCase("allow")) {
 				if (args.length != 3) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgetag allow <badge> <player>"));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin allow <badge> <player>"));
 					return true;
 				}
 				
 				String b = args[1].toLowerCase();
-				UUID u = getUUIDFromName(args[2]);
+				OfflinePlayer p = getPlayerFromName(args[2]);
+				UUID u = p.getUniqueId();
 				if (u == null) {
 					sender.sendMessage(playerNotExistTagMsg(sender,args[2]));
 					return true;
@@ -186,97 +201,106 @@ final class Badge implements Listener, CommandExecutor {
 					tagAllowed.put(u, l);
 				}
 				if (l.contains(b)) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "already has the tag"));
+					sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " already has this badge."));
 					return true;
 				}
 				
 				String t = tagPreset.get(b);
 				if (t == null) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "badge does not exist"));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "\"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" badge does not exist."));
 					return true;
 				}
 				
 				l.add(b);
 				
-				sender.sendMessage(ArcaneCommons.tag(TAG, "given the tag"));
+				config.set("players."+u.toString()+".badges", l);
+				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " can now use " + ChatColor.RESET + t + ColorPalette.CONTENT + "."));
 				return true;
 			}
 			
 			if (args[0].equalsIgnoreCase("disallow")) {
 				if (args.length != 3) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgetag disallow <badge> <player>"));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin disallow <badge> <player>"));
 					return true;
 				}
 				
-				UUID u = getUUIDFromName(args[2]);
+				OfflinePlayer p = getPlayerFromName(args[2]);
+				UUID u = p.getUniqueId();
 				if (u == null) {
 					sender.sendMessage(playerNotExistTagMsg(sender,args[2]));
 					return true;
 				}
 				
 				List<String> l = tagAllowed.get(u);
-				if (l == null || l.remove(args[1].toLowerCase())) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "doesn't have the tag already"));
+				String b = args[1].toLowerCase();
+				if (l == null || l.remove(b)) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " doesn't have the badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\"."));
 					return true;
 				}
 				
-				sender.sendMessage(ArcaneCommons.tag(TAG, "removed successfully"));
+				config.set("players."+u.toString()+".badges", l);
+				
+				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " cannot use the badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" anymore."));
 				return true;
 			}
 			
 			if (args[0].equalsIgnoreCase("set")) {
 				if (args.length < 3) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgetag set <tag...> <player>"));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin set <tag...> <player>"));
 					return true;
 				}
 				
-				int p = args.length - 1;
+				int plPos = args.length - 1;
 				
-				UUID u = getUUIDFromName(args[p]);
+				OfflinePlayer p = getPlayerFromName(args[plPos]);
+				UUID u = p.getUniqueId();
 				if (u == null) {
-					sender.sendMessage(playerNotExistTagMsg(sender,args[p]));
+					sender.sendMessage(playerNotExistTagMsg(sender,args[plPos]));
 					return true;
 				}
 				
 				String b = "";
-				for (int i = 1; i < p; i++) {
+				for (int i = 1; i < plPos; i++) {
 					b += " " + args[i];
 				}
 				b = b.substring(1);
 				
-				// TODO: Add b to configuration
+				String c = setBadge(u, b);
 				
-				b = ChatColor.translateAlternateColorCodes('&', b);
-				
-				badgeOn.put(u, b);
-				
-				sender.sendMessage(ArcaneCommons.tag(TAG, b + " set successfully"));
+				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + "'s tag is now " + c + "."));
 				return true;
 			}
 			
 			if (args[0].equalsIgnoreCase("clear")) {
 				if (args.length != 2) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgetag clear <player>"));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin clear <player>"));
 					return true;
 				}
 				
-				UUID u = getUUIDFromName(args[1]);
+				OfflinePlayer p = getPlayerFromName(args[1]);
+				UUID u = p.getUniqueId();
 				if (u == null) {
 					sender.sendMessage(playerNotExistTagMsg(sender,args[1]));
 					return true;
 				}
 				
-				if (badgeOn.remove(u) == null) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "didn't have a tag anyway"));
+				if (!removeBadge(u)) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " wasn't holding a tag."));
 					return true;
 				}
 				
-				sender.sendMessage(ArcaneCommons.tag(TAG, "cleared successfully"));
+				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + "'s tag is cleared successfully."));
 				return true;
 			}
 			
 			if (args[0].equalsIgnoreCase("library")) {
+				// Books!... er, tags!
 				// TODO
+				
+				String  s = "Usage: /badgeadmin library add <badge> <tag...>";
+				s = "Usage: /badgeadmin library remove <badge>";
+				
+				config.set("players."+u.toString()+".tag", b);
 				return true;
 			}
 			return false;
@@ -291,21 +315,22 @@ final class Badge implements Listener, CommandExecutor {
 		UUID u = ((Player)sender).getUniqueId();
 		
 		if (cmd.getName().equalsIgnoreCase("badgetoggle")) {
-			if (badgeOn.remove(u) == null) {
-				List<String> ls = tagAllowed.get(u);
-				if (ls != null && ls.size() == 1) {
-					// only one
-					for (String s : ls) {
-						String b = tagPreset.get(s);
-						badgeOn.put(u, b);
-						sender.sendMessage(ArcaneCommons.tag(TAG, "Your tag is now " + ChatColor.RESET + b + ColorPalette.CONTENT + "."));
-						return true;
-					}
-				}
-				sender.spigot().sendMessage(getBadgeList(ls));
+			if (removeBadge(u)) {
+				sender.sendMessage(ArcaneCommons.tag(TAG, "You put your badge away."));
 				return true;
 			}
-			sender.sendMessage(ArcaneCommons.tag(TAG, "You put your badge away."));
+			
+			List<String> ls = tagAllowed.get(u);
+			if (ls != null && ls.size() == 1) {
+				// only one
+				for (String s : ls) {
+					String b = tagPreset.get(s);
+					setBadge(u, b);
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Your tag is now " + ChatColor.RESET + b + ColorPalette.CONTENT + "."));
+					return true;
+				}
+			}
+			((Player)sender).spigot().sendMessage(getBadgeList(ls));
 			return true;
 		}
 		
@@ -319,13 +344,10 @@ final class Badge implements Listener, CommandExecutor {
 		}
 		
 		if (args[0].equalsIgnoreCase("off")) {
-			String b = badgeOn.remove(u);
-			if (b == null)
-				sender.sendMessage(ArcaneCommons.tag(TAG, "You didn't have any badge on."));
-			else {
+			if (removeBadge(u))
 				sender.sendMessage(ArcaneCommons.tag(TAG, "You put your badge away."));
-				
-			}
+			else
+				sender.sendMessage(ArcaneCommons.tag(TAG, "You didn't have any badge on."));
 			return true;
 		}
 		
@@ -333,7 +355,7 @@ final class Badge implements Listener, CommandExecutor {
 			if (args.length >= 2) {
 				if (tagAllowed.get(u).contains(args[1])) {
 					String b = tagPreset.get(args[1]);
-					badgeOn.put(u, b);
+					setBadge(u, b);
 					sender.sendMessage(ArcaneCommons.tag(TAG, "Your tag is now " + ChatColor.RESET + b + ColorPalette.CONTENT + "."));
 					//config.set("players."+".asdf", value);
 					return true;
@@ -345,8 +367,7 @@ final class Badge implements Listener, CommandExecutor {
 		
 		// List
 		List<String> ls = tagAllowed.get(u);
-		sender.spigot().sendMessage(getBadgeList(ls));
-		// TODO: Change this to hover/click-able text
+		((Player)sender).spigot().sendMessage(getBadgeList(ls));
 		
 		return true;
 	}

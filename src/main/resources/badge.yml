@@ -1,5 +1,10 @@
-tags:
+badges:
   admin: '&c[Admin]'
   mod: '&9[Mod]'
   chatmod: '&2[ChatMod]'
   donor: '&3[Donor]'
+
+# players:
+#   (Player UUID):
+#     badges: []
+#     tag: &c[Admin]

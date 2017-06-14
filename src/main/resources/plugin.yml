@@ -26,8 +26,6 @@ commands:
     description: Administration of player tags
     usage: |
              /badgeadmin <add|remove|set>  [player]
-             /badgeadmin preset <add|remove> <preset ID> <literal>
-             /badgeadmin reload
   local:
     aliases: [l]
     description: Sends a chat message to all players within range.

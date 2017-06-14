@@ -59,8 +59,7 @@ final class Badge implements Listener, CommandExecutor {
 			{"badgeadmin disallow", "remove existing badge option", "Usage: /badgeadmin disallow <badge> <player>"},
 			{"badgeadmin set", "set player custom tag", "Usage: /badgeadmin set <tag...> <player>\n Tag may contain multiple spaces."},
 			{"badgeadmin clear", "clear player tag", "Usage: /badgeadmin clear <player>"},
-			{"badgeadmin library add", "add new badge type", "Usage: /badgeadmin library add <badge> <tag...>"},
-			{"badgeadmin library remove", "remove existing badge", "Usage: /badgeadmin library remove <badge>"},
+			{"badgeadmin library", "add/remove/list badge type", "Usage:\n /badgeadmin library list\n /badgeadmin library add <badge> <tag...>\n /badgeadmin library remove <badge>"},
 		};
 	
 	Badge (ArcaneChatUtils plugin) {
@@ -72,26 +71,29 @@ final class Badge implements Listener, CommandExecutor {
 	         plugin.saveResource("badge.yml", false);
 	     }
 		
-		this.config = YamlConfiguration.loadConfiguration(configFile);
+		config = YamlConfiguration.loadConfiguration(configFile);
 		
 		ConfigurationSection cs = config.getConfigurationSection("badges");
-		
 		// Load default list of tags
-		for (String tag : cs.getKeys(false)) {
-			tagPreset.put(tag, ChatColor.translateAlternateColorCodes('&',cs.getString(tag)));
+		if (cs != null) {
+			for (String tag : cs.getKeys(false)) {
+				tagPreset.put(tag, cs.getString(tag));
+			}
 		}
 		
 		cs = config.getConfigurationSection("players");
 		
 		// Load player's badge status
-		for (String uuid : cs.getKeys(false)) {
-			UUID u = UUID.fromString(uuid);
-			tagAllowed.put(u, cs.getStringList("badges"));
-			String using = cs.getString("tag");
-			if (using == null || using == "")
-				continue;
-			// If player has a tag applied already
-			badgeOn.put(u, using);
+		if (cs != null) {
+			for (String uuid : cs.getKeys(false)) {
+				UUID u = UUID.fromString(uuid);
+				ConfigurationSection cs2 = cs.getConfigurationSection(uuid);
+				tagAllowed.put(u, cs2.getStringList("badges"));
+				String tag = cs2.getString("tag");
+				// If player has a tag applied already
+				if (tag != null && tag != "")
+					badgeOn.put(u, ChatColor.translateAlternateColorCodes('&', tag));
+			}
 		}
 	}
 	
@@ -124,7 +126,7 @@ final class Badge implements Listener, CommandExecutor {
 		BaseComponent ret = ArcaneCommons.tagTC(TAG);
 		ret.addExtra("Available badges:");
 		
-		if (l == null) {
+		if (l == null || l.size() == 0) {
 			TextComponent tc = new TextComponent(" none");
 			tc.setItalic(true);
 			ret.addExtra(tc);
@@ -171,7 +173,7 @@ final class Badge implements Listener, CommandExecutor {
 			}
 			
 			if (args.length == 0) {
-				ArcaneCommons.sendCommandMenu(sender, "Badge Tag Help", BADGE_TAG_HELP, new String[]{"blah"});
+				ArcaneCommons.sendCommandMenu(sender, "Badge Tag Help", BADGE_TAG_HELP, new String[]{"You can /b use any badge as badge admin."});
 				return true;
 			}
 			
@@ -208,7 +210,7 @@ final class Badge implements Listener, CommandExecutor {
 				l.add(b);
 				
 				config.set("players."+u.toString()+".badges", l);
-				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " can now use " + ChatColor.RESET + t + ColorPalette.CONTENT + "."));
+				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " can now use " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', t) + ColorPalette.CONTENT + "."));
 				return true;
 			}
 			
@@ -290,9 +292,14 @@ final class Badge implements Listener, CommandExecutor {
 			// Books!... er, tags!
 			if (args[0].equalsIgnoreCase("library")) {
 				if (args.length == 1) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin library (add|remove) <badge> [<tag...>]"));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin library (list|add|remove) [<badge> [<tag...>]]"));
 					return true;
 				}
+				if (args[1].equalsIgnoreCase("list")) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Badge Presets: " + ColorPalette.FOCUS + String.join(ColorPalette.CONTENT + ", " + ColorPalette.FOCUS, tagPreset.keySet())));
+					return true;
+				}
+				
 				if (args[1].equalsIgnoreCase("add")) {
 					if (args.length < 4) {
 						sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin library add <badge> <tag...>"));
@@ -302,7 +309,7 @@ final class Badge implements Listener, CommandExecutor {
 					String b = args[2].toLowerCase();
 					String t = "";
 					for (int i = 3; i < args.length; i++) {
-						t += " " + args.length;
+						t += " " + args[i];
 					}
 					
 					t = t.substring(1);
@@ -310,10 +317,12 @@ final class Badge implements Listener, CommandExecutor {
 					config.set("badges."+b, t);
 					
 					// The previous value
-					String prev = tagPreset.put(b, t = ChatColor.translateAlternateColorCodes('&', t));
+					String prev = tagPreset.put(b, t);
+					
+					t = ChatColor.translateAlternateColorCodes('&', t);
 					
 					if (prev != null) {
-						sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\"'s tag is now " + ChatColor.RESET + t + ColorPalette.CONTENT + ", replacing " + ChatColor.RESET + prev + ColorPalette.CONTENT + "."));
+						sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\"'s tag is now " + ChatColor.RESET + t + ColorPalette.CONTENT + ", replacing " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', prev) + ColorPalette.CONTENT + "."));
 						return true;
 					}
 					
@@ -336,10 +345,11 @@ final class Badge implements Listener, CommandExecutor {
 					}
 					
 					config.set("badges."+b, null);
-					sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\", which represented " + ChatColor.RESET + prev + ColorPalette.CONTENT + ", has been deleted."));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\", which represented " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', prev) + ColorPalette.CONTENT + ", has been deleted."));
 					return true;
 				}
 				
+				sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin library (add|remove|list) [<badge> [<tag...>]]"));
 				return true;
 			}
 			return false;
@@ -363,9 +373,9 @@ final class Badge implements Listener, CommandExecutor {
 			if (ls != null && ls.size() == 1) {
 				// only one
 				for (String s : ls) {
-					String b = tagPreset.get(s);
-					setBadge(u, b);
-					sender.sendMessage(ArcaneCommons.tag(TAG, "Your tag is now " + ChatColor.RESET + b + ColorPalette.CONTENT + "."));
+					String t = tagPreset.get(s);
+					setBadge(u, t);
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Your tag is now " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', t) + ColorPalette.CONTENT + "."));
 					return true;
 				}
 			}
@@ -377,8 +387,8 @@ final class Badge implements Listener, CommandExecutor {
 		
 		//String b = tagAllowed.get(p).get(0);
 		if (args.length == 0) {
-			String b = badgeOn.get(u);
-			ArcaneCommons.sendCommandMenu(sender, "Badge Help", BADGE_HELP, new String[]{"Currently using", b == null ? ChatColor.ITALIC + "none" : ChatColor.RESET + b});
+			String t = badgeOn.get(u);
+			ArcaneCommons.sendCommandMenu(sender, "Badge Help", BADGE_HELP, new String[]{"Currently using", t == null ? ChatColor.ITALIC + "none" : ChatColor.RESET + t});
 			return true;
 		}
 		
@@ -392,11 +402,10 @@ final class Badge implements Listener, CommandExecutor {
 		
 		if (args[0].equalsIgnoreCase("use")) {
 			if (args.length >= 2) {
-				if (tagAllowed.get(u).contains(args[1])) {
+				if (tagAllowed.get(u).contains(args[1]) || sender.hasPermission(BADGE_TAG_PERMISSION)) {
 					String b = tagPreset.get(args[1]);
 					setBadge(u, b);
-					sender.sendMessage(ArcaneCommons.tag(TAG, "Your tag is now " + ChatColor.RESET + b + ColorPalette.CONTENT + "."));
-					//config.set("players."+".asdf", value);
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Your tag is now " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', b) + ColorPalette.CONTENT + "."));
 					return true;
 				}
 				

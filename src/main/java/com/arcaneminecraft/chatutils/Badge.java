@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -64,8 +63,6 @@ final class Badge implements Listener, CommandExecutor {
 			{"badgeadmin library remove", "remove existing badge", "Usage: /badgeadmin library remove <badge>"},
 		};
 	
-	//@SuppressWarnings("unchecked")
-	@SuppressWarnings("unchecked")
 	Badge (ArcaneChatUtils plugin) {
 		this.plugin = plugin;
 		this.configFile = new File(plugin.getDataFolder(), "badge.yml");
@@ -178,9 +175,6 @@ final class Badge implements Listener, CommandExecutor {
 				return true;
 			}
 			
-			// 4allow 4disallow 43set 3clear library<5add 4remove>
-			//{"badgetag library add", "add new badge type", "Usage: /badgetag library add <Badge ID> <Badge Display>"},
-			//{"badgetag library remove", "remove existing badge", "Usage: /badgetag library remove <Badge ID>"}
 			if (args[0].equalsIgnoreCase("allow")) {
 				if (args.length != 3) {
 					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin allow <badge> <player>"));
@@ -207,7 +201,7 @@ final class Badge implements Listener, CommandExecutor {
 				
 				String t = tagPreset.get(b);
 				if (t == null) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, "\"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" badge does not exist."));
+					sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" does not exist."));
 					return true;
 				}
 				
@@ -293,9 +287,59 @@ final class Badge implements Listener, CommandExecutor {
 				return true;
 			}
 			
+			// Books!... er, tags!
 			if (args[0].equalsIgnoreCase("library")) {
-				// Books!... er, tags!
-				// TODO
+				if (args.length == 1) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin library (add|remove) <badge> [<tag...>]"));
+					return true;
+				}
+				if (args[1].equalsIgnoreCase("add")) {
+					if (args.length < 4) {
+						sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin library add <badge> <tag...>"));
+						return true;
+					}
+					
+					String b = args[2].toLowerCase();
+					String t = "";
+					for (int i = 3; i < args.length; i++) {
+						t += " " + args.length;
+					}
+					
+					t = t.substring(1);
+					
+					config.set("badges."+b, t);
+					
+					// The previous value
+					String prev = tagPreset.put(b, t = ChatColor.translateAlternateColorCodes('&', t));
+					
+					if (prev != null) {
+						sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\"'s tag is now " + ChatColor.RESET + t + ColorPalette.CONTENT + ", replacing " + ChatColor.RESET + prev + ColorPalette.CONTENT + "."));
+						return true;
+					}
+					
+					sender.sendMessage(ArcaneCommons.tag(TAG, "The new badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" has the tag " + ChatColor.RESET + t + ColorPalette.CONTENT + "."));
+					return true;
+				}
+				
+				if (args[1].equalsIgnoreCase("remove")) {
+					if (args.length != 3) {
+						sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin library remove <badge>"));
+						return true;
+					}
+					
+					String b = args[2].toLowerCase();
+					String prev = tagPreset.remove(b);
+					
+					if (prev == null) {
+						sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" does not exist."));
+						return true;
+					}
+					
+					config.set("badges."+b, null);
+					sender.sendMessage(ArcaneCommons.tag(TAG, "The badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\", which represented " + ChatColor.RESET + prev + ColorPalette.CONTENT + ", has been deleted."));
+					return true;
+				}
+				
 				return true;
 			}
 			return false;

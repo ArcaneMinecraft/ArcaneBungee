@@ -1,3 +1,6 @@
+# This file is not meant to be modified by hand.
+# Please use /badgeadmin for badge management.
+
 badges:
   admin: '&c[Admin]'
   mod: '&9[Mod]'

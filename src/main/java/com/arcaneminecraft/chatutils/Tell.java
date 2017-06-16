@@ -98,7 +98,10 @@ class Tell implements CommandExecutor {
 		
 		send.addExtra(msg);
 		send.setColor(ColorPalette.HEADING);
-		send.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + name.getName() + " "));
+		if (name instanceof Player)
+			send.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + name.getName() + " "));
+		else
+			send.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/reply "));
 
 		// Send Messages
 		if (player instanceof Player)

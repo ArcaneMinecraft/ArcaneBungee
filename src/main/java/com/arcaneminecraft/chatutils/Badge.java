@@ -57,6 +57,7 @@ final class Badge implements Listener, CommandExecutor {
 			{"badgeadmin", "show this screen", "Aliases:\n /ba\n /nt"},
 			{"badgeadmin allow", "give new badge option", "Usage: /badgeadmin allow <badge> <player>"},
 			{"badgeadmin disallow", "remove existing badge option", "Usage: /badgeadmin disallow <badge> <player>"},
+			{"badgeadmin check", "check player's badges", "Usage: /badgeadmin check <player>"},
 			{"badgeadmin set", "set player custom tag", "Usage: /badgeadmin set <tag...> <player>\n Tag may contain multiple spaces."},
 			{"badgeadmin clear", "clear player tag", "Usage: /badgeadmin clear <player>"},
 			{"badgeadmin library", "add/remove/list badge type", "Usage:\n /badgeadmin library list\n /badgeadmin library add <badge> <tag...>\n /badgeadmin library remove <badge>"},
@@ -142,7 +143,7 @@ final class Badge implements Listener, CommandExecutor {
 			ret.addExtra(" ");
 			TextComponent tc = new TextComponent('[' + s + ']');
 			tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/badge use " + s));
-			tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(t).create()));
+			tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.translateAlternateColorCodes('&', t)).create()));
 			tc.setColor(ColorPalette.FOCUS);
 			ret.addExtra(tc);
 		}
@@ -229,14 +230,60 @@ final class Badge implements Listener, CommandExecutor {
 				
 				List<String> l = tagAllowed.get(u);
 				String b = args[1].toLowerCase();
-				if (l == null || l.remove(b)) {
-					sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " doesn't have the badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\"."));
+				if (l == null || !l.remove(b)) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " did not have \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\"."));
 					return true;
 				}
 				
 				config.set("players."+u.toString()+".badges", l);
 				
-				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " cannot use the badge \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" anymore."));
+				sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " is not allowed to use \"" + ColorPalette.FOCUS + b + ColorPalette.CONTENT + "\" anymore."));
+				return true;
+			}
+			
+			if (args[0].equalsIgnoreCase("check")) {
+				if (args.length != 2) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin check <player>"));
+					return true;
+				}
+				
+				OfflinePlayer p = getPlayerFromName(args[1]);
+				UUID u = p.getUniqueId();
+				if (u == null) {
+					sender.sendMessage(playerNotExistTagMsg(sender,args[2]));
+					return true;
+				}
+				
+				List<String> l = tagAllowed.get(u);
+				
+				if (l == null || l.size() == 0) {
+					sender.sendMessage(ArcaneCommons.tag(TAG, ColorPalette.FOCUS + p.getName() + ColorPalette.CONTENT + " does not have any badges."));
+					return true;
+				}
+				
+				TextComponent send = ArcaneCommons.tagTC(TAG);
+				
+				TextComponent a = new TextComponent(p.getName());
+				a.setColor(ColorPalette.FOCUS);
+				send.addExtra(a);
+				
+				send.addExtra(" can use:");
+				
+				for (String s : l) {
+					String t = tagPreset.get(s);
+					if (t == null) {
+						l.remove(s);
+						continue;
+					}
+					send.addExtra(" ");
+					TextComponent tc = new TextComponent('[' + s + ']');
+					tc.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/badgeadmin disallow " + s));
+					tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(t).create()));
+					tc.setColor(ColorPalette.FOCUS);
+					send.addExtra(tc);
+				}
+				
+				sender.spigot().sendMessage(send);
 				return true;
 			}
 			

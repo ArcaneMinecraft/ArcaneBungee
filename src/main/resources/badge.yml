@@ -1,0 +1,13 @@
+# This file is not meant to be modified by hand.
+# Please use /badgeadmin for badge management.
+
+badges:
+  admin: '&c[Admin]'
+  mod: '&9[Mod]'
+  chatmod: '&2[ChatMod]'
+  donor: '&3[Donor]'
+
+# players:
+#   (Player UUID):
+#     badges: []
+#     tag: &c[Admin]

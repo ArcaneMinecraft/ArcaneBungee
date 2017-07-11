@@ -1,0 +1,61 @@
+name: ArcaneChatUtils
+version: ${project.version}
+authors: [Mark Talrey, SimonOrJ]
+description: Local chat, private messaging, and badge, written for Arcane Survival.
+main: com.arcaneminecraft.chatutils.ArcaneChatUtils
+website: https://arcaneminecraft.com/
+
+depend: [ArcaneSurvival]
+
+commands:
+  a:
+    description: Staff Chat Channel
+  atoggle:
+    aliases: [at]
+    description: Toggle Staff Chat
+  badge:
+    aliases: [b]
+    description: Show badge status.
+    usage: /badge [list | <use|off> [preset ID]]
+  badgetoggle:
+    aliases: [bt]
+    description: Toggle badge status. If multiple badges, choose from list.
+    usage: /badgetoggle
+  badgeadmin:
+    aliases: [ba, nt]
+    description: Administration of player tags
+    usage: |
+             /badgeadmin <add|remove|set>  [player]
+  global:
+    aliases: [g]
+    description: Sends a chat message to the whole server, regardless of ltoggle state.
+    usage: /global <message>
+  local:
+    aliases: [l]
+    description: Sends a chat message to all players within range.
+    usage: /local <message>
+  localtoggle:
+    aliases: [ltoggle, lt]
+    description: Toggles your chat state to local only.
+    usage: /localtoggle
+  localradius:
+    aliases: [lradius, lr]
+    descriptioni: Sets a new radius
+    usage: /localradius <radius>
+  tell:
+    aliases: [t, message, msg, m, whisper, w]
+    description: Private Message someone
+    usage: /tell <player> <message>
+  reply:
+    aliases: [r]
+    description: Reply to the person who sent you last message
+    usage: /reply <message>
+
+permissions:
+  arcane.command.a:
+    description: Allows staff chat functionality (/a, /atoggle)
+    default: op
+  arcane.command.badgeadmin:
+    description: Administer badge functionality 
+    default: op 
+    

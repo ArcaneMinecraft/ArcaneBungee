@@ -1,9 +1,9 @@
 package com.arcaneminecraft.chatutils;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 
 import com.arcaneminecraft.ArcaneCommons;
 import com.arcaneminecraft.ColorPalette;
+import com.arcaneminecraft.TextComponentURL;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -40,7 +41,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 
 	@Override
 	public void runToggled(Player p, String msg) {
-		broadcastLocal(p, getRadius(p), msg);
+		broadcastLocal(p, getRadius(p), StringUtils.split(msg));
 	}
 
 	@Override
@@ -62,13 +63,15 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 		}
 		Player p = (Player) sender;
 		
+		int r = getRadius(p);
+		
 		if (cmd.getName().equalsIgnoreCase("localradius")) {
 			if (args.length == 0) {
-				sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /localradius <radius>"));
+				sender.sendMessage(ArcaneCommons.tag(TAG, "Your chat radius is "
+						+ ColorPalette.FOCUS + r + ColorPalette.CONTENT +". Usage: /localradius <radius>"));
 				return true;
 			}
 			
-			Integer r;
 			try {
 				r = Integer.parseInt(args[0]);
 			} catch (NumberFormatException e) {
@@ -85,8 +88,6 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 			return true;
 		}
 		
-		int r = getRadius(p);
-		
 		if (cmd.getName().equalsIgnoreCase("local")) {
 			if (args.length == 0) {
 				sender.sendMessage(ArcaneCommons.tag(TAG, "Your toggle is currently "
@@ -95,7 +96,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 						+ ColorPalette.FOCUS + r + ColorPalette.CONTENT +". Usage: /l <message>"));
 				return true;
 			}
-			broadcastLocal(p, r, String.join(" ", args));
+			broadcastLocal(p, r, args);
 			return true;
 		}
 		
@@ -112,7 +113,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 		return false;
 	}
 	
-	private void broadcastLocal (Player p, int r, String msg) {
+	private void broadcastLocal (Player p, int r, String[] msg) {
 		// 1. Get all the recipients
 		HashSet<Player> recipients = new HashSet<>();
 		
@@ -128,17 +129,16 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 		TextComponent send = new TextComponent();
 		send.setColor(ChatColor.GRAY);
 		
-		// Beginning
+		// Beginning: tag
 		TextComponent a = new TextComponent();
 		
 		TextComponent b = new TextComponent(CHAT_TAG);
 		
 		a.addExtra(b);
-		a.addExtra(" <" + p.getDisplayName() + "> ");
 		
-		b = new TextComponent(msg);
-		b.setColor(ChatColor.GRAY);
-		b.setItalic(true);
+		// name
+		b = new TextComponent(" <" + p.getDisplayName() + "> ");
+		b.setColor(ChatColor.WHITE);
 		a.addExtra(b);
 		
 		// Add a click action only to the beginning
@@ -154,7 +154,11 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 				new ComponentBuilder("Recipient" + (list.length() == 1 ? "" : "s") + ": " + list).create()));
 		
 		send.addExtra(a);
-		send.addExtra(msg);
+		
+		// Later: message
+		a = TextComponentURL.activate(msg);
+		a.setItalic(true);
+		send.addExtra(a);
 		
 		// Send Messages
 		for (Player rp : recipients)

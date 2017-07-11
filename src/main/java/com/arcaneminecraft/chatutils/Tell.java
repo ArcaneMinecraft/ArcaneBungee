@@ -14,6 +14,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 
 import com.arcaneminecraft.ArcaneCommons;
 import com.arcaneminecraft.ColorPalette;
+import com.arcaneminecraft.TextComponentURL;
 
 class Tell implements CommandExecutor {
 	private static final String TAG = "PM";
@@ -39,12 +40,7 @@ class Tell implements CommandExecutor {
 			}
 			
 			// Combine Message
-			TextComponent msg = new TextComponent();
-			for (int i = 1; i < args.length; i++) {
-				msg.addExtra(" ");
-				msg.addExtra(args[i]);
-			}
-			msg.setColor(ColorPalette.CONTENT);
+			TextComponent msg = TextComponentURL.activate(args, 1);
 			
 			messanger(sender, p, msg);
 			
@@ -63,8 +59,7 @@ class Tell implements CommandExecutor {
 			}
 			
 			// Combine Message
-			TextComponent msg = new TextComponent(" " + String.join(" ", args));
-			msg.setColor(ColorPalette.CONTENT);
+			TextComponent msg = TextComponentURL.activate(args);
 			
 			messanger(sender, p, msg);
 			
@@ -75,6 +70,8 @@ class Tell implements CommandExecutor {
 	}
 
 	private void messanger(CommandSender from, CommandSender to, TextComponent msg) {
+		msg.setColor(ColorPalette.CONTENT);
+		
 		messageSender(from, to, msg, false); // send to "sender" as "To p: msg"
 		messageSender(to, from, msg, true);
 		
@@ -96,7 +93,7 @@ class Tell implements CommandExecutor {
 		a.addExtra((isReceiving ? "From" : "To") + " ");
 		a.addExtra(name.getName());
 		
-		b = new TextComponent(":");
+		b = new TextComponent(": ");
 		b.setColor(ChatColor.DARK_GRAY);
 		a.addExtra(b);
 		
@@ -108,6 +105,8 @@ class Tell implements CommandExecutor {
 		
 		
 		send.addExtra(a);
+		
+		// Message
 		send.addExtra(msg);
 		
 		// Send Messages

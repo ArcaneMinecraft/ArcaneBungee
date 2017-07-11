@@ -1,9 +1,9 @@
 package com.arcaneminecraft.chatutils;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -13,6 +13,12 @@ import org.bukkit.entity.Player;
 
 import com.arcaneminecraft.ArcaneCommons;
 import com.arcaneminecraft.ColorPalette;
+
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 
 final class LocalChat implements ChatTogglable, CommandExecutor {
 	private final ArcaneChatUtils plugin;
@@ -34,7 +40,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 
 	@Override
 	public void runToggled(Player p, String msg) {
-		broadcast(p, getRadius(p), msg);
+		broadcastLocal(p, getRadius(p), msg);
 	}
 
 	@Override
@@ -89,7 +95,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 						+ ColorPalette.FOCUS + r + ColorPalette.CONTENT +". Usage: /l <message>"));
 				return true;
 			}
-			broadcast(p, r, String.join(" ", args));
+			broadcastLocal(p, r, String.join(" ", args));
 			return true;
 		}
 		
@@ -106,15 +112,52 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 		return false;
 	}
 	
-	private void broadcast (Player p, int r, String msg) {
-		String send = CHAT_TAG + ChatColor.RESET + " <" + p.getDisplayName() + "> " + ChatColor.GRAY + ChatColor.ITALIC + msg;
+	private void broadcastLocal (Player p, int r, String msg) {
+		// 1. Get all the recipients
+		HashSet<Player> recipients = new HashSet<>();
+		
 		World w = p.getWorld();
 		Location l = p.getLocation();
-		// Who to send the message to?
 		for (Player recipient : plugin.getServer().getOnlinePlayers()) {
 			if (recipient.getWorld().equals(w)
 					&& recipient.getLocation().distanceSquared(l) <= r*r)
-				recipient.sendMessage(send);
+				recipients.add(recipient);
 		}
+		
+		// 2. Create message
+		TextComponent send = new TextComponent();
+		send.setColor(ChatColor.GRAY);
+		
+		// Beginning
+		TextComponent a = new TextComponent();
+		
+		TextComponent b = new TextComponent(CHAT_TAG);
+		
+		a.addExtra(b);
+		a.addExtra(" <" + p.getDisplayName() + "> ");
+		
+		b = new TextComponent(msg);
+		b.setColor(ChatColor.GRAY);
+		b.setItalic(true);
+		a.addExtra(b);
+		
+		// Add a click action only to the beginning
+		a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/l "));
+		
+		// Hover event to show list of players who received the message
+		String list = "";
+		for (Player rp : recipients)
+			list += ", " + rp.getName();
+		
+		list.substring(2);
+		a.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+				new ComponentBuilder("Recipient" + (list.length() == 1 ? "" : "s") + ": " + list).create()));
+		
+		send.addExtra(a);
+		send.addExtra(msg);
+		
+		// Send Messages
+		for (Player rp : recipients)
+			rp.spigot().sendMessage(send);
 	}
 }

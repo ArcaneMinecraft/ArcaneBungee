@@ -71,6 +71,7 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 			}
 			if (r > DIST_MAX) {
 				sender.sendMessage(ArcaneCommons.tag(TAG, "The messaging radius is capped at " + DIST_MAX + " blocks."));
+				return true;
 			}
 			
 			radiusMap.put(p, r);

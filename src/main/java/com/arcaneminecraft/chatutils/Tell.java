@@ -85,24 +85,31 @@ class Tell implements CommandExecutor {
 	private void messageSender(CommandSender player, CommandSender name, TextComponent msg, boolean isReceiving) {
 		TextComponent send = new TextComponent();
 		
-		TextComponent a = new TextComponent("> ");
-		a.setColor(ChatColor.DARK_GRAY);
-		send.addExtra(a);
+		// Beginning
+		TextComponent a = new TextComponent();
+		a.setColor(ColorPalette.HEADING);
 		
-		send.addExtra((isReceiving ? "From" : "To") + " ");
-		send.addExtra(name.getName());
+		TextComponent b = new TextComponent("> ");
+		b.setColor(ChatColor.DARK_GRAY);
 		
-		a = new TextComponent(":");
-		a.setColor(ChatColor.DARK_GRAY);
-		send.addExtra(a);
+		a.addExtra(b);
+		a.addExtra((isReceiving ? "From" : "To") + " ");
+		a.addExtra(name.getName());
 		
-		send.addExtra(msg);
-		send.setColor(ColorPalette.HEADING);
+		b = new TextComponent(":");
+		b.setColor(ChatColor.DARK_GRAY);
+		a.addExtra(b);
+		
+		// Add a click action only to the beginning
 		if (name instanceof Player)
-			send.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + name.getName() + " "));
+			a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + name.getName() + " "));
 		else
-			send.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/reply "));
-
+			a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/reply "));
+		
+		
+		send.addExtra(a);
+		send.addExtra(msg);
+		
 		// Send Messages
 		if (player instanceof Player)
 			((Player)player).spigot().sendMessage(send);

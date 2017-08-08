@@ -12,7 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import com.arcaneminecraft.ArcaneCommons;
+import com.arcaneminecraft.api.ArcaneCommons;
 
 final class GlobalToggle implements CommandExecutor, Listener {
 	private final HashSet<Player> global = new HashSet<>();

@@ -11,9 +11,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.arcaneminecraft.ArcaneCommons;
-import com.arcaneminecraft.ColorPalette;
-import com.arcaneminecraft.TextComponentURL;
+import com.arcaneminecraft.api.ArcaneCommons;
+import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.TextComponentURL;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;

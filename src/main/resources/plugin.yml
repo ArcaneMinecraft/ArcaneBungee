@@ -5,7 +5,7 @@ description: Local chat, private messaging, and badge, written for Arcane Surviv
 main: com.arcaneminecraft.chatutils.ArcaneChatUtils
 website: https://arcaneminecraft.com/
 
-depend: [ArcaneSurvival]
+depend: [ArcaneAPI]
 
 commands:
   a:
@@ -58,4 +58,3 @@ permissions:
   arcane.command.badgeadmin:
     description: Administer badge functionality 
     default: op 
-    

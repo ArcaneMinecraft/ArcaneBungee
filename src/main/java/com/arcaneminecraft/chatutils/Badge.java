@@ -248,7 +248,7 @@ final class Badge implements Listener, CommandExecutor {
 				send.addExtra("Available badge for each player:\n");
 				
 				for (Entry<UUID, List<String>> e : tagAllowed.entrySet()) {
-					Player p = plugin.getServer().getPlayer(e.getKey());
+					OfflinePlayer p = plugin.getServer().getOfflinePlayer(e.getKey());
 					
 					TextComponent a = new TextComponent("> " + p.getName());
 					a.setColor(ColorPalette.FOCUS);

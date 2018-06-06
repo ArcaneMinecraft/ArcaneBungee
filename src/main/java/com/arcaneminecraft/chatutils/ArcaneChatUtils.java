@@ -1,46 +1,51 @@
+package com.arcaneminecraft.chatutils;
+
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.plugin.Plugin;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.Socket;
+
 /**
  * ArcaneChatUtilPlugin.java
  * Close-chat function for the Arcane Survival server.
+ *
  * @author Morios (Mark Talrey)
- * @version 3.3.0 for Minecraft 1.9.*
+ * @author SimonOrJ (Simon Chuu)
+ * @version 3.0-SNAPSHOT
  */
 
-package com.arcaneminecraft.chatutils;
+public final class ArcaneChatUtils extends Plugin {
+    private final String logIP = "127.0.0.1";
+    private final int logPort = 25555;
 
-import org.bukkit.plugin.java.JavaPlugin;
+    @Override
+    public void onEnable() {
+        StaffChat sc = new StaffChat(this); // also registers commands in the class
+        this.getProxy().getPluginManager().registerCommand(this, sc.getChatListener());
+        this.getProxy().getPluginManager().registerCommand(this, sc.getToggleListener());
 
-public final class ArcaneChatUtils extends JavaPlugin
-{
-	private Badge badge;
-	
-	@Override
-	public void onEnable () {
-		badge = new Badge(this);
-		getCommand("badge").setExecutor(badge);
-		getCommand("badgetoggle").setExecutor(badge);
-		getCommand("badgeadmin").setExecutor(badge);
-		getServer().getPluginManager().registerEvents(badge, this);
-		
-		LocalChat lc = new LocalChat(this);
-		getCommand("local").setExecutor(lc);
-		getCommand("localtoggle").setExecutor(lc);
-		getCommand("localradius").setExecutor(lc);
-		
-		StaffChat sc = new StaffChat(this);
-		getCommand("a").setExecutor(sc);
-		getCommand("atoggle").setExecutor(sc);
-		
-		GlobalToggle gtog = new GlobalToggle(sc, lc);
-		getCommand("global").setExecutor(gtog);
-		getServer().getPluginManager().registerEvents(gtog, this);
+        Tell tell = new Tell(this);
+    }
 
-		Tell tell = new Tell(this);
-		getCommand("tell").setExecutor(tell);
-		getCommand("reply").setExecutor(tell);
-	}
-	
-	@Override
-	public void onDisable() {
-		badge.saveConfig();
-	}
+    void logCommand (ProxiedPlayer p, String msg) {
+        Socket client;
+        try {
+            client = new Socket(logIP, logPort);
+            DataOutputStream ds = new DataOutputStream(client.getOutputStream());
+            ds.writeUTF(msg);
+            ds.writeUTF(p.getName());
+            ds.writeUTF(p.getDisplayName());
+            ds.writeUTF(p.getUniqueId().toString());
+            ds.close();
+            client.close();
+            // TODO: Handle ConnectException separately.
+        } catch (ConnectException e) {
+            getLogger().warning("Cannot connect to the logging server on " + logIP + ":" + logPort);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

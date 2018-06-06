@@ -4,6 +4,7 @@ public enum Usage {
     AFK             ("/afk"),
     APPLY           ("/apply"),
     GREYLIST        ("/greylist", "arcane.command.greylist"),
+    REPLY           ("/reply <private message ...>"),
     LINKS           ("/links"),
     NEWS            ("/news"),
     PING            ("/ping [player]"),

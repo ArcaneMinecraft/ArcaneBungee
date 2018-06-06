@@ -24,28 +24,33 @@ public final class ArcaneChatUtils extends Plugin {
     @Override
     public void onEnable() {
         StaffChat sc = new StaffChat(this); // also registers commands in the class
-        this.getProxy().getPluginManager().registerCommand(this, sc.getChatListener());
-        this.getProxy().getPluginManager().registerCommand(this, sc.getToggleListener());
+        getProxy().getPluginManager().registerCommand(this, sc.getChatListener());
+        getProxy().getPluginManager().registerCommand(this, sc.getToggleListener());
+        getProxy().getPluginManager().registerListener(this, sc);
 
         Tell tell = new Tell(this);
+        getProxy().getPluginManager().registerCommand(this, tell.getMessage());
+        getProxy().getPluginManager().registerCommand(this, tell.getReply());
     }
 
     void logCommand (ProxiedPlayer p, String msg) {
-        Socket client;
-        try {
-            client = new Socket(logIP, logPort);
-            DataOutputStream ds = new DataOutputStream(client.getOutputStream());
-            ds.writeUTF(msg);
-            ds.writeUTF(p.getName());
-            ds.writeUTF(p.getDisplayName());
-            ds.writeUTF(p.getUniqueId().toString());
-            ds.close();
-            client.close();
-            // TODO: Handle ConnectException separately.
-        } catch (ConnectException e) {
-            getLogger().warning("Cannot connect to the logging server on " + logIP + ":" + logPort);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        getProxy().getScheduler().runAsync(this, () -> {
+            Socket client;
+            try {
+                client = new Socket(logIP, logPort);
+                DataOutputStream ds = new DataOutputStream(client.getOutputStream());
+                ds.writeUTF(msg);
+                ds.writeUTF(p.getName());
+                ds.writeUTF(p.getDisplayName());
+                ds.writeUTF(p.getUniqueId().toString());
+                ds.close();
+                client.close();
+                // TODO: Handle ConnectException separately.
+            } catch (ConnectException e) {
+                getLogger().warning("Cannot connect to the logging server on " + logIP + ":" + logPort);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

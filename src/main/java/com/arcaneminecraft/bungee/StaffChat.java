@@ -2,6 +2,7 @@ package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.ColorPalette;
+import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -11,6 +12,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Listener;
+import net.md_5.bungee.api.plugin.TabExecutor;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
@@ -18,7 +20,6 @@ import java.util.HashSet;
 
 public class StaffChat implements Listener {
     private final ArcaneBungee plugin;
-    private static final String PERMISSION_NODE = Usage.STAFFCHAT.getPermission();
     private final HashSet<ProxiedPlayer> toggled = new HashSet<>();
     private final Command chat;
     private final Command toggle;
@@ -54,7 +55,7 @@ public class StaffChat implements Listener {
         }
     }
 
-    public class Toggle extends Command {
+    public class Toggle extends Command implements TabExecutor {
 
         Toggle() {
             super("atoggle", Usage.STAFFCHAT.getPermission(), "at");
@@ -86,6 +87,13 @@ public class StaffChat implements Listener {
             send.addExtra(".");
 
             p.sendMessage(ChatMessageType.SYSTEM, send);
+
+            plugin.logCommand(p, "/atoggle");
+        }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            return ImmutableSet.of();
         }
     }
 

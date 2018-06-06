@@ -79,7 +79,6 @@ public final class ArcaneBungee extends Plugin implements Listener {
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-
         }
     }
 }

@@ -40,15 +40,15 @@ public class StaffChat implements Listener {
 
     public class Chat extends Command {
         Chat() {
-            super("a", Usage.STAFFCHAT.getPermission());
+            super("a", BungeeCommandUsage.STAFFCHAT.getPermission());
         }
 
         @Override
         public void execute(CommandSender sender, String[] args) {
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)
-                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(Usage.STAFFCHAT.getUsage()));
-                else sender.sendMessage(ArcaneText.usage(Usage.STAFFCHAT.getUsage()));
+                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.STAFFCHAT.getUsage()));
+                else sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.STAFFCHAT.getUsage()));
                 return;
             }
             broadcast(sender, String.join(" ", args));
@@ -58,7 +58,7 @@ public class StaffChat implements Listener {
     public class Toggle extends Command implements TabExecutor {
 
         Toggle() {
-            super("atoggle", Usage.STAFFCHAT.getPermission(), "at");
+            super("atoggle", BungeeCommandUsage.STAFFCHATTOGGLE.getPermission(), "at");
         }
 
         @Override
@@ -122,7 +122,7 @@ public class StaffChat implements Listener {
 
         plugin.getProxy().getConsole().sendMessage(send);
         for (ProxiedPlayer recipient : plugin.getProxy().getPlayers()) {
-            if (recipient.hasPermission(Usage.STAFFCHAT.getPermission())) {
+            if (recipient.hasPermission(BungeeCommandUsage.STAFFCHAT.getPermission())) {
                 recipient.sendMessage(ChatMessageType.SYSTEM, send);
             }
         }

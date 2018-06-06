@@ -1,6 +1,6 @@
 package com.arcaneminecraft.bungee;
 
-public enum Usage {
+public enum BungeeCommandUsage {
     AFK             ("/afk"),
     APPLY           ("/apply"),
     GREYLIST        ("/greylist", "arcane.command.greylist"),
@@ -17,12 +17,12 @@ public enum Usage {
     private final String usage;
     private final String permission;
 
-    Usage(String usage){
+    BungeeCommandUsage(String usage){
         this.usage = usage;
         this.permission = null;
     }
 
-    Usage(String usage, String permission){
+    BungeeCommandUsage(String usage, String permission){
         this.usage = usage;
         this.permission = permission;
     }

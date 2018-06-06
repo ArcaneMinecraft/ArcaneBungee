@@ -83,8 +83,8 @@ public class Tell {
         public void execute(CommandSender sender, String[] args) {
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)
-                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(Usage.REPLY.getUsage()));
-                else sender.sendMessage(ArcaneText.usage(Usage.REPLY.getUsage()));
+                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.REPLY.getUsage()));
+                else sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.REPLY.getUsage()));
                 return;
             }
 

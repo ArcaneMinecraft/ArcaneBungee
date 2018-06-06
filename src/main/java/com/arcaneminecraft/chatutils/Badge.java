@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -21,8 +22,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-import com.arcaneminecraft.ArcaneCommons;
-import com.arcaneminecraft.ColorPalette;
+import com.arcaneminecraft.api.ArcaneCommons;
+import com.arcaneminecraft.api.ColorPalette;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -58,6 +59,7 @@ final class Badge implements Listener, CommandExecutor {
 			{"badgeadmin allow", "give new badge option", "Usage: /badgeadmin allow <badge> <player>"},
 			{"badgeadmin disallow", "remove existing badge option", "Usage: /badgeadmin disallow <badge> <player>"},
 			{"badgeadmin check", "check player's badges", "Usage: /badgeadmin check <player>"},
+			{"badgeadmin list", "list every player's badges"},
 			{"badgeadmin set", "set player custom tag", "Usage: /badgeadmin set <tag...> <player>\n Tag may contain multiple spaces."},
 			{"badgeadmin clear", "clear player tag", "Usage: /badgeadmin clear <player>"},
 			{"badgeadmin library", "add/remove/list badge type", "Usage:\n /badgeadmin library list\n /badgeadmin library add <badge> <tag...>\n /badgeadmin library remove <badge>"},
@@ -241,6 +243,40 @@ final class Badge implements Listener, CommandExecutor {
 				return true;
 			}
 			
+			if (args[0].equalsIgnoreCase("list")) {
+				TextComponent send = ArcaneCommons.tagTC(TAG);
+				send.addExtra("Available badge for each player:\n");
+				
+				for (Entry<UUID, List<String>> e : tagAllowed.entrySet()) {
+					OfflinePlayer p = plugin.getServer().getOfflinePlayer(e.getKey());
+					
+					TextComponent a = new TextComponent("> " + p.getName());
+					a.setColor(ColorPalette.FOCUS);
+					send.addExtra(a);
+					
+					send.addExtra(" can use:");
+					
+					String current = badgeOn.get(e.getKey());
+					
+					for (String s : e.getValue()) {
+						String t = tagPreset.get(s);
+						if (t == null) {
+							e.getValue().remove(s);
+							continue;
+						}
+						send.addExtra(" ");
+						TextComponent tc = new TextComponent('[' + s + ']');
+						if (t.equals(current)) tc.setBold(true);
+						tc.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/badgeadmin disallow " + s));
+						tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(t).create()));
+						tc.setColor(ColorPalette.FOCUS);
+						send.addExtra(tc);
+					}
+					send.addExtra("\n");
+				}
+				sender.spigot().sendMessage(send);
+			}
+			
 			if (args[0].equalsIgnoreCase("check")) {
 				if (args.length != 2) {
 					sender.sendMessage(ArcaneCommons.tag(TAG, "Usage: /badgeadmin check <player>"));
@@ -269,6 +305,8 @@ final class Badge implements Listener, CommandExecutor {
 				
 				send.addExtra(" can use:");
 				
+				String current = badgeOn.get(u);
+				
 				for (String s : l) {
 					String t = tagPreset.get(s);
 					if (t == null) {
@@ -276,7 +314,9 @@ final class Badge implements Listener, CommandExecutor {
 						continue;
 					}
 					send.addExtra(" ");
+					
 					TextComponent tc = new TextComponent('[' + s + ']');
+					if (t.equals(current)) tc.setBold(true);
 					tc.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/badgeadmin disallow " + s));
 					tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(t).create()));
 					tc.setColor(ColorPalette.FOCUS);

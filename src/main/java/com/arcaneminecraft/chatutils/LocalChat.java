@@ -11,9 +11,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.arcaneminecraft.ArcaneCommons;
-import com.arcaneminecraft.ColorPalette;
-import com.arcaneminecraft.TextComponentURL;
+import com.arcaneminecraft.api.ArcaneCommons;
+import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.TextComponentURL;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -145,13 +145,15 @@ final class LocalChat implements ChatTogglable, CommandExecutor {
 		a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/l "));
 		
 		// Hover event to show list of players who received the message
-		String list = "";
+		StringBuilder list = new StringBuilder();
 		for (Player rp : recipients)
-			list += ", " + rp.getName();
+			list.append(", ").append(rp.getName());
 		
-		list.substring(2);
+		// Get rid of leading comma and space
+		list.delete(0, 2);
+		
 		a.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-				new ComponentBuilder("Recipient" + (list.length() == 1 ? "" : "s") + ": " + list).create()));
+				new ComponentBuilder("Recipient" + (recipients.size() == 1 ? "" : "s") + ": " + list).create()));
 		
 		send.addExtra(a);
 		

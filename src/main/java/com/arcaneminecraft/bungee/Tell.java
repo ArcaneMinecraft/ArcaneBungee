@@ -1,4 +1,4 @@
-package com.arcaneminecraft.chatutils;
+package com.arcaneminecraft.bungee;
 
 import java.util.HashMap;
 
@@ -17,12 +17,12 @@ import net.md_5.bungee.api.plugin.Command;
 
 public class Tell {
     private static final String TAG = "PM";
-    private final ArcaneChatUtils plugin;
+    private final ArcaneBungee plugin;
     private final HashMap<CommandSender, CommandSender> lastReceived = new HashMap<>();
     private final Command message;
     private final Command reply;
 
-    Tell(ArcaneChatUtils plugin) {
+    Tell(ArcaneBungee plugin) {
         this.plugin = plugin;
         this.message = new Message();
         this.reply = new Reply();

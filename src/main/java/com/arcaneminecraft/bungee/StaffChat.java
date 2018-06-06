@@ -1,4 +1,4 @@
-package com.arcaneminecraft.chatutils;
+package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.ColorPalette;
@@ -17,13 +17,13 @@ import net.md_5.bungee.event.EventPriority;
 import java.util.HashSet;
 
 public class StaffChat implements Listener {
-    private final ArcaneChatUtils plugin;
+    private final ArcaneBungee plugin;
     private static final String PERMISSION_NODE = Usage.STAFFCHAT.getPermission();
     private final HashSet<ProxiedPlayer> toggled = new HashSet<>();
     private final Command chat;
     private final Command toggle;
 
-    StaffChat(ArcaneChatUtils plugin) {
+    StaffChat(ArcaneBungee plugin) {
         this.plugin = plugin;
         this.chat = new Chat();
         this.toggle = new Toggle();

@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group 'ArcaneChatUtils'
+group 'com.arcaneminecraft.bungee'
 version '3.0-SNAPSHOT'
 
 sourceCompatibility = 1.8

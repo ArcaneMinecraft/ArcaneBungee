@@ -1,5 +1,5 @@
-name: ArcaneChatUtils
+name: ArcaneBungee
 version: ${project.version}
-authors: [Mark Talrey, SimonOrJ]
+author: Arcane Survival
 description: Local chat, private messaging, and badge, written for Arcane Survival.
-main: com.arcaneminecraft.chatutils.ArcaneChatUtils
+main: com.arcaneminecraft.bungee.ArcaneBungee

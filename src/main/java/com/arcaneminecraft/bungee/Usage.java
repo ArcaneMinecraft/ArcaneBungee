@@ -1,4 +1,4 @@
-package com.arcaneminecraft.chatutils;
+package com.arcaneminecraft.bungee;
 
 public enum Usage {
     AFK             ("/afk"),

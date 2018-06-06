@@ -1,4 +1,4 @@
-package com.arcaneminecraft.chatutils;
+package com.arcaneminecraft.bungee;
 
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
@@ -22,7 +22,7 @@ import java.net.Socket;
  * @version 3.0-SNAPSHOT
  */
 
-public final class ArcaneChatUtils extends Plugin implements Listener {
+public final class ArcaneBungee extends Plugin implements Listener {
     private final String logIP = "127.0.0.1";
     private final int logPort = 25555;
 

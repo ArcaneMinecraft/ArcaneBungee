@@ -1,8 +1,13 @@
 package com.arcaneminecraft.chatutils;
 
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.event.PluginMessageEvent;
+import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.event.EventHandler;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -17,7 +22,7 @@ import java.net.Socket;
  * @version 3.0-SNAPSHOT
  */
 
-public final class ArcaneChatUtils extends Plugin {
+public final class ArcaneChatUtils extends Plugin implements Listener {
     private final String logIP = "127.0.0.1";
     private final int logPort = 25555;
 
@@ -31,18 +36,24 @@ public final class ArcaneChatUtils extends Plugin {
         Tell tell = new Tell(this);
         getProxy().getPluginManager().registerCommand(this, tell.getMessage());
         getProxy().getPluginManager().registerCommand(this, tell.getReply());
+
+        getProxy().registerChannel("BungeeCoreProtectLogger");
     }
 
     void logCommand (ProxiedPlayer p, String msg) {
+        logCommand(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
+    }
+
+    void logCommand (String name, String displayName, String uniqueId, String msg) {
         getProxy().getScheduler().runAsync(this, () -> {
             Socket client;
             try {
                 client = new Socket(logIP, logPort);
                 DataOutputStream ds = new DataOutputStream(client.getOutputStream());
                 ds.writeUTF(msg);
-                ds.writeUTF(p.getName());
-                ds.writeUTF(p.getDisplayName());
-                ds.writeUTF(p.getUniqueId().toString());
+                ds.writeUTF(name);
+                ds.writeUTF(displayName);
+                ds.writeUTF(uniqueId);
                 ds.close();
                 client.close();
                 // TODO: Handle ConnectException separately.
@@ -52,5 +63,23 @@ public final class ArcaneChatUtils extends Plugin {
                 e.printStackTrace();
             }
         });
+    }
+
+    @EventHandler
+    public void onPluginMessage(PluginMessageEvent e) {
+        if (e.getTag().equals("MessageToBungeeCord")) {
+            // data ordering: "CoreProtectForward", Message, Name, DisplayName, UniqueID
+            DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
+            try {
+                String subchannel = in.readUTF();
+                if (subchannel.equals("CoreProtectForward")) {
+                    String msg = in.readUTF();
+                    logCommand(in.readUTF(), in.readUTF(), in.readUTF(), msg); // Name, DisplayName, UUID
+                }
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+        }
     }
 }

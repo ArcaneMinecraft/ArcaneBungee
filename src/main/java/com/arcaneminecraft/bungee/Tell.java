@@ -16,7 +16,6 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 public class Tell {
-    private static final String TAG = "PM";
     private final ArcaneBungee plugin;
     private final HashMap<CommandSender, CommandSender> lastReceived = new HashMap<>();
     private final Command message;
@@ -114,10 +113,10 @@ public class Tell {
         lastReceived.put(to, from);
 
         if (from instanceof ProxiedPlayer)
-            plugin.logCommand((ProxiedPlayer) from, "/msg " + to.getName() + " " + String.join(" ",args));
+            plugin.getArcaneLogger().logCommand((ProxiedPlayer) from, "/msg " + to.getName() + " " + String.join(" ",args));
     }
 
-    // TODO: Should we vanilla messaging?
+    // TODO: Should we make messaging using vanilla translatable?
     private void messageSender(CommandSender player, CommandSender name, BaseComponent msg, boolean isReceiving) {
         TextComponent send = new TextComponent();
 

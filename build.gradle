@@ -16,5 +16,5 @@ repositories {
 dependencies {
     compileOnly 'net.md-5:bungeecord-api:1.12-SNAPSHOT' // Bungeecord api
     compileOnly files('libs/ArcaneAPI-1.0-SNAPSHOT.jar')
-    //testCompile group: 'junit', name: 'junit', version: '4.12'
+    compileOnly 'me.lucko.luckperms:luckperms-api:4.2'
 }

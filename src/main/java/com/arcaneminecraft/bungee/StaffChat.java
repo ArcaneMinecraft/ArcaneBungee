@@ -98,7 +98,7 @@ public class StaffChat implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void chat(ChatEvent e) {
+    public void checkToggle(ChatEvent e) {
         //noinspection SuspiciousMethodCalls
         if (!(e.getSender() instanceof ProxiedPlayer) // Must be sent by player
                 || !e.isCommand() // Don't hog onto commands

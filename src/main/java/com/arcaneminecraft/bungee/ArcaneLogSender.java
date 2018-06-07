@@ -27,17 +27,28 @@ public class ArcaneLogSender implements Listener {
     @EventHandler
     public void onPluginMessage(PluginMessageEvent e) {
         try {
-        if (e.getTag().equalsIgnoreCase("BungeeCord")) {
-            DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
+            if (e.getTag().equalsIgnoreCase("BungeeCord")) {
+                DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
+                String forward = in.readUTF(); // forward probably
+                String servers = in.readUTF(); // servers probably
                 String channel = in.readUTF(); // channel we delivered
-                if(channel.equals("ChatAndLog")){
+                if(forward.equals("Forward") && (channel.equals("ChatAndLog") || channel.equals("Chat"))){
                     byte[] msgBytes = new byte[in.readShort()];
                     in.readFully(msgBytes);
 
                     DataInputStream is = new DataInputStream(new ByteArrayInputStream(msgBytes));
                     String msg = is.readUTF();
-                    // in.readUTF() ordering: Name, DisplayName, UUID
-                    logCommand(is.readUTF(), is.readUTF(), is.readUTF(), msg);
+                    String name = is.readUTF();
+                    String displayName = is.readUTF();
+                    String uuid = is.readUTF();
+
+                    // Log chat on bungeecord console
+                    plugin.getLogger().info(
+                            "[" + plugin.getProxy().getPlayer(name).getServer().getInfo().getName() + "] "
+                                    + name + ": " + msg);
+
+                    if (channel.equals("ChatAndLog"))
+                        logCommand(name, displayName, uuid, msg);
                 }
             }
         } catch (IOException e1) {
@@ -50,6 +61,7 @@ public class ArcaneLogSender implements Listener {
     }
 
     void logCommand (String name, String displayName, String uniqueId, String msg) {
+        plugin.getLogger().info("logCommand executed");
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             Socket client;
             try {

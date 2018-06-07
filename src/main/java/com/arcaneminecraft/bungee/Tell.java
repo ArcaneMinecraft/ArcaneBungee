@@ -1,10 +1,7 @@
 package com.arcaneminecraft.bungee;
 
-import java.util.HashMap;
-
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.ColorPalette;
-
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -14,6 +11,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
+
+import java.util.HashMap;
 
 public class Tell {
     private final ArcaneBungee plugin;
@@ -35,7 +35,7 @@ public class Tell {
         return reply;
     }
 
-    public class Message extends Command {
+    public class Message extends Command implements TabExecutor {
 
         Message() {
             super("tell", null, "w", "msg", "m", "t");
@@ -70,9 +70,14 @@ public class Tell {
 
             messenger(sender, p, args, 1);
         }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            return TabCompletePreset.onlinePlayers(args[args.length - 1]);
+        }
     }
 
-    public class Reply extends Command {
+    public class Reply extends Command implements TabExecutor {
 
         Reply() {
             super("reply", null, "r");
@@ -98,6 +103,11 @@ public class Tell {
 
             messenger(sender, p, args, 0);
         }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            return TabCompletePreset.onlinePlayers(args[args.length - 1]);
+        }
     }
 
     private void messenger(CommandSender from, CommandSender to, String[] args, int fromIndex) {
@@ -113,7 +123,7 @@ public class Tell {
         lastReceived.put(to, from);
 
         if (from instanceof ProxiedPlayer)
-            plugin.getArcaneLogger().logCommand((ProxiedPlayer) from, "/msg " + to.getName() + " " + String.join(" ",args));
+            plugin.getArcaneLogger().logCommand((ProxiedPlayer) from, "/msg " + String.join(" ",args));
     }
 
     // TODO: Should we make messaging using vanilla translatable?

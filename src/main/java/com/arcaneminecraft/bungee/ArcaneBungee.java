@@ -12,13 +12,15 @@ import net.md_5.bungee.api.plugin.Plugin;
  */
 
 public final class ArcaneBungee extends Plugin {
-    private final String logIP = "127.0.0.1";
-    private final int logPort = 25555;
     private ArcaneLogSender arcaneLogSender;
-
 
     @Override
     public void onEnable() {
+        String logIP = "127.0.0.1";
+        int logPort = 25555;
+
+        TabCompletePreset.setPlugin(this);
+
         getProxy().getPluginManager().registerListener(
                 this, arcaneLogSender = new ArcaneLogSender(this, logIP, logPort));
 

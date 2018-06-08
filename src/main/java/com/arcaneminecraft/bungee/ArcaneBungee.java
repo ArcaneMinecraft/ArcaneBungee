@@ -27,6 +27,7 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(
                 this, arcaneLogSender = new ArcaneLogSender(this, logIP, logPort));
 
+        getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
         getProxy().getPluginManager().registerListener(this, new StaffChat(this));
         new Tell(this);
         new SimpleCommands(this);

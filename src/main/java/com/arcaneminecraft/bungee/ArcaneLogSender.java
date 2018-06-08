@@ -1,6 +1,6 @@
 package com.arcaneminecraft.bungee;
 
-import com.sun.istack.internal.NotNull;
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -49,7 +49,7 @@ public class ArcaneLogSender implements Listener {
                                     + name + ": " + msg);
 
                     if (channel.equals("ChatAndLog"))
-                        logCommand(name, displayName, uuid, msg);
+                        log(name, displayName, uuid, msg);
                 }
             }
         } catch (IOException e1) {
@@ -57,12 +57,28 @@ public class ArcaneLogSender implements Listener {
         }
     }
 
-    public void logCommand (@NotNull ProxiedPlayer p, @NotNull String msg) {
-        logCommand(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
+    public void log(CommandSender sender, String command, String[] args) {
+        if (!(sender instanceof ProxiedPlayer))
+            return;
+
+        String msg = command;
+        if (args.length != 0)
+            msg += " " + String.join(" ", args);
+
+        ProxiedPlayer p = (ProxiedPlayer) sender;
+        log(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
     }
 
-    public void logCommand (@NotNull String name, @NotNull String displayName, @NotNull String uniqueId, @NotNull String msg) {
-        plugin.getLogger().info("logCommand executed");
+    public void log(CommandSender sender, String msg) {
+        if (!(sender instanceof ProxiedPlayer))
+            return;
+
+        ProxiedPlayer p = (ProxiedPlayer) sender;
+        log(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
+    }
+
+    public void log(String name, String displayName, String uniqueId, String msg) {
+        plugin.getLogger().info("log executed");
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             Socket client;
             try {

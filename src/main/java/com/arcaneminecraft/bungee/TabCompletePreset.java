@@ -11,11 +11,11 @@ public class TabCompletePreset {
         TabCompletePreset.plugin = plugin;
     }
 
-    public static Iterable<String> onlinePlayers(String startsWith) {
+    public static Iterable<String> onlinePlayers(String[] args) {
         ArrayList<String> ret = new ArrayList<>();
 
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
-            if (p.getName().toLowerCase().startsWith(startsWith))
+            if (p.getName().toLowerCase().startsWith(args[args.length - 1]))
                 ret.add(p.getName());
         }
 

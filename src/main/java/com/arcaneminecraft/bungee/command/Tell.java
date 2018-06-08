@@ -36,6 +36,8 @@ public class Tell {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            plugin.getCommandLogger().log(sender, "/msg", args);
+
             if (args.length < 2) {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usageTranslatable("commands.message.usage"));
@@ -46,11 +48,9 @@ public class Tell {
             // Get recipient
             CommandSender p = plugin.getProxy().getPlayer(args[0]);
             if (p == null) {
-                BaseComponent send = new TranslatableComponent("commands.generic.player.notFound", args[0]);
-                send.setColor(ChatColor.RED);
                 if (sender instanceof ProxiedPlayer)
-                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, send);
-                else sender.sendMessage(send);
+                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
+                else sender.sendMessage(ArcaneText.playerNotFound(args[0]));
                 return;
             } else if (p == sender) {
                 BaseComponent send = new TranslatableComponent("commands.message.sameTarget");
@@ -66,7 +66,7 @@ public class Tell {
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return TabCompletePreset.onlinePlayers(args[args.length - 1]);
+            return TabCompletePreset.onlinePlayers(args);
         }
     }
 
@@ -86,12 +86,30 @@ public class Tell {
             }
 
             CommandSender p = lastReceived.get(sender);
-            if (p == null || (p instanceof ProxiedPlayer && !((ProxiedPlayer) p).isConnected())) {
-                BaseComponent send = new TranslatableComponent("commands.generic.player.notFound", p == null ? "" : p.getName());
+            if (p == null) {
+                plugin.getCommandLogger().log(sender, "/r", args);
+
+                BaseComponent send = new TextComponent("There is nobody to reply to");
+                send.setColor(ChatColor.RED);
+
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, send);
                 else sender.sendMessage(send);
                 return;
+            }
+
+            if (p instanceof ProxiedPlayer) {
+                // Log with /msg instead for easier readability.
+                plugin.getCommandLogger().log(sender, "/msg " + p.getName() + " " + String.join(" ", args));
+
+                if (!((ProxiedPlayer) p).isConnected()) {
+                    if (sender instanceof ProxiedPlayer)
+                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(p.getName()));
+                    else sender.sendMessage(ArcaneText.playerNotFound(p.getName()));
+                    return;
+                }
+            } else {
+                plugin.getCommandLogger().log(sender, "/r", args);
             }
 
             messenger(sender, p, args, 0);
@@ -99,7 +117,7 @@ public class Tell {
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return TabCompletePreset.onlinePlayers(args[args.length - 1]);
+            return TabCompletePreset.onlinePlayers(args);
         }
     }
 
@@ -114,9 +132,6 @@ public class Tell {
 
         // Update sender-receiver map
         lastReceived.put(to, from);
-
-        if (from instanceof ProxiedPlayer)
-            plugin.getArcaneLogger().logCommand((ProxiedPlayer) from, "/msg " + String.join(" ",args));
     }
 
     // TODO: Should we make messaging using vanilla translatable?

@@ -79,8 +79,6 @@ public class StaffChat implements Listener {
             send.addExtra(".");
 
             p.sendMessage(ChatMessageType.SYSTEM, send);
-
-            plugin.getArcaneLogger().logCommand(p, "/atoggle");
         }
 
         @Override
@@ -103,6 +101,8 @@ public class StaffChat implements Listener {
     }
 
     private void broadcast(CommandSender sender, String msg) {
+        plugin.getCommandLogger().log(sender, "/a" + msg);
+
         BaseComponent send = new TextComponent("Staff // ");
         send.setColor(ColorPalette.HEADING);
 
@@ -119,7 +119,5 @@ public class StaffChat implements Listener {
                 recipient.sendMessage(ChatMessageType.SYSTEM, send);
             }
         }
-        if (sender instanceof ProxiedPlayer)
-            plugin.getArcaneLogger().logCommand((ProxiedPlayer) sender, "/a " + msg);
     }
 }

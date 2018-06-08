@@ -9,6 +9,7 @@ public enum BungeeCommandUsage {
     NEWS            ("/news"),
     PING            ("/ping [player]"),
     SEEN            ("/seen <player>"),
+    SLAP            ("/slap <player>", "arcane.command.slap"),
     FINDPLAYER      ("/findplayer <part of name>"),
     FIRSTSEEN       ("/firstseen [player]"),
     STAFFCHAT       ("/a <staff message ...>", "arcane.command.a"),
@@ -27,11 +28,11 @@ public enum BungeeCommandUsage {
         this.permission = permission;
     }
 
-    String getUsage() {
+    public String getUsage() {
         return usage;
     }
 
-    String getPermission() {
+    public String getPermission() {
         return permission;
     }
 }

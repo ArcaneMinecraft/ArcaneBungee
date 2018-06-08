@@ -1,5 +1,7 @@
 package com.arcaneminecraft.bungee;
 
+import com.arcaneminecraft.bungee.command.StaffChat;
+import com.arcaneminecraft.bungee.command.Tell;
 import net.md_5.bungee.api.plugin.Plugin;
 
 /**
@@ -24,17 +26,11 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(
                 this, arcaneLogSender = new ArcaneLogSender(this, logIP, logPort));
 
-        StaffChat sc = new StaffChat(this);
-        getProxy().getPluginManager().registerCommand(this, sc.getChatListener());
-        getProxy().getPluginManager().registerCommand(this, sc.getToggleListener());
-        getProxy().getPluginManager().registerListener(this, sc);
-
-        Tell tell = new Tell(this);
-        getProxy().getPluginManager().registerCommand(this, tell.getMessage());
-        getProxy().getPluginManager().registerCommand(this, tell.getReply());
+        getProxy().getPluginManager().registerListener(this, new StaffChat(this));
+        new Tell(this);
     }
 
-    ArcaneLogSender getArcaneLogger() {
+    public ArcaneLogSender getArcaneLogger() {
         return arcaneLogSender;
     }
 }

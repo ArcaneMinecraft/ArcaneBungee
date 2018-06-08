@@ -1,7 +1,10 @@
-package com.arcaneminecraft.bungee;
+package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.BungeeCommandUsage;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -18,21 +21,11 @@ import java.util.HashMap;
 public class Tell {
     private final ArcaneBungee plugin;
     private final HashMap<CommandSender, CommandSender> lastReceived = new HashMap<>();
-    private final Command message;
-    private final Command reply;
 
-    Tell(ArcaneBungee plugin) {
+    public Tell(ArcaneBungee plugin) {
         this.plugin = plugin;
-        this.message = new Message();
-        this.reply = new Reply();
-    }
-
-    Command getMessage() {
-        return message;
-    }
-
-    Command getReply() {
-        return reply;
+        plugin.getProxy().getPluginManager().registerCommand(plugin, new Message());
+        plugin.getProxy().getPluginManager().registerCommand(plugin, new Reply());
     }
 
     public class Message extends Command implements TabExecutor {

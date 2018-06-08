@@ -4,14 +4,14 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.ArrayList;
 
-class TabCompletePreset {
+public class TabCompletePreset {
     private static ArcaneBungee plugin;
 
     static void setPlugin(ArcaneBungee plugin) {
         TabCompletePreset.plugin = plugin;
     }
 
-    static Iterable<String> onlinePlayers(String startsWith) {
+    public static Iterable<String> onlinePlayers(String startsWith) {
         ArrayList<String> ret = new ArrayList<>();
 
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {

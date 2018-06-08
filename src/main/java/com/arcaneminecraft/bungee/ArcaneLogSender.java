@@ -1,5 +1,6 @@
 package com.arcaneminecraft.bungee;
 
+import com.sun.istack.internal.NotNull;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -29,9 +30,9 @@ public class ArcaneLogSender implements Listener {
         try {
             if (e.getTag().equalsIgnoreCase("BungeeCord")) {
                 DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
-                String forward = in.readUTF(); // forward probably
-                String servers = in.readUTF(); // servers probably
-                String channel = in.readUTF(); // channel we delivered
+                String forward = in.readUTF(); // "Forward"
+                in.readUTF(); // recipients "ONLINE"
+                String channel = in.readUTF(); // channel
                 if(forward.equals("Forward") && (channel.equals("ChatAndLog") || channel.equals("Chat"))){
                     byte[] msgBytes = new byte[in.readShort()];
                     in.readFully(msgBytes);
@@ -56,11 +57,11 @@ public class ArcaneLogSender implements Listener {
         }
     }
 
-    void logCommand (ProxiedPlayer p, String msg) {
+    public void logCommand (@NotNull ProxiedPlayer p, @NotNull String msg) {
         logCommand(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
     }
 
-    void logCommand (String name, String displayName, String uniqueId, String msg) {
+    public void logCommand (@NotNull String name, @NotNull String displayName, @NotNull String uniqueId, @NotNull String msg) {
         plugin.getLogger().info("logCommand executed");
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             Socket client;

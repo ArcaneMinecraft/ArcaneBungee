@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.ColorPalette;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.BungeeCommandUsage;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -30,7 +31,7 @@ public class StaffChat implements Listener {
         plugin.getProxy().getPluginManager().registerCommand(plugin, new Toggle());
     }
 
-    public class Chat extends Command {
+    public class Chat extends Command implements TabExecutor{
         Chat() {
             super("a", BungeeCommandUsage.STAFFCHAT.getPermission());
         }
@@ -44,6 +45,12 @@ public class StaffChat implements Listener {
                 return;
             }
             broadcast(sender, String.join(" ", args));
+        }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            // attempt to stop "you do not have permission" msg when tab-completing "/a"
+            return TabCompletePreset.onlinePlayers(args);
         }
     }
 

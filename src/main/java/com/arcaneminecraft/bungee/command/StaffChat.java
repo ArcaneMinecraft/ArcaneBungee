@@ -108,7 +108,7 @@ public class StaffChat implements Listener {
     }
 
     private void broadcast(CommandSender sender, String msg) {
-        plugin.getCommandLogger().log(sender, "/a" + msg);
+        plugin.getCommandLogger().log(sender, "/a " + msg);
 
         BaseComponent send = new TextComponent("Staff // ");
         send.setColor(ColorPalette.HEADING);

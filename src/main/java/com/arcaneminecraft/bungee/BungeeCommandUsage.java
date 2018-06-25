@@ -1,5 +1,6 @@
 package com.arcaneminecraft.bungee;
 
+@Deprecated
 public enum BungeeCommandUsage {
     AFK             ("/afk"),
     APPLY           ("/apply"),

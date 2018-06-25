@@ -1,9 +1,9 @@
 package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
+import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ColorPalette;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -28,20 +28,20 @@ public class Tell {
         plugin.getProxy().getPluginManager().registerCommand(plugin, new Reply());
     }
 
-    public class Message extends Command implements TabExecutor { // TODO: Change class & super from other plugin
+    public class Message extends Command implements TabExecutor {
 
         Message() {
-            super("tell", null, "w", "msg", "m", "t");
+            super(BungeeCommandUsage.MSG.getName(), BungeeCommandUsage.MSG.getPermission(), BungeeCommandUsage.MSG.getAliases());
         }
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, "/msg", args);
+            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.MSG.getCommand(), args);
 
             if (args.length < 2) {
                 if (sender instanceof ProxiedPlayer)
-                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usageTranslatable("commands.message.usage"));
-                else sender.sendMessage(ArcaneText.usageTranslatable("commands.message.usage"));
+                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.MSG.getUsage()));
+                else sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.MSG.getUsage()));
                 return;
             }
 
@@ -53,7 +53,7 @@ public class Tell {
                 else sender.sendMessage(ArcaneText.playerNotFound(args[0]));
                 return;
             } else if (p == sender) {
-                BaseComponent send = new TranslatableComponent("commands.message.sameTarget");
+                BaseComponent send = new TranslatableComponent("commands.message.sameTarget"); // TODO: Latest 1.13 snapshot allows self-messaging
                 send.setColor(ChatColor.RED);
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, send);
@@ -70,10 +70,10 @@ public class Tell {
         }
     }
 
-    public class Reply extends Command implements TabExecutor { // TODO: Change class
+    public class Reply extends Command implements TabExecutor {
 
         Reply() {
-            super("reply", null, "r");
+            super(BungeeCommandUsage.REPLY.getName(), BungeeCommandUsage.REPLY.getPermission(), BungeeCommandUsage.REPLY.getAliases());
         }
 
         @Override
@@ -87,7 +87,7 @@ public class Tell {
 
             CommandSender p = lastReceived.get(sender);
             if (p == null) {
-                plugin.getCommandLogger().coreprotect(sender, "/r", args);
+                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.REPLY.getCommand(), args);
 
                 BaseComponent send = new TextComponent("There is nobody to reply to");
                 send.setColor(ChatColor.RED);
@@ -100,7 +100,7 @@ public class Tell {
 
             if (p instanceof ProxiedPlayer) {
                 // Log with /msg instead for easier readability.
-                plugin.getCommandLogger().coreprotect(sender, "/msg " + p.getName() + " " + String.join(" ", args));
+                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.MSG.getCommand() + " " + p.getName() + " " + String.join(" ", args));
 
                 if (!((ProxiedPlayer) p).isConnected()) {
                     if (sender instanceof ProxiedPlayer)
@@ -109,7 +109,7 @@ public class Tell {
                     return;
                 }
             } else {
-                plugin.getCommandLogger().coreprotect(sender, "/r", args);
+                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.REPLY.getCommand(), args);
             }
 
             messenger(sender, p, args, 0);
@@ -151,7 +151,7 @@ public class Tell {
         // Add a click action
         BaseComponent receiving = ArcaneText.playerComponentBungee(name);
         if (!(name instanceof ProxiedPlayer))
-            receiving.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/reply "));
+            receiving.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, BungeeCommandUsage.REPLY.getCommand() + " "));
         header.addExtra(receiving);
 
         TextComponent out = new TextComponent(": ");

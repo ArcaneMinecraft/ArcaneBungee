@@ -1,9 +1,9 @@
 package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
+import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ColorPalette;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
@@ -31,9 +31,9 @@ public class StaffChat implements Listener {
         plugin.getProxy().getPluginManager().registerCommand(plugin, new Toggle());
     }
 
-    public class Chat extends Command implements TabExecutor{ // TODO: Change class
+    public class Chat extends Command implements TabExecutor{
         Chat() {
-            super("a", BungeeCommandUsage.STAFFCHAT.getPermission());
+            super(BungeeCommandUsage.STAFFCHAT.getName(), BungeeCommandUsage.STAFFCHAT.getPermission(), BungeeCommandUsage.STAFFCHAT.getAliases());
         }
 
         @Override
@@ -41,7 +41,8 @@ public class StaffChat implements Listener {
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.STAFFCHAT.getUsage()));
-                else sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.STAFFCHAT.getUsage()));
+                else
+                    sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.STAFFCHAT.getUsage()));
                 return;
             }
             broadcast(sender, String.join(" ", args));
@@ -57,7 +58,7 @@ public class StaffChat implements Listener {
     public class Toggle extends Command implements TabExecutor {
 
         Toggle() {
-            super("atoggle", BungeeCommandUsage.STAFFCHATTOGGLE.getPermission(), "at");
+            super(BungeeCommandUsage.STAFFCHATTOGGLE.getName(), BungeeCommandUsage.STAFFCHATTOGGLE.getPermission(), BungeeCommandUsage.STAFFCHATTOGGLE.getAliases());
         }
 
         @Override
@@ -108,7 +109,7 @@ public class StaffChat implements Listener {
     }
 
     private void broadcast(CommandSender sender, String msg) {
-        plugin.getCommandLogger().coreprotect(sender, "/a " + msg);
+        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.STAFFCHAT.getCommand() + " " + msg);
 
         BaseComponent send = new TextComponent("Staff // ");
         send.setColor(ColorPalette.HEADING);

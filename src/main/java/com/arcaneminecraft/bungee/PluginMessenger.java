@@ -1,6 +1,7 @@
 package com.arcaneminecraft.bungee;
 
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -13,13 +14,13 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
 
-public class ArcaneLogSender implements Listener {
+public class PluginMessenger implements Listener {
     private final ArcaneBungee plugin;
     private final String ip;
     private final int port;
 
 
-    ArcaneLogSender(ArcaneBungee plugin, String ip, int port) {
+    PluginMessenger(ArcaneBungee plugin, String ip, int port) {
         this.plugin = plugin;
         this.ip = ip;
         this.port = port;
@@ -44,12 +45,12 @@ public class ArcaneLogSender implements Listener {
                     String uuid = is.readUTF();
 
                     // Log chat on bungeecord console
-                    plugin.getLogger().info(
-                            "[" + plugin.getProxy().getPlayer(name).getServer().getInfo().getName() + "] "
-                                    + name + ": " + msg);
+                    plugin.getProxy().getConsole().sendMessage(new TextComponent(
+                            "[" + plugin.getProxy().getPlayer(name).getServer().getInfo().getName() + "] <"
+                                    + name + "> " + msg));
 
                     if (channel.equals("ChatAndLog"))
-                        log(name, displayName, uuid, msg);
+                        coreprotect(name, displayName, uuid, msg);
                 }
             }
         } catch (IOException e1) {
@@ -57,7 +58,7 @@ public class ArcaneLogSender implements Listener {
         }
     }
 
-    public void log(CommandSender sender, String command, String[] args) {
+    public void coreprotect(CommandSender sender, String command, String[] args) {
         if (!(sender instanceof ProxiedPlayer))
             return;
 
@@ -66,30 +67,27 @@ public class ArcaneLogSender implements Listener {
             msg += " " + String.join(" ", args);
 
         ProxiedPlayer p = (ProxiedPlayer) sender;
-        log(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
+        coreprotect(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
     }
 
-    public void log(CommandSender sender, String msg) {
+    public void coreprotect(CommandSender sender, String msg) {
         if (!(sender instanceof ProxiedPlayer))
             return;
 
         ProxiedPlayer p = (ProxiedPlayer) sender;
-        log(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
+        coreprotect(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
     }
 
-    public void log(String name, String displayName, String uniqueId, String msg) {
+    public void coreprotect(String name, String displayName, String uniqueId, String msg) {
         plugin.getLogger().info("log executed");
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            Socket client;
-            try {
-                client = new Socket(ip, port);
+            try (Socket client = new Socket(ip, port)) {
                 DataOutputStream ds = new DataOutputStream(client.getOutputStream());
                 ds.writeUTF(msg);
                 ds.writeUTF(name);
                 ds.writeUTF(displayName);
                 ds.writeUTF(uniqueId);
                 ds.close();
-                client.close();
             } catch (ConnectException e) {
                 plugin.getLogger().warning("Cannot connect to the logging server on " + ip + ":" + port);
             } catch (IOException e) {

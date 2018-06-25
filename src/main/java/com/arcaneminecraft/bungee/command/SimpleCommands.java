@@ -31,7 +31,7 @@ public class SimpleCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().log(sender, "/slap", args);
+            plugin.getCommandLogger().coreprotect(sender, "/slap", args);
 
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)

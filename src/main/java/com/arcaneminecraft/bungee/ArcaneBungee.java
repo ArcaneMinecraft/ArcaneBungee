@@ -15,7 +15,7 @@ import net.md_5.bungee.api.plugin.Plugin;
  */
 
 public final class ArcaneBungee extends Plugin {
-    private ArcaneLogSender arcaneLogSender;
+    private PluginMessenger pluginMessenger;
 
     @Override
     public void onEnable() {
@@ -25,7 +25,7 @@ public final class ArcaneBungee extends Plugin {
         TabCompletePreset.setPlugin(this);
 
         getProxy().getPluginManager().registerListener(
-                this, arcaneLogSender = new ArcaneLogSender(this, logIP, logPort));
+                this, pluginMessenger = new PluginMessenger(this, logIP, logPort));
 
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
         getProxy().getPluginManager().registerListener(this, new StaffChat(this));
@@ -33,7 +33,7 @@ public final class ArcaneBungee extends Plugin {
         new SimpleCommands(this);
     }
 
-    public ArcaneLogSender getCommandLogger() {
-        return arcaneLogSender;
+    public PluginMessenger getCommandLogger() {
+        return pluginMessenger;
     }
 }

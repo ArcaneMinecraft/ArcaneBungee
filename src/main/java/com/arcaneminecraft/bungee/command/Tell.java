@@ -28,7 +28,7 @@ public class Tell {
         plugin.getProxy().getPluginManager().registerCommand(plugin, new Reply());
     }
 
-    public class Message extends Command implements TabExecutor {
+    public class Message extends Command implements TabExecutor { // TODO: Change class & super from other plugin
 
         Message() {
             super("tell", null, "w", "msg", "m", "t");
@@ -36,7 +36,7 @@ public class Tell {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().log(sender, "/msg", args);
+            plugin.getCommandLogger().coreprotect(sender, "/msg", args);
 
             if (args.length < 2) {
                 if (sender instanceof ProxiedPlayer)
@@ -70,7 +70,7 @@ public class Tell {
         }
     }
 
-    public class Reply extends Command implements TabExecutor {
+    public class Reply extends Command implements TabExecutor { // TODO: Change class
 
         Reply() {
             super("reply", null, "r");
@@ -87,7 +87,7 @@ public class Tell {
 
             CommandSender p = lastReceived.get(sender);
             if (p == null) {
-                plugin.getCommandLogger().log(sender, "/r", args);
+                plugin.getCommandLogger().coreprotect(sender, "/r", args);
 
                 BaseComponent send = new TextComponent("There is nobody to reply to");
                 send.setColor(ChatColor.RED);
@@ -100,7 +100,7 @@ public class Tell {
 
             if (p instanceof ProxiedPlayer) {
                 // Log with /msg instead for easier readability.
-                plugin.getCommandLogger().log(sender, "/msg " + p.getName() + " " + String.join(" ", args));
+                plugin.getCommandLogger().coreprotect(sender, "/msg " + p.getName() + " " + String.join(" ", args));
 
                 if (!((ProxiedPlayer) p).isConnected()) {
                     if (sender instanceof ProxiedPlayer)
@@ -109,7 +109,7 @@ public class Tell {
                     return;
                 }
             } else {
-                plugin.getCommandLogger().log(sender, "/r", args);
+                plugin.getCommandLogger().coreprotect(sender, "/r", args);
             }
 
             messenger(sender, p, args, 0);

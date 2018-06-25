@@ -31,7 +31,7 @@ public class StaffChat implements Listener {
         plugin.getProxy().getPluginManager().registerCommand(plugin, new Toggle());
     }
 
-    public class Chat extends Command implements TabExecutor{
+    public class Chat extends Command implements TabExecutor{ // TODO: Change class
         Chat() {
             super("a", BungeeCommandUsage.STAFFCHAT.getPermission());
         }
@@ -108,7 +108,7 @@ public class StaffChat implements Listener {
     }
 
     private void broadcast(CommandSender sender, String msg) {
-        plugin.getCommandLogger().log(sender, "/a " + msg);
+        plugin.getCommandLogger().coreprotect(sender, "/a " + msg);
 
         BaseComponent send = new TextComponent("Staff // ");
         send.setColor(ColorPalette.HEADING);

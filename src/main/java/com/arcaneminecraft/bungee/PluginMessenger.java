@@ -46,12 +46,34 @@ public class PluginMessenger implements Listener {
 
                     // Log chat on bungeecord console
                     plugin.getProxy().getConsole().sendMessage(new TextComponent(
-                            "[" + plugin.getProxy().getPlayer(name).getServer().getInfo().getName() + "] <"
+                            plugin.getProxy().getPlayer(name).getServer().getInfo().getName() + ": <"
                                     + name + "> " + msg));
 
                     if (channel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);
                 }
+                return;
+            }
+
+            if (e.getTag().equalsIgnoreCase("ArcaneAlert")) {
+                DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
+                String type = in.readUTF(); // Type
+                String player = in.readUTF(); // Player
+                String uuid = in.readUTF(); // UUID
+                String world = in.readUTF(); // World
+                int[] loc = {in.readInt(), in.readInt(), in.readInt()}; // Location
+
+                if (type.equals("XRay")) {
+                    String material = in.readUTF();
+                    // TODO: Send to players with permission
+                    plugin.getLogger().info("Player mined " + material + "at " + loc[0] + ", " + loc[1] + ", " + loc[2]);
+                } else if (type.equals("Sign")) {
+                    String[] lines = new String[]{in.readUTF(), in.readUTF(), in.readUTF(), in.readUTF()};
+                    // TODO: Send to players with permission
+                    plugin.getLogger().info("Player created sign with: " + String.join(" ", lines));
+                }
+
+                //return;
             }
         } catch (IOException e1) {
             e1.printStackTrace();

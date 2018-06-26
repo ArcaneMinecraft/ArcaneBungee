@@ -24,8 +24,8 @@ public final class ArcaneBungee extends Plugin {
 
         TabCompletePreset.setPlugin(this);
 
-        getProxy().getPluginManager().registerListener(
-                this, pluginMessenger = new PluginMessenger(this, logIP, logPort));
+        getProxy().registerChannel("ArcaneAlert");
+        getProxy().getPluginManager().registerListener(this, pluginMessenger = new PluginMessenger(this, logIP, logPort));
 
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
         getProxy().getPluginManager().registerListener(this, new StaffChat(this));

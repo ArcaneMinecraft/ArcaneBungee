@@ -1,6 +1,9 @@
 package com.arcaneminecraft.bungee;
 
+import com.arcaneminecraft.api.ArcaneText;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
@@ -17,22 +20,21 @@ public class VanillaEvents implements Listener {
 
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
-        String joined = e.getPlayer().getDisplayName();
+        BaseComponent joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(e.getPlayer()));
+        joined.setColor(ChatColor.YELLOW);
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             if (p == e.getPlayer()) continue;
             // TODO: Name change "multiplayer.player.joined.renamed"
-            // Ignore plugin stuff
-            p.sendMessage(ChatMessageType.SYSTEM, new TranslatableComponent("multiplayer.player.joined", joined));
+            p.sendMessage(ChatMessageType.SYSTEM, joined);
         }
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerDisconnectEvent e) {
-        String joined = e.getPlayer().getDisplayName();
+        BaseComponent left = new TranslatableComponent("multiplayer.player.left", ArcaneText.playerComponentBungee(e.getPlayer()));
+        left.setColor(ChatColor.YELLOW);
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
-            if (p == e.getPlayer()) continue;
-            // Ignore plugin stuff
-            p.sendMessage(ChatMessageType.SYSTEM, new TranslatableComponent("multiplayer.player.left", joined));
+            p.sendMessage(ChatMessageType.SYSTEM, left);
         }
     }
 }

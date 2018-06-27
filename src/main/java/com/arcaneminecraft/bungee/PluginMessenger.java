@@ -13,6 +13,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PluginMessenger implements Listener {
     private final ArcaneBungee plugin;
@@ -80,6 +82,10 @@ public class PluginMessenger implements Listener {
         }
     }
 
+    public void getPlayerName(String uuid, ReturnRunnable response) {
+        toLog("GetPlayerName", response, uuid);
+    }
+
     public void coreprotect(CommandSender sender, String command, String[] args) {
         if (!(sender instanceof ProxiedPlayer))
             return;
@@ -100,21 +106,44 @@ public class PluginMessenger implements Listener {
         coreprotect(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
     }
 
-    public void coreprotect(String name, String displayName, String uniqueId, String msg) {
-        plugin.getLogger().info("log executed");
+    public void coreprotect(String name, String displayName, String uuid, String msg) {
+        toLog("LogCoreProtect", null, name, displayName, uuid, msg);
+    }
+
+    private void toLog(String subChannel, ReturnRunnable run, String... args) {
+
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            String response = null;
+
             try (Socket client = new Socket(ip, port)) {
-                DataOutputStream ds = new DataOutputStream(client.getOutputStream());
-                ds.writeUTF(msg);
-                ds.writeUTF(name);
-                ds.writeUTF(displayName);
-                ds.writeUTF(uniqueId);
-                ds.close();
+                DataOutputStream dos = new DataOutputStream(client.getOutputStream());
+                dos.writeUTF(subChannel);
+
+                for (String s : args)
+                    dos.writeUTF(s);
+
+                dos.flush();
+
+                if (run != null) {
+                    DataInputStream dis = new DataInputStream(client.getInputStream());
+                    response = dis.readUTF();
+                }
             } catch (ConnectException e) {
                 plugin.getLogger().warning("Cannot connect to the logging server on " + ip + ":" + port);
             } catch (IOException e) {
+                plugin.getLogger().warning("Socket connection closed before response.");
                 e.printStackTrace();
             }
+
+            if (run != null)
+                run.run(response);
         });
+    }
+
+    public interface ReturnRunnable {
+        /**
+         * @param args null if exception
+         */
+        void run(String args);
     }
 }

@@ -13,8 +13,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PluginMessenger implements Listener {
     private final ArcaneBungee plugin;
@@ -41,15 +39,14 @@ public class PluginMessenger implements Listener {
                     in.readFully(msgBytes);
 
                     DataInputStream is = new DataInputStream(new ByteArrayInputStream(msgBytes));
+                    String server = is.readUTF(); // server
                     String msg = is.readUTF();
                     String name = is.readUTF();
                     String displayName = is.readUTF();
                     String uuid = is.readUTF();
 
                     // Log chat on bungeecord console
-                    plugin.getProxy().getConsole().sendMessage(new TextComponent(
-                            plugin.getProxy().getPlayer(name).getServer().getInfo().getName() + ": <"
-                                    + name + "> " + msg));
+                    plugin.getProxy().getConsole().sendMessage(new TextComponent(server + ": <" + name + "> " + msg));
 
                     if (channel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);
@@ -59,10 +56,11 @@ public class PluginMessenger implements Listener {
 
             if (e.getTag().equalsIgnoreCase("ArcaneAlert")) {
                 DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
-                String type = in.readUTF(); // Type
-                String player = in.readUTF(); // Player
-                String uuid = in.readUTF(); // UUID
-                String world = in.readUTF(); // World
+                String server = in.readUTF();
+                String type = in.readUTF();
+                String player = in.readUTF();
+                String uuid = in.readUTF();
+                String world = in.readUTF();
                 int[] loc = {in.readInt(), in.readInt(), in.readInt()}; // Location
 
                 if (type.equals("XRay")) {

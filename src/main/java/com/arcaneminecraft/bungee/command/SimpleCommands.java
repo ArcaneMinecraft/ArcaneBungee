@@ -4,7 +4,6 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ColorPalette;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -39,7 +38,7 @@ public class SimpleCommands {
 
     public class Apply extends Command implements TabExecutor {
 
-        public Apply() {
+        Apply() {
             super(BungeeCommandUsage.APPLY.getName(), BungeeCommandUsage.APPLY.getPermission(), BungeeCommandUsage.APPLY.getAliases());
         }
 
@@ -60,7 +59,7 @@ public class SimpleCommands {
         private final List<String> candidates;
         // unfortunately gotta show all the links
 
-        public Links() {
+        Links() {
             super(BungeeCommandUsage.LINKS.getName(), BungeeCommandUsage.LINKS.getPermission(), BungeeCommandUsage.LINKS.getAliases());
             candidates = new ArrayList<>();
             candidates.add("website");
@@ -202,11 +201,11 @@ public class SimpleCommands {
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
             if (args.length > 1)
                 return ImmutableSet.of();
-            return TabCompletePreset.onlinePlayers(args);
+            return null;
         }
     }
 
-    public class Slap extends Command implements TabExecutor {
+    public class Slap extends Command {
 
         Slap() {
             super("slap", BungeeCommandUsage.SLAP.getPermission());
@@ -242,11 +241,6 @@ public class SimpleCommands {
             for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
                 p.sendMessage(ChatMessageType.SYSTEM, send);
             }
-        }
-
-        @Override
-        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return TabCompletePreset.onlinePlayers(args);
         }
     }
 }

@@ -31,10 +31,13 @@ public class PluginMessenger implements Listener {
         try {
             if (e.getTag().equalsIgnoreCase("BungeeCord")) {
                 DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
-                String forward = in.readUTF(); // "Forward"
+
+                if (!in.readUTF().equals("Forward")) // Should be "Forward"
+                    return;
+
                 in.readUTF(); // recipients "ONLINE"
                 String channel = in.readUTF(); // channel
-                if(forward.equals("Forward") && (channel.equals("ChatAndLog") || channel.equals("Chat"))){
+                if(channel.equals("ChatAndLog") || channel.equals("Chat")){
                     byte[] msgBytes = new byte[in.readShort()];
                     in.readFully(msgBytes);
 
@@ -74,6 +77,7 @@ public class PluginMessenger implements Listener {
                 }
 
                 //return;
+
             }
         } catch (IOException e1) {
             e1.printStackTrace();

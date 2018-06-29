@@ -22,8 +22,6 @@ public final class ArcaneBungee extends Plugin {
         String logIP = "127.0.0.1";
         int logPort = 25555;
 
-        TabCompletePreset.setPlugin(this);
-
         getProxy().registerChannel("ArcaneAlert");
         getProxy().getPluginManager().registerListener(this, pluginMessenger = new PluginMessenger(this, logIP, logPort));
 

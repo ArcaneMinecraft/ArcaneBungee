@@ -9,6 +9,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.plugin.Command;
@@ -63,16 +64,16 @@ public class StaffChat implements Listener {
 
             ProxiedPlayer p = (ProxiedPlayer) sender;
 
-            BaseComponent send = new TextComponent("Staff chat has been toggled ");
+            BaseComponent send = new TextComponent("Staff chat toggle is ");
             send.setColor(ColorPalette.CONTENT);
 
-            if (toggled.add(p)) {
-                BaseComponent on = new TextComponent("on");
+            if (toggled.add(p)){
+                BaseComponent on = new TranslatableComponent("options.on");
                 on.setColor(ColorPalette.POSITIVE);
                 send.addExtra(on);
             } else {
                 toggled.remove(p);
-                BaseComponent off = new TextComponent("off");
+                BaseComponent off = new TranslatableComponent("options.off");
                 off.setColor(ColorPalette.NEGATIVE);
                 send.addExtra(off);
             }

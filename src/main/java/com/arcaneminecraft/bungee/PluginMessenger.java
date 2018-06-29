@@ -47,9 +47,14 @@ public class PluginMessenger implements Listener {
                     String name = is.readUTF();
                     String displayName = is.readUTF();
                     String uuid = is.readUTF();
+                    String tag = is.readUTF();
 
                     // Log chat on bungeecord console
-                    plugin.getProxy().getConsole().sendMessage(new TextComponent(server + ": <" + name + "> " + msg));
+                    TextComponent log = new TextComponent(server + ": ");
+                    if (!tag.isEmpty())
+                        log.addExtra(" " + tag);
+                    log.addExtra("<" + name + "> " + msg);
+                    plugin.getProxy().getConsole().sendMessage(log);
 
                     if (channel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);

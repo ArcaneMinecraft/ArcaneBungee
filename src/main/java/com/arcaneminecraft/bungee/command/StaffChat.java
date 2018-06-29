@@ -84,8 +84,6 @@ public class StaffChat implements Listener {
                 send.addExtra(off);
             }
 
-            send.addExtra(".");
-
             p.sendMessage(ChatMessageType.SYSTEM, send);
         }
 
@@ -97,13 +95,11 @@ public class StaffChat implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void checkToggle(ChatEvent e) {
+        // Ignore commands and if staff chat is not toggled
         //noinspection SuspiciousMethodCalls
-        if (!(e.getSender() instanceof ProxiedPlayer) // Must be sent by player
-                || !e.isCommand() // Don't hog onto commands
-                || e.getMessage().startsWith("/g ")
-                || e.getMessage().startsWith("/global ") // escapes capture
-                || !toggled.contains(e.getSender()) // has toggle on
-                ) return;
+        if (e.isCommand() || !toggled.contains(e.getSender()))
+            return;
+
         broadcast((ProxiedPlayer) e.getSender(), e.getMessage());
         e.setCancelled(true);
     }

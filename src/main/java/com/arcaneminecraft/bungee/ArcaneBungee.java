@@ -2,7 +2,6 @@ package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.bungee.command.*;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.protocol.packet.Chat;
 
 /**
  * ArcaneChatUtilPlugin.java
@@ -15,14 +14,18 @@ import net.md_5.bungee.protocol.packet.Chat;
 
 public final class ArcaneBungee extends Plugin {
     private PluginMessenger pluginMessenger;
+    private TabCompletePreset tabCompletePreset;
 
     @Override
     public void onEnable() {
         String logIP = "127.0.0.1";
         int logPort = 25555;
-
         getProxy().registerChannel("ArcaneAlert");
-        getProxy().getPluginManager().registerListener(this, pluginMessenger = new PluginMessenger(this, logIP, logPort));
+
+        this.tabCompletePreset = new TabCompletePreset(this);
+        this.pluginMessenger = new PluginMessenger(this, logIP, logPort);
+
+        getProxy().getPluginManager().registerListener(this, pluginMessenger);
 
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
         getProxy().getPluginManager().registerListener(this, new StaffChat(this));
@@ -36,7 +39,7 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
         getProxy().getPluginManager().registerCommand(this, new Apply(this));// TODO
         getProxy().getPluginManager().registerCommand(this, new Links(this)); // TODO
-        getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
+        getProxy().getPluginManager().registerCommand(this, new List(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));
         getProxy().getPluginManager().registerCommand(this, new Slap(this));
@@ -44,5 +47,9 @@ public final class ArcaneBungee extends Plugin {
 
     public PluginMessenger getCommandLogger() {
         return pluginMessenger;
+    }
+
+    public TabCompletePreset getTabCompletePreset() {
+        return tabCompletePreset;
     }
 }

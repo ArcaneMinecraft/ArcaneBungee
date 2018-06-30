@@ -29,7 +29,7 @@ public class StaffChat implements Listener {
         this.plugin = plugin;
     }
 
-    public class Chat extends Command {
+    public class Chat extends Command implements TabExecutor {
         public Chat() {
             super(BungeeCommandUsage.STAFFCHAT.getName(), BungeeCommandUsage.STAFFCHAT.getPermission(), BungeeCommandUsage.STAFFCHAT.getAliases());
         }
@@ -44,6 +44,11 @@ public class StaffChat implements Listener {
                 return;
             }
             broadcast(sender, String.join(" ", args));
+        }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            return plugin.getTabCompletePreset().onlinePlayers(args);
         }
     }
 

@@ -3,7 +3,6 @@ package com.arcaneminecraft.bungee.command;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.ColorPalette;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -11,6 +10,8 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
+
+import java.util.Collections;
 
 public class Ping extends Command implements TabExecutor {
     private final ArcaneBungee plugin;
@@ -58,8 +59,8 @@ public class Ping extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args.length > 1)
-            return ImmutableSet.of();
-        return null;
+        if (args.length == 1)
+            return plugin.getTabCompletePreset().onlinePlayers(args);
+        return Collections.emptyList();
     }
 }

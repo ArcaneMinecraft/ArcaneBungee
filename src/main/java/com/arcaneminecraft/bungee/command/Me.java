@@ -9,8 +9,9 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 
-public class Me extends Command {
+public class Me extends Command implements TabExecutor {
     private final ArcaneBungee plugin;
 
     public Me(ArcaneBungee plugin) {
@@ -32,5 +33,10 @@ public class Me extends Command {
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, ret);
         }
+    }
+
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        return plugin.getTabCompletePreset().onlinePlayers(args);
     }
 }

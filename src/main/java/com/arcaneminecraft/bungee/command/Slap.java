@@ -56,9 +56,8 @@ public class Slap extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args.length <= 1)
-            return null;
-        else
-            return Collections.emptyList();
+        if (args.length == 1)
+            return plugin.getTabCompletePreset().onlinePlayers(args);
+        return Collections.emptyList();
     }
 }

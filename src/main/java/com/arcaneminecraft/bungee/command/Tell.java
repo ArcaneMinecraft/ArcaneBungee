@@ -13,6 +13,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.HashMap;
 
@@ -24,7 +25,7 @@ public class Tell {
         this.plugin = plugin;
      }
 
-    public class Message extends Command {
+    public class Message extends Command implements TabExecutor {
 
         public Message() {
             super(BungeeCommandUsage.MSG.getName(), BungeeCommandUsage.MSG.getPermission(), BungeeCommandUsage.MSG.getAliases());
@@ -59,9 +60,14 @@ public class Tell {
 
             messenger(sender, p, args, 1);
         }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            return plugin.getTabCompletePreset().onlinePlayers(args);
+        }
     }
 
-    public class Reply extends Command {
+    public class Reply extends Command implements TabExecutor {
 
         public Reply() {
             super(BungeeCommandUsage.REPLY.getName(), BungeeCommandUsage.REPLY.getPermission(), BungeeCommandUsage.REPLY.getAliases());
@@ -104,6 +110,11 @@ public class Tell {
             }
 
             messenger(sender, p, args, 0);
+        }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            return plugin.getTabCompletePreset().onlinePlayers(args);
         }
     }
 

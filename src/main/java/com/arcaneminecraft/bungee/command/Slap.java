@@ -18,13 +18,13 @@ public class Slap extends Command implements TabExecutor {
     private final ArcaneBungee plugin;
 
     public Slap(ArcaneBungee plugin) {
-        super("slap", BungeeCommandUsage.SLAP.getPermission());
+        super(BungeeCommandUsage.SLAP.getName(), BungeeCommandUsage.SLAP.getPermission(), BungeeCommandUsage.SLAP.getAliases());
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.getCommandLogger().coreprotect(sender, "/slap", args);
+        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.SLAP.getCommand(), args);
 
         if (args.length == 0) {
             if (sender instanceof ProxiedPlayer)

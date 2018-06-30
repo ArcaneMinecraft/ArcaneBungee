@@ -33,7 +33,7 @@ public final class ArcaneBungee extends Plugin {
 
         StaffChat sc = new StaffChat(this);
         Tell t = new Tell(this);
-        getProxy().getPluginManager().registerCommand(this, sc.new Chat());
+        getProxy().getPluginManager().registerCommand(this, sc.new Chat()); // Staff Chat
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());

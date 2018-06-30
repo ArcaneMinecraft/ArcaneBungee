@@ -76,6 +76,8 @@ public class Tell {
         @Override
         public void execute(CommandSender sender, String[] args) {
             if (args.length == 0) {
+                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.REPLY.getCommand(), args);
+
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.REPLY.getUsage()));
                 else sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.REPLY.getUsage()));
@@ -102,7 +104,8 @@ public class Tell {
                 if (!((ProxiedPlayer) p).isConnected()) {
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(p.getName()));
-                    else sender.sendMessage(ArcaneText.playerNotFound(p.getName()));
+                    else
+                        sender.sendMessage(ArcaneText.playerNotFound(p.getName()));
                     return;
                 }
             } else {

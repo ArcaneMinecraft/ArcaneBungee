@@ -36,6 +36,8 @@ public class StaffChat implements Listener {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            // Command logger on ::broadcast
+
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.STAFFCHAT.getUsage()));
@@ -60,6 +62,8 @@ public class StaffChat implements Listener {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            // No real reason to log toggle command
+
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
@@ -92,7 +96,7 @@ public class StaffChat implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void checkToggle(ChatEvent e) {
-        // Ignore commands and if staff chat is not toggled
+        // if is a command and staff chat is not toggled
         //noinspection SuspiciousMethodCalls
         if (e.isCommand() || !toggled.contains(e.getSender()))
             return;

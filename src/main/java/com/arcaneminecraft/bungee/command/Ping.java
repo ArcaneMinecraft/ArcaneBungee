@@ -1,6 +1,7 @@
 package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
+import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ColorPalette;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.md_5.bungee.api.ChatMessageType;
@@ -17,12 +18,14 @@ public class Ping extends Command implements TabExecutor {
     private final ArcaneBungee plugin;
 
     public Ping(ArcaneBungee plugin) {
-        super("ping");
+        super(BungeeCommandUsage.PING.getName(), BungeeCommandUsage.PING.getPermission(), BungeeCommandUsage.PING.getAliases());
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
+        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.PING.getCommand(), args);
+
         if (!(sender instanceof ProxiedPlayer)) {
             sender.sendMessage(new TextComponent("Your ping will forever be <1ms."));
             return;

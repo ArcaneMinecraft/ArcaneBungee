@@ -21,11 +21,11 @@ import net.md_5.bungee.event.EventPriority;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class StaffChat implements Listener {
+public class StaffChatCommands implements Listener {
     private final ArcaneBungee plugin;
     private final HashSet<ProxiedPlayer> toggled = new HashSet<>();
 
-    public StaffChat(ArcaneBungee plugin) {
+    public StaffChatCommands(ArcaneBungee plugin) {
         this.plugin = plugin;
     }
 

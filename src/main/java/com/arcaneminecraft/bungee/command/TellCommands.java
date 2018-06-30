@@ -17,11 +17,11 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.HashMap;
 
-public class Tell {
+public class TellCommands {
     private final ArcaneBungee plugin;
     private final HashMap<CommandSender, CommandSender> lastReceived = new HashMap<>();
 
-    public Tell(ArcaneBungee plugin) {
+    public TellCommands(ArcaneBungee plugin) {
         this.plugin = plugin;
      }
 

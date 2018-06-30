@@ -28,18 +28,19 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, pluginMessenger);
 
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
-        getProxy().getPluginManager().registerListener(this, new StaffChat(this));
-        new Tell(this);
+        getProxy().getPluginManager().registerListener(this, new StaffChatCommands(this));
+        new TellCommands(this);
 
-        StaffChat sc = new StaffChat(this);
-        Tell t = new Tell(this);
-        Links l = new Links(this);
+        StaffChatCommands sc = new StaffChatCommands(this);
+        TellCommands t = new TellCommands(this);
+        LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat()); // Staff Chat
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
         getProxy().getPluginManager().registerCommand(this, l.new Discord());
+        getProxy().getPluginManager().registerCommand(this, l.new Links());
         getProxy().getPluginManager().registerCommand(this, l.new Forum());
         getProxy().getPluginManager().registerCommand(this, l.new Website());
         getProxy().getPluginManager().registerCommand(this, s.new Creative());

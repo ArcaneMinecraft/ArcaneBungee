@@ -33,13 +33,20 @@ public final class ArcaneBungee extends Plugin {
 
         StaffChat sc = new StaffChat(this);
         Tell t = new Tell(this);
+        Links l = new Links(this);
+        ServerCommands s = new ServerCommands(this);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat()); // Staff Chat
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
-        getProxy().getPluginManager().registerCommand(this, new Apply(this));// TODO
-        getProxy().getPluginManager().registerCommand(this, new Links(this)); // TODO
-        getProxy().getPluginManager().registerCommand(this, new List(this));
+        getProxy().getPluginManager().registerCommand(this, l.new Discord());
+        getProxy().getPluginManager().registerCommand(this, l.new Forum());
+        getProxy().getPluginManager().registerCommand(this, l.new Website());
+        getProxy().getPluginManager().registerCommand(this, s.new Creative());
+        getProxy().getPluginManager().registerCommand(this, s.new Event());
+        getProxy().getPluginManager().registerCommand(this, s.new Survival());
+        getProxy().getPluginManager().registerCommand(this, new Apply(this));
+        getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));
         getProxy().getPluginManager().registerCommand(this, new Slap(this));

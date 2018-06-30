@@ -16,10 +16,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class List extends Command implements TabExecutor {
+public class ListPlayers extends Command implements TabExecutor {
     private final ArcaneBungee plugin;
 
-    public List(ArcaneBungee plugin) {
+    public ListPlayers(ArcaneBungee plugin) {
         super(BungeeCommandUsage.LIST.getName(), BungeeCommandUsage.LIST.getPermission(), BungeeCommandUsage.LIST.getAliases());
         this.plugin = plugin;
     }

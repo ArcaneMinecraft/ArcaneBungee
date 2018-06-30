@@ -35,6 +35,21 @@ public class TabCompletePreset implements Listener {
         return ret;
     }
 
+    public Iterable<String> validChoices(String[] args, Iterable<String> choices) {
+        String arg = args[args.length - 1];
+        if (arg.equals(""))
+            return choices;
+
+        List<String> ret = new ArrayList<>();
+        String argL = arg.toLowerCase();
+
+        for (String n : choices)
+            if (n.toLowerCase().startsWith(argL))
+                ret.add(n);
+
+        return ret;
+    }
+
     @EventHandler
     public void joinEvent(PostLoginEvent e) {
         playerList.add(e.getPlayer().getName());

@@ -1,0 +1,65 @@
+package com.arcaneminecraft.bungee.command;
+
+import com.arcaneminecraft.api.ArcaneText;
+import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.google.common.collect.ImmutableSet;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
+
+public class Ping extends Command implements TabExecutor {
+    private final ArcaneBungee plugin;
+
+    public Ping(ArcaneBungee plugin) {
+        super("ping");
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof ProxiedPlayer)) {
+            sender.sendMessage(new TextComponent("Your ping will forever be <1ms."));
+            return;
+        }
+
+        ProxiedPlayer p;
+
+        if (args.length == 0) {
+            p = (ProxiedPlayer) sender;
+        } else {
+            p = plugin.getProxy().getPlayer(args[0]);
+            if (p == null) {
+                sender.sendMessage(ArcaneText.playerNotFound(args[0]));
+                return;
+            }
+        }
+
+        BaseComponent m = new TextComponent("Pong! ");
+        if (p == sender) {
+            m.addExtra("Your");
+        } else {
+            m.addExtra(ArcaneText.playerComponentBungee(p));
+            m.addExtra("'s");
+        }
+        m.addExtra(" ping: ");
+
+        BaseComponent n = new TextComponent(p.getPing() + " ms");
+        n.setColor(ColorPalette.FOCUS);
+
+        m.addExtra(n);
+
+        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, m);
+    }
+
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        if (args.length > 1)
+            return ImmutableSet.of();
+        return null;
+    }
+}

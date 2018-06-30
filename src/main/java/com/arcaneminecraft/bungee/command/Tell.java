@@ -22,13 +22,11 @@ public class Tell {
 
     public Tell(ArcaneBungee plugin) {
         this.plugin = plugin;
-        plugin.getProxy().getPluginManager().registerCommand(plugin, new Message());
-        plugin.getProxy().getPluginManager().registerCommand(plugin, new Reply());
-    }
+     }
 
     public class Message extends Command {
 
-        Message() {
+        public Message() {
             super(BungeeCommandUsage.MSG.getName(), BungeeCommandUsage.MSG.getPermission(), BungeeCommandUsage.MSG.getAliases());
         }
 
@@ -65,7 +63,7 @@ public class Tell {
 
     public class Reply extends Command {
 
-        Reply() {
+        public Reply() {
             super(BungeeCommandUsage.REPLY.getName(), BungeeCommandUsage.REPLY.getPermission(), BungeeCommandUsage.REPLY.getAliases());
         }
 

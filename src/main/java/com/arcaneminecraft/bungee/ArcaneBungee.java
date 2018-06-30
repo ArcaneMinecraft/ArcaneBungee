@@ -1,9 +1,8 @@
 package com.arcaneminecraft.bungee;
 
-import com.arcaneminecraft.bungee.command.SimpleCommands;
-import com.arcaneminecraft.bungee.command.StaffChat;
-import com.arcaneminecraft.bungee.command.Tell;
+import com.arcaneminecraft.bungee.command.*;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.protocol.packet.Chat;
 
 /**
  * ArcaneChatUtilPlugin.java
@@ -28,7 +27,19 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
         getProxy().getPluginManager().registerListener(this, new StaffChat(this));
         new Tell(this);
-        new SimpleCommands(this);
+
+        StaffChat sc = new StaffChat(this);
+        Tell t = new Tell(this);
+        getProxy().getPluginManager().registerCommand(this, sc.new Chat());
+        getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
+        getProxy().getPluginManager().registerCommand(this, t.new Message());
+        getProxy().getPluginManager().registerCommand(this, t.new Reply());
+        getProxy().getPluginManager().registerCommand(this, new Apply(this));// TODO
+        getProxy().getPluginManager().registerCommand(this, new Links(this)); // TODO
+        getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
+        getProxy().getPluginManager().registerCommand(this, new Me(this));
+        getProxy().getPluginManager().registerCommand(this, new Ping(this));
+        getProxy().getPluginManager().registerCommand(this, new Slap(this));
     }
 
     public PluginMessenger getCommandLogger() {

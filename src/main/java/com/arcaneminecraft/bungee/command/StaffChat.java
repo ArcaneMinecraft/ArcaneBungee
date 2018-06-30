@@ -27,12 +27,10 @@ public class StaffChat implements Listener {
 
     public StaffChat(ArcaneBungee plugin) {
         this.plugin = plugin;
-        plugin.getProxy().getPluginManager().registerCommand(plugin, new Chat());
-        plugin.getProxy().getPluginManager().registerCommand(plugin, new Toggle());
     }
 
     public class Chat extends Command {
-        Chat() {
+        public Chat() {
             super(BungeeCommandUsage.STAFFCHAT.getName(), BungeeCommandUsage.STAFFCHAT.getPermission(), BungeeCommandUsage.STAFFCHAT.getAliases());
         }
 
@@ -51,7 +49,7 @@ public class StaffChat implements Listener {
 
     public class Toggle extends Command implements TabExecutor {
 
-        Toggle() {
+        public Toggle() {
             super(BungeeCommandUsage.STAFFCHATTOGGLE.getName(), BungeeCommandUsage.STAFFCHATTOGGLE.getPermission(), BungeeCommandUsage.STAFFCHATTOGGLE.getAliases());
         }
 

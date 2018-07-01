@@ -26,6 +26,7 @@ public class PluginMessenger implements Listener {
         this.port = port;
     }
 
+    @SuppressWarnings("unused") // because ArcaneAlert portion is still under development. TODO: Remove when ArcaneAlert is implemented
     @EventHandler
     public void onPluginMessage(PluginMessageEvent e) {
         try {
@@ -89,7 +90,7 @@ public class PluginMessenger implements Listener {
         }
     }
 
-    public void getPlayerName(String uuid, ReturnRunnable response) {
+    void getPlayerName(String uuid, ReturnRunnable response) {
         toLog("GetPlayerName", response, uuid);
     }
 
@@ -147,10 +148,4 @@ public class PluginMessenger implements Listener {
         });
     }
 
-    public interface ReturnRunnable {
-        /**
-         * @param args null if exception
-         */
-        void run(String args);
-    }
 }

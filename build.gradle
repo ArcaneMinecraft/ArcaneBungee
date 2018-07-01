@@ -11,10 +11,13 @@ repositories {
     maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
     compileOnly 'net.md-5:bungeecord-api:1.12-SNAPSHOT' // Bungeecord api
     compileOnly fileTree(dir: 'libs', include: '*.jar')
     compileOnly 'me.lucko.luckperms:luckperms-api:4.2'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
+    implementation 'net.dv8tion:JDA:3.6.0_376'
 }

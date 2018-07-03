@@ -21,7 +21,7 @@ public class VanillaEvents implements Listener {
 
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
-        plugin.getCommandLogger().getPlayerName(e.getPlayer().getUniqueId().toString(), (String name) -> {
+        plugin.getCommandLogger().getPlayerName(e.getPlayer().getUniqueId().toString(), name -> {
             BaseComponent joined = null;
 
             if (name != null && !e.getPlayer().getName().equals(name)) {

@@ -90,7 +90,7 @@ public class PluginMessenger implements Listener {
         }
     }
 
-    void getPlayerName(String uuid, ReturnRunnable response) {
+    void getPlayerName(String uuid, ReturnRunnable<String> response) {
         toLog("GetPlayerName", response, uuid);
     }
 
@@ -118,7 +118,7 @@ public class PluginMessenger implements Listener {
         toLog("LogCoreProtect", null, name, displayName, uuid, msg);
     }
 
-    private void toLog(String subChannel, ReturnRunnable run, String... args) {
+    private void toLog(String subChannel, ReturnRunnable<String> run, String... args) {
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             String response = null;

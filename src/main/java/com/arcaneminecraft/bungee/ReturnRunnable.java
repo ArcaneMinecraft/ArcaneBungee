@@ -1,8 +1,6 @@
 package com.arcaneminecraft.bungee;
 
-public interface ReturnRunnable {
-    /**
-     * @param args null if exception
-     */
-    void run(String args);
+@FunctionalInterface
+public interface ReturnRunnable<T> {
+    void run(T args);
 }

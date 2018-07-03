@@ -1,7 +1,10 @@
 package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.bungee.command.*;
+import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.plugin.Plugin;
+
+import java.sql.SQLException;
 
 /**
  * ArcaneChatUtilPlugin.java
@@ -30,6 +33,13 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
         getProxy().getPluginManager().registerListener(this, new StaffChatCommands(this));
         new TellCommands(this);
+
+        try {
+            getProxy().getPluginManager().registerListener(this, new SQLDatabase(this));
+        } catch (SQLException e) {
+            e.printStackTrace();
+            //shrug
+        }
 
         StaffChatCommands sc = new StaffChatCommands(this);
         TellCommands t = new TellCommands(this);

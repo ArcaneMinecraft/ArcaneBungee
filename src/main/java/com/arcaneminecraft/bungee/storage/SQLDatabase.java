@@ -1,20 +1,19 @@
 package com.arcaneminecraft.bungee.storage;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.ReturnRunnable;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.plugin.Listener;
-import net.md_5.bungee.event.EventHandler;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 import java.sql.*;
-import java.text.SimpleDateFormat;
+import java.util.UUID;
 
 /**
  * SQL Database must be MariaDB.
  * Stores: String uuid, String username, Date firstseen, Date lastseen, boolean greylist, boolean discord
  */
-public class SQLDatabase implements Listener {
+// TODO: Cache
+public class SQLDatabase {
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
     private static final String PLAYER_SELECT = "SELECT * FROM ab_players WHERE uuid=? LIMIT 1";
     private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE username=?";
@@ -50,43 +49,57 @@ public class SQLDatabase implements Listener {
         }
     }
 
-    @EventHandler
-    public void playerJoin(PostLoginEvent e) {
-        ProxiedPlayer p = e.getPlayer();
-
+    public void checkName(ProxiedPlayer p, ReturnRunnable<String> run) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 ResultSet rs;
+                // Get player info: player name
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT)) {
                     ps.setString(1, p.getUniqueId().toString());
                     rs = ps.executeQuery();
                 }
 
+                // Check if query returned any data.
                 if (!rs.next()) {
-                    // No data = new player
+                    // There is no data = new player
                     try (PreparedStatement ps = c.prepareStatement(PLAYER_INSERT)) {
                         ps.setString(1, p.getUniqueId().toString());
                         ps.setString(2, p.getName());
-                        rs = ps.executeQuery();
+                        ps.executeUpdate();
                     }
-                    plugin.getLogger().info("First timer");
+                    // is new player: empty string
+                    run.run("");
                     return;
                 }
 
-                String s = rs.getString("username");
-                Timestamp date = rs.getTimestamp("firstseen");
+                String name = rs.getString("username");
 
-                // Over a week
-                String d = new SimpleDateFormat("yyyy-MM-dd").format(date);
-                String t = new SimpleDateFormat("HH:mm z").format(date);
+                if (!p.getName().equals(name)) {
+                    try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_USERNAME)) {
+                        ps.setString(1, p.getName());
+                        ps.setString(2, p.getUniqueId().toString());
+                        ps.executeUpdate();
+                    }
+                }
 
-                String text = "Player " + s +
-                        "first joined on " +
-                        d +
-                        " at " +
-                        t;
-                plugin.getLogger().info(text);
+                // Query returned data; give username from database
+                run.run(name);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                // Fetch failed: null
+                run.run(null);
+            }
+        });
+    }
 
+    public void updateLastSeen(String uuid) {
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            try (Connection c = ds.getConnection()) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN)) {
+                    ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                    ps.setString(2, uuid);
+                    ps.executeUpdate();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }

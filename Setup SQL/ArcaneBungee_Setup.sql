@@ -4,9 +4,10 @@ CREATE TABLE `ab_players` (
   `id`         INT AUTO_INCREMENT NOT NULL,
   `uuid`       VARCHAR(36)        NOT NULL,
   `username`   VARCHAR(36)        NOT NULL,
-  `firstseen`  TIMESTAMP          DEFAULT CURRENT_TIMESTAMP,
-  `lastseen`   TIMESTAMP          DEFAULT CURRENT_TIMESTAMP,
-  `greylist`   BOOL               DEFAULT FALSE,
+  `firstseen`  TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `lastseen`   TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `greylist`   BOOL               NOT NULL DEFAULT FALSE,
+  `options`    INT UNSIGNED       NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) DEFAULT CHARSET = utf8;
 CREATE INDEX `ab_players_uuid` ON `ab_players` (`uuid`);

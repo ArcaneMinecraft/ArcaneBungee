@@ -17,6 +17,7 @@ import java.sql.SQLNonTransientConnectionException;
 public final class ArcaneBungee extends Plugin {
     private File file;
     private Configuration config = null;
+    private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
     private TabCompletePreset tabCompletePreset;
 
@@ -33,7 +34,7 @@ public final class ArcaneBungee extends Plugin {
 
         if (getConfig().getBoolean("mariadb.enabled")) {
             try {
-                getProxy().getPluginManager().registerListener(this, new SQLDatabase(this));
+                this.sqlDatabase = new SQLDatabase(this);
             } catch (SQLNonTransientConnectionException e) {
                 getLogger().severe("Cannot connect to database! Check configuration and reload the plugin.");
             } catch (SQLException e) {
@@ -69,6 +70,10 @@ public final class ArcaneBungee extends Plugin {
     @Override
     public void onDisable() {
         config = null;
+    }
+
+    public SQLDatabase getSqlDatabase() {
+        return sqlDatabase;
     }
 
     public PluginMessenger getCommandLogger() {

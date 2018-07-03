@@ -90,10 +90,6 @@ public class PluginMessenger implements Listener {
         }
     }
 
-    void getPlayerName(String uuid, ReturnRunnable<String> response) {
-        toLog("GetPlayerName", response, uuid);
-    }
-
     public void coreprotect(CommandSender sender, String command, String[] args) {
         if (!(sender instanceof ProxiedPlayer))
             return;

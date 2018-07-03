@@ -25,16 +25,29 @@ public class SQLDatabase implements Listener {
     private final MariaDbPoolDataSource ds;
 
 
-    private PreparedStatement statement;
-
     public SQLDatabase(ArcaneBungee plugin) throws SQLException {
         this.plugin = plugin;
-        String url = "jdbc:mariadb://localhost/arcanebungee-test";
-        String user = "arcanebungee-test";
-        String pass = "test";
+
+        String url = "jdbc:mariadb://"
+                + plugin.getConfig().getString("mariadb.hostname")
+                + "/" + plugin.getConfig().getString("mariadb.database");
+        String user = plugin.getConfig().getString("mariadb.username");
+        String pass = plugin.getConfig().getString("mariadb.password");
+
         this.ds = new MariaDbPoolDataSource(url);
         ds.setUser(user);
         ds.setPassword(pass);
+        ds.setLoginTimeout(10); // localhost connection shouldn't take long
+
+        // Ping/test the server
+        long timer = System.currentTimeMillis();
+        try (Connection c = ds.getConnection()) {
+            c.prepareStatement("/* ping */ SELECT 1").executeQuery().close();
+        }
+        long time = System.currentTimeMillis() - timer;
+        if (time > 1000) {
+            plugin.getLogger().warning("Connecting to database takes over 1 second: " + time);
+        }
     }
 
     @EventHandler

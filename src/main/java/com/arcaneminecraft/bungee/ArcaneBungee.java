@@ -11,17 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-
 import java.sql.SQLException;
-
-/**
- * ArcaneChatUtilPlugin.java
- * Close-chat function for the Arcane Survival server.
- *
- * @author Morios (Mark Talrey)
- * @author SimonOrJ (Simon Chuu)
- * @version 3.0-SNAPSHOT
- */
+import java.sql.SQLNonTransientConnectionException;
 
 public final class ArcaneBungee extends Plugin {
     private File file;
@@ -40,15 +31,18 @@ public final class ArcaneBungee extends Plugin {
         this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, this.pluginMessenger = new PluginMessenger(this));
 
-        getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
-
-        try {
-            getProxy().getPluginManager().registerListener(this, new SQLDatabase(this));
-        } catch (SQLException e) {
-            e.printStackTrace();
-            //shrug
+        if (getConfig().getBoolean("mariadb.enabled")) {
+            try {
+                getProxy().getPluginManager().registerListener(this, new SQLDatabase(this));
+            } catch (SQLNonTransientConnectionException e) {
+                getLogger().severe("Cannot connect to database! Check configuration and reload the plugin.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+                //shrug
+            }
         }
 
+        getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
         StaffChatCommands sc = new StaffChatCommands(this);
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);

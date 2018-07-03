@@ -1,0 +1,10 @@
+mariadb:
+  enabled: false
+  hostname: localhost:3306
+  username: name
+  password: pass
+  database: db
+
+arcanelog:
+  ip: localhost
+  port: 25555

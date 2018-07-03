@@ -20,10 +20,10 @@ public class PluginMessenger implements Listener {
     private final int port;
 
 
-    PluginMessenger(ArcaneBungee plugin, String ip, int port) {
+    PluginMessenger(ArcaneBungee plugin) {
         this.plugin = plugin;
-        this.ip = ip;
-        this.port = port;
+        this.ip = plugin.getConfig().getString("arcanelog.ip");
+        this.port = plugin.getConfig().getInt("arcanelog.port");
     }
 
     @SuppressWarnings("unused") // because ArcaneAlert portion is still under development. TODO: Remove when ArcaneAlert is implemented

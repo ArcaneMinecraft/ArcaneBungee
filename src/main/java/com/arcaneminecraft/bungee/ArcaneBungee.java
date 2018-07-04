@@ -47,13 +47,11 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
 
         // All Commands
-        StaffChatCommands sc = new StaffChatCommands(this);
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
-        getProxy().getPluginManager().registerListener(this, sc);
-        getProxy().getPluginManager().registerCommand(this, sc.new Chat());
-        getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
+        SeenCommands fs = new SeenCommands(this);
+        StaffChatCommands sc = new StaffChatCommands(this);
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
         getProxy().getPluginManager().registerCommand(this, l.new Discord());
@@ -63,6 +61,11 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, s.new Creative());
         getProxy().getPluginManager().registerCommand(this, s.new Event());
         getProxy().getPluginManager().registerCommand(this, s.new Survival());
+        getProxy().getPluginManager().registerCommand(this, fs.new Seen());
+        getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
+        getProxy().getPluginManager().registerListener(this, sc);
+        getProxy().getPluginManager().registerCommand(this, sc.new Chat());
+        getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, new Apply(this));
         getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));

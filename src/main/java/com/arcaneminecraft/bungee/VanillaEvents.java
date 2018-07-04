@@ -21,7 +21,7 @@ public class VanillaEvents implements Listener {
 
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
-        plugin.getSqlDatabase().checkName(e.getPlayer(), name -> {
+        plugin.getSqlDatabase().playerJoin(e.getPlayer(), name -> {
             BaseComponent joined;
             if (name == null) {
                 // Exceptioned out
@@ -55,7 +55,7 @@ public class VanillaEvents implements Listener {
 
     @EventHandler
     public void onPlayerLeave(PlayerDisconnectEvent e) {
-        plugin.getSqlDatabase().updateLastSeen(e.getPlayer().getUniqueId().toString());
+        plugin.getSqlDatabase().playerLeave(e.getPlayer().getUniqueId());
 
         BaseComponent left = new TranslatableComponent("multiplayer.player.left", ArcaneText.playerComponentBungee(e.getPlayer()));
         left.setColor(ChatColor.YELLOW);

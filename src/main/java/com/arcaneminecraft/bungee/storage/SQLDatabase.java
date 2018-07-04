@@ -108,7 +108,7 @@ public class SQLDatabase {
     }
 
     /**
-     * Adds all players on database to toUpdate set.
+     * Adds all players on database to toUpdate set
      * @param toUpdate Set to add players to
      */
     public void getAllPlayers(Set<String> toUpdate) {

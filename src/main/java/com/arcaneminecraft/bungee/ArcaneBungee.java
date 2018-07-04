@@ -29,7 +29,6 @@ public final class ArcaneBungee extends Plugin {
 
         getProxy().registerChannel("ArcaneAlert");
 
-        this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, this.pluginMessenger = new PluginMessenger(this));
 
         if (getConfig().getBoolean("mariadb.enabled")) {
@@ -43,7 +42,11 @@ public final class ArcaneBungee extends Plugin {
             }
         }
 
+        this.tabCompletePreset = new TabCompletePreset(this);
+
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
+
+        // All Commands
         StaffChatCommands sc = new StaffChatCommands(this);
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
@@ -61,6 +64,7 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, s.new Event());
         getProxy().getPluginManager().registerCommand(this, s.new Survival());
         getProxy().getPluginManager().registerCommand(this, new Apply(this));
+        getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));

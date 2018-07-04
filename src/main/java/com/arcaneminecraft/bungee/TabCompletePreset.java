@@ -21,7 +21,8 @@ public class TabCompletePreset implements Listener {
 
         this.allPlayerSet = new HashSet<>();
 
-        plugin.getSqlDatabase().getAllPlayers(allPlayerSet);
+        if (plugin.getSqlDatabase() != null)
+            plugin.getSqlDatabase().getAllPlayers(allPlayerSet);
     }
 
 

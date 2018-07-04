@@ -43,14 +43,21 @@ public final class ArcaneBungee extends Plugin {
         }
 
         this.tabCompletePreset = new TabCompletePreset(this);
-
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
 
-        // All Commands
+        // Commnads that directly depend on SQL
+        if (sqlDatabase != null) {
+            SeenCommands fs = new SeenCommands(this);
+            getProxy().getPluginManager().registerCommand(this, fs.new Seen());
+            getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
+            getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
+            getProxy().getPluginManager().registerCommand(this, new News(this));
+        }
+
+        // Rest of the commands
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
-        SeenCommands fs = new SeenCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
@@ -61,16 +68,12 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, s.new Creative());
         getProxy().getPluginManager().registerCommand(this, s.new Event());
         getProxy().getPluginManager().registerCommand(this, s.new Survival());
-        getProxy().getPluginManager().registerCommand(this, fs.new Seen());
-        getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
         getProxy().getPluginManager().registerListener(this, sc);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat());
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, new Apply(this));
-        getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
-        getProxy().getPluginManager().registerCommand(this, new News(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));
         getProxy().getPluginManager().registerCommand(this, new Slap(this));
     }

@@ -7,11 +7,22 @@ CREATE TABLE `ab_players` (
   `firstseen`  TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastseen`   TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `greylist`   BOOL               NOT NULL DEFAULT FALSE,
+  `timezone`   VARCHAR(32),
   `options`    INT UNSIGNED       NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) DEFAULT CHARSET = utf8;
 CREATE INDEX `ab_players_uuid` ON `ab_players` (`uuid`);
 CREATE INDEX `ab_players_name` ON `ab_players` (`username`);
+
+CREATE TABLE `ab_news` (
+  `id`         INT AUTO_INCREMENT NOT NULL,
+  `content`    VARCHAR(200)       NOT NULL,
+  `timestamp`  TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `username`   VARCHAR(36)        NOT NULL,
+  `uuid`       VARCHAR(36),
+  PRIMARY KEY (`id`)
+) DEFAULT CHARSET = utf8;
+CREATE INDEX `ab_news_timestamp` ON `ab_news` (`timestamp`);
 
 -- Provisioning Discord implementation
 -- CREATE TABLE `ab_discord` (

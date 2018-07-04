@@ -29,9 +29,8 @@ public class SeenCommands {
     private BaseComponent timeText(Timestamp time, Locale locale, String timezone) {
         BaseComponent ret = new TextComponent();
         TimeZone zone = TimeZone.getTimeZone((timezone == null) ? "America/Toronto" : timezone);
-
+        // TODO: Set timezone hint message
         int diff = (int) ((System.currentTimeMillis() - time.getTime()) / 1000);
-        plugin.getLogger().info(String.valueOf(diff));
 
         if (diff < 60) {
             // Within a minute

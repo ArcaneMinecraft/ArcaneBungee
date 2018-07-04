@@ -2,6 +2,7 @@ package com.arcaneminecraft.bungee.storage;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.ReturnRunnable;
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
@@ -24,6 +25,8 @@ public class SQLDatabase {
     private static final String PLAYER_SELECT_TIMEZONE_BY_UUID = "SELECT timezone FROM ab_players WHERE uuid=?";
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_LAST_SEEN = "UPDATE ab_players SET lastseen=? WHERE uuid=?";
+    private static final String NEWS_SELECT_LATEST = "SELECT * FROM ab_news ORDER BY id DESC LIMIT 1";
+    private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
 
     private final ArcaneBungee plugin;
     private final HashMap<UUID, Cache> onlinePlayerCache;
@@ -182,6 +185,51 @@ public class SQLDatabase {
             }
         });
         onlinePlayerCache.remove(uuid);
+    }
+
+    public void getLatestNews(ReturnRunnable<String> run) {
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            try (Connection c = ds.getConnection()) {
+                try (PreparedStatement ps = c.prepareStatement(NEWS_SELECT_LATEST)) {
+                    ResultSet rs = ps.executeQuery();
+                    // Push news posted date
+                    if (rs.next())
+                        run.run(rs.getString("content"));
+                    else
+                        run.run("There is no news");
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
+    public void addNews(CommandSender sender, String news, ReturnRunnable<Boolean> run) {
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            String name, uuid;
+            if (sender instanceof ProxiedPlayer) {
+                name = sender.getName();
+                uuid = ((ProxiedPlayer) sender).getUniqueId().toString();
+            } else {
+                name = "Server";
+                uuid = null;
+            }
+
+            try (Connection c = ds.getConnection()) {
+                try (PreparedStatement ps = c.prepareStatement(NEWS_INSERT_NEWS)) {
+                    ps.setString(1, news);
+                    ps.setString(2, name);
+                    ps.setString(3, uuid);
+                    int rs = ps.executeUpdate();
+                    if (rs == 1)
+                        run.run(true);
+                    else
+                        run.run(false);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 
     /**

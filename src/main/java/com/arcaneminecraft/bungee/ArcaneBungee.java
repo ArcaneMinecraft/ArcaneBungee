@@ -70,6 +70,7 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
+        getProxy().getPluginManager().registerCommand(this, new News(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));
         getProxy().getPluginManager().registerCommand(this, new Slap(this));
     }

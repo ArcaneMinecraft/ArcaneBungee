@@ -6,7 +6,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 import java.sql.*;
-import java.util.UUID;
+import java.util.Set;
 
 /**
  * SQL Database must be MariaDB.
@@ -16,6 +16,7 @@ import java.util.UUID;
 public class SQLDatabase {
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
     private static final String PLAYER_SELECT = "SELECT * FROM ab_players WHERE uuid=? LIMIT 1";
+    private static final String PLAYER_SELECT_ALL_USERNAME = "SELECT username FROM ab_players";
     private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE username=?";
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_LAST_SEEN = "UPDATE ab_players SET lastseen=? WHERE uuid=?";
@@ -99,6 +100,25 @@ public class SQLDatabase {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
                     ps.setString(2, uuid);
                     ps.executeUpdate();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Adds all players on database to toUpdate set.
+     * @param toUpdate Set to add players to
+     */
+    public void getAllPlayers(Set<String> toUpdate) {
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            try (Connection c = ds.getConnection()) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME)) {
+                    ResultSet rs = ps.executeQuery();
+
+                    while(rs.next())
+                        toUpdate.add(rs.getString("username"));
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();

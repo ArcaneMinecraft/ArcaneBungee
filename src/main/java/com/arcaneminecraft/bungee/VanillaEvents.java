@@ -29,7 +29,7 @@ public class VanillaEvents implements Listener {
             } else if (name.equals("")) {
                 // New player
                 BaseComponent newPlayer = new TextComponent(ArcaneText.playerComponentBungee(e.getPlayer()));
-                newPlayer.addExtra(" joined for the first time!");
+                newPlayer.addExtra(" has joined  " + "Arcane" + " for the first time!");
                 newPlayer.setColor(ChatColor.YELLOW);
 
                 for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {

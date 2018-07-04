@@ -126,7 +126,7 @@ public class ServerCommands {
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
             if (args.length == 1)
-                return plugin.getTabCompletePreset().validChoices(args, eventServers.keySet());
+                return plugin.getTabCompletePreset().argStartsWith(args, eventServers.keySet());
             return Collections.emptyList();
         }
     }

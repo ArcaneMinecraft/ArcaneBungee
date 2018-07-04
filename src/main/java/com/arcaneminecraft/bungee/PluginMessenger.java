@@ -16,12 +16,15 @@ import java.net.Socket;
 
 public class PluginMessenger implements Listener {
     private final ArcaneBungee plugin;
+    private final SpyAlert spy;
     private final String ip;
     private final int port;
 
 
-    PluginMessenger(ArcaneBungee plugin) {
+    PluginMessenger(ArcaneBungee plugin, SpyAlert spy) {
         this.plugin = plugin;
+        this.spy = spy;
+
         this.ip = plugin.getConfig().getString("arcanelog.ip");
         this.port = plugin.getConfig().getInt("arcanelog.port");
     }
@@ -74,12 +77,10 @@ public class PluginMessenger implements Listener {
 
                 if (type.equals("XRay")) {
                     String material = in.readUTF();
-                    // TODO: Send to players with permission
-                    plugin.getLogger().info("Player mined " + material + "at " + loc[0] + ", " + loc[1] + ", " + loc[2]);
+                    spy.xRayAlert(player, material, loc);
                 } else if (type.equals("Sign")) {
                     String[] lines = new String[]{in.readUTF(), in.readUTF(), in.readUTF(), in.readUTF()};
-                    // TODO: Send to players with permission
-                    plugin.getLogger().info("Player created sign with: " + String.join(" ", lines));
+                    spy.signAlert(player, lines, loc);
                 }
 
                 //return;

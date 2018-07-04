@@ -29,7 +29,9 @@ public final class ArcaneBungee extends Plugin {
 
         getProxy().registerChannel("ArcaneAlert");
 
-        getProxy().getPluginManager().registerListener(this, this.pluginMessenger = new PluginMessenger(this));
+        SpyAlert spyAlert = new SpyAlert(this);
+        getProxy().getPluginManager().registerListener(this, spyAlert);
+        getProxy().getPluginManager().registerListener(this, this.pluginMessenger = new PluginMessenger(this, spyAlert));
 
         if (getConfig().getBoolean("mariadb.enabled")) {
             try {

@@ -2,7 +2,7 @@ package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -72,16 +72,16 @@ public class StaffChatCommands implements Listener {
             ProxiedPlayer p = (ProxiedPlayer) sender;
 
             BaseComponent send = new TextComponent("Staff chat toggle is ");
-            send.setColor(ColorPalette.CONTENT);
+            send.setColor(ArcaneColor.CONTENT);
 
             if (toggled.add(p)){
                 BaseComponent on = new TranslatableComponent("options.on");
-                on.setColor(ColorPalette.POSITIVE);
+                on.setColor(ArcaneColor.POSITIVE);
                 send.addExtra(on);
             } else {
                 toggled.remove(p);
                 BaseComponent off = new TranslatableComponent("options.off");
-                off.setColor(ColorPalette.NEGATIVE);
+                off.setColor(ArcaneColor.NEGATIVE);
                 send.addExtra(off);
             }
 
@@ -109,10 +109,10 @@ public class StaffChatCommands implements Listener {
         plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.STAFFCHAT.getCommand() + " " + msg);
 
         BaseComponent send = new TextComponent("Staff // ");
-        send.setColor(ColorPalette.HEADING);
+        send.setColor(ArcaneColor.HEADING);
 
         BaseComponent name = ArcaneText.playerComponentBungee(sender);
-        name.setColor(ColorPalette.FOCUS);
+        name.setColor(ArcaneColor.FOCUS);
         name.addExtra(": ");
 
         send.addExtra(name);

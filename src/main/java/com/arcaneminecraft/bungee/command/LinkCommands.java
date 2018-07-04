@@ -2,7 +2,7 @@ package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatMessageType;
@@ -36,7 +36,7 @@ public class LinkCommands {
         ret.addExtra(what);
         ret.addExtra(": ");
         ret.addExtra(link);
-        ret.setColor(ColorPalette.CONTENT);
+        ret.setColor(ArcaneColor.CONTENT);
         return ret;
     }
 

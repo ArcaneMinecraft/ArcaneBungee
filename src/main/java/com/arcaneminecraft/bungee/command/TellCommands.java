@@ -2,7 +2,7 @@ package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -124,7 +124,7 @@ public class TellCommands {
     private void messenger(CommandSender from, CommandSender to, String[] args, int fromIndex) {
         BaseComponent msg = ArcaneText.url(args, fromIndex);
 
-        msg.setColor(ColorPalette.CONTENT);
+        msg.setColor(ArcaneColor.CONTENT);
         msg.setItalic(true);
 
         messageSender(from, to, msg, false); // send to "sender" as "To p: msg"
@@ -140,7 +140,7 @@ public class TellCommands {
 
         // Beginning
         TextComponent header = new TextComponent();
-        header.setColor(ColorPalette.HEADING);
+        header.setColor(ArcaneColor.HEADING);
 
         TextComponent in = new TextComponent("> ");
         in.setColor(ChatColor.DARK_GRAY);

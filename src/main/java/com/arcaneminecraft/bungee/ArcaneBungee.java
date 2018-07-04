@@ -1,6 +1,7 @@
 package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.bungee.command.*;
+import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
@@ -10,19 +11,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-
-/**
- * ArcaneChatUtilPlugin.java
- * Close-chat function for the Arcane Survival server.
- *
- * @author Morios (Mark Talrey)
- * @author SimonOrJ (Simon Chuu)
- * @version 3.0-SNAPSHOT
- */
+import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
 
 public final class ArcaneBungee extends Plugin {
     private File file;
     private Configuration config = null;
+    private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
     private TabCompletePreset tabCompletePreset;
 
@@ -34,18 +29,36 @@ public final class ArcaneBungee extends Plugin {
 
         getProxy().registerChannel("ArcaneAlert");
 
-        this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, this.pluginMessenger = new PluginMessenger(this));
 
+        if (getConfig().getBoolean("mariadb.enabled")) {
+            try {
+                this.sqlDatabase = new SQLDatabase(this);
+            } catch (SQLNonTransientConnectionException e) {
+                getLogger().severe("Cannot connect to database! Check configuration and reload the plugin.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+                //shrug
+            }
+        }
+
+        this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
 
-        StaffChatCommands sc = new StaffChatCommands(this);
+        // Commnads that directly depend on SQL
+        if (sqlDatabase != null) {
+            SeenCommands fs = new SeenCommands(this);
+            getProxy().getPluginManager().registerCommand(this, fs.new Seen());
+            getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
+            getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
+            getProxy().getPluginManager().registerCommand(this, new News(this));
+        }
+
+        // Rest of the commands
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
-        getProxy().getPluginManager().registerListener(this, sc);
-        getProxy().getPluginManager().registerCommand(this, sc.new Chat());
-        getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
+        StaffChatCommands sc = new StaffChatCommands(this);
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
         getProxy().getPluginManager().registerCommand(this, l.new Discord());
@@ -55,6 +68,9 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, s.new Creative());
         getProxy().getPluginManager().registerCommand(this, s.new Event());
         getProxy().getPluginManager().registerCommand(this, s.new Survival());
+        getProxy().getPluginManager().registerListener(this, sc);
+        getProxy().getPluginManager().registerCommand(this, sc.new Chat());
+        getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, new Apply(this));
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
@@ -65,6 +81,10 @@ public final class ArcaneBungee extends Plugin {
     @Override
     public void onDisable() {
         config = null;
+    }
+
+    public SQLDatabase getSqlDatabase() {
+        return sqlDatabase;
     }
 
     public PluginMessenger getCommandLogger() {

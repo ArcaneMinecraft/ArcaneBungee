@@ -2,7 +2,7 @@ package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -42,7 +42,7 @@ public class ServerCommands {
                 p.connect(server);
             } else {
                 BaseComponent send = new TextComponent("Can't connect to " + serverInfoName + "server");
-                send.setColor(ColorPalette.NEGATIVE);
+                send.setColor(ArcaneColor.NEGATIVE);
                 p.sendMessage(ChatMessageType.SYSTEM, send);
             }
         });
@@ -101,7 +101,7 @@ public class ServerCommands {
                             p.connect(entry.getValue());
 
                             BaseComponent send = new TextComponent("Connected to event " + entry.getKey());
-                            send.setColor(ColorPalette.CONTENT);
+                            send.setColor(ArcaneColor.CONTENT);
 
                             p.sendMessage(ChatMessageType.SYSTEM, send);
                         }

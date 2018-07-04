@@ -1,6 +1,6 @@
 package com.arcaneminecraft.bungee;
 
-import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.ArcaneColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -77,19 +77,19 @@ public class TabCompletePreset implements Listener {
                     StringBuilder toAdd = new StringBuilder(name.substring(0, start));
 
                     // Highlight matched portion
-                    toAdd.append(ColorPalette.FOCUS)
+                    toAdd.append(ArcaneColor.FOCUS)
                             .append(name.substring(start, end))
-                            .append(ColorPalette.CONTENT);
+                            .append(ArcaneColor.CONTENT);
 
                     // Search again until it goes through and matches the entire string.
                     while ((start = name.toLowerCase().indexOf(searchLower, end)) != -1) {
                         toAdd.append(name.substring(end, start))
-                                .append(ColorPalette.FOCUS);
+                                .append(ArcaneColor.FOCUS);
 
                         end += search.length();
 
                         toAdd.append(name.substring(start, end))
-                                .append(ColorPalette.CONTENT);
+                                .append(ArcaneColor.CONTENT);
                     }
                     toAdd.append(name.substring(end, name.length()));
 

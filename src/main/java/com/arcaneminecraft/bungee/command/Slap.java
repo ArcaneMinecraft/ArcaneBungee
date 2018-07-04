@@ -2,7 +2,7 @@ package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -47,7 +47,7 @@ public class Slap extends Command implements TabExecutor {
         send.addExtra(ArcaneText.playerComponentBungee(victim));
         send.addExtra(" in the face!");
 
-        send.setColor(ColorPalette.META);
+        send.setColor(ArcaneColor.META);
 
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, send);

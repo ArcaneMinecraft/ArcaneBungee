@@ -2,7 +2,7 @@ package com.arcaneminecraft.bungee.command;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ColorPalette;
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -36,14 +36,14 @@ public class Apply extends Command implements TabExecutor {
 
         if (sender.hasPermission("arcane.build")) {
             BaseComponent send = new TextComponent("You are already greylisted");
-            send.setColor(ColorPalette.CONTENT);
+            send.setColor(ArcaneColor.CONTENT);
             p.sendMessage(ChatMessageType.SYSTEM, send);
             return;
         }
 
         BaseComponent send = new TextComponent("Apply at: ");
         send.addExtra(LINK);
-        send.setColor(ColorPalette.CONTENT);
+        send.setColor(ArcaneColor.CONTENT);
         p.sendMessage(ChatMessageType.SYSTEM, send);
         // TODO: Write application in-game?
     }

@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
 
-public final class ArcaneBungee extends Plugin {
+public class ArcaneBungee extends Plugin {
     private File file;
     private Configuration config = null;
     private SQLDatabase sqlDatabase = null;
@@ -57,10 +57,13 @@ public final class ArcaneBungee extends Plugin {
         }
 
         // Rest of the commands
+        GreylistCommands g = new GreylistCommands(this);
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
+        getProxy().getPluginManager().registerCommand(this, g.new Apply());
+        getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
         getProxy().getPluginManager().registerCommand(this, l.new Discord());
@@ -73,7 +76,6 @@ public final class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, sc);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat());
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
-        getProxy().getPluginManager().registerCommand(this, new Apply(this));
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));

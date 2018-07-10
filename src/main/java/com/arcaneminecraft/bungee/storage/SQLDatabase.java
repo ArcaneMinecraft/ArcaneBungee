@@ -3,6 +3,7 @@ package com.arcaneminecraft.bungee.storage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.ReturnRunnable;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.connection.ConnectedPlayer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
@@ -57,6 +58,25 @@ public class SQLDatabase {
         if (time > 1000) {
             plugin.getLogger().warning("Connecting to database takes over 1 second: " + time);
         }
+    }
+
+    public void getPlayerUUID(String name, ReturnRunnable<UUID> run) {
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            try (Connection c = ds.getConnection()) {
+                ResultSet rs;
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_BY_USERNAME)) {
+                    ps.setString(1, name.toUpperCase());
+                    rs = ps.executeQuery();
+                }
+                if (rs.next())
+                    run.run(UUID.fromString(rs.getString("uuid")));
+                else
+                    run.run(null);
+            } catch (SQLException e) {
+                e.printStackTrace();
+                run.run(null);
+            }
+        });
     }
 
     public void playerJoin(ProxiedPlayer p, ReturnRunnable<String> run) {

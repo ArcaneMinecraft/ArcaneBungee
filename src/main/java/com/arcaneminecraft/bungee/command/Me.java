@@ -24,12 +24,16 @@ public class Me extends Command implements TabExecutor {
         plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.ME.getCommand(), args);
 
         if (args.length == 0) {
-            ArcaneText.usage(BungeeCommandUsage.ME.getUsage());
+            if (sender instanceof ProxiedPlayer)
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.ME.getUsage()));
+            else
+                sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.ME.getUsage()));
             return;
         }
 
         BaseComponent ret = new TranslatableComponent("chat.type.emote", ArcaneText.playerComponentBungee(sender), String.join(" ", args));
 
+        plugin.getProxy().getConsole().sendMessage(ret);
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, ret);
         }

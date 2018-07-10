@@ -41,7 +41,7 @@ public class ServerCommands {
             if (e == null) {
                 p.connect(server);
             } else {
-                BaseComponent send = new TextComponent("Can't connect to " + serverInfoName + "server");
+                BaseComponent send = new TextComponent("Can't connect to " + serverInfoName + " server");
                 send.setColor(ArcaneColor.NEGATIVE);
                 p.sendMessage(ChatMessageType.SYSTEM, send);
             }
@@ -100,7 +100,7 @@ public class ServerCommands {
                         if (eventConnecting.remove(p) && e == null) {
                             p.connect(entry.getValue());
 
-                            BaseComponent send = new TextComponent("Connected to event " + entry.getKey());
+                            BaseComponent send = new TextComponent("Connected to " + entry.getKey() + " event");
                             send.setColor(ArcaneColor.CONTENT);
 
                             p.sendMessage(ChatMessageType.SYSTEM, send);

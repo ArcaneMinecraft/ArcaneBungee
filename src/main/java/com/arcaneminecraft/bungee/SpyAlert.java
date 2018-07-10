@@ -21,7 +21,35 @@ public class SpyAlert implements Listener {
 */
     }
 
-    public void signAlert(String name, String[] lines, int[] loc) {
+    private TextComponent diamondAlertMsg(ProxiedPlayer p, int count, String block, int[] loc) {
+        TextComponent ret = (TextComponent)TEMPLATE_DIAMOND_ALERT.duplicate();
+        TextComponent a = new TextComponent(p.getName());
+        a.setColor(ColorPalette.FOCUS);
+        ret.addExtra(a);
+        ret.addExtra(" just mined ");
+        a = new TextComponent(count + " diamond ore" + (count == 1 ? "" : "s"));
+        a.setColor(ColorPalette.FOCUS);
+        ret.addExtra(a);
+        ret.addExtra(".");
+        addLocationClickEvent(ret,lastBlock.getLocation());
+        return ret;
+    }
+
+    private TextComponent commandAlertMsg(ProxiedPlayer p, String command) {
+        TextComponent ret = (TextComponent)TEMPLATE_COMMAND_ALERT.duplicate();
+        TextComponent a = new TextComponent(p.getName());
+        a.setColor(ChatColor.GRAY);
+        ret.addExtra(a);
+        ret.addExtra(" ran ");
+        a = new TextComponent(command);
+        a.setColor(ChatColor.GRAY);
+        ret.addExtra(a);
+        ret.addExtra(".");
+        addLocationClickEvent(ret,p.getLocation());
+        return ret;
+    }
+
+    void signAlert(String name, String[] lines, int[] loc) {
         BaseComponent s = new TextComponent("with: " + String.join(" ", lines));
         s.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(String.join("\n", lines)).create()));
 
@@ -43,7 +71,7 @@ public class SpyAlert implements Listener {
         }
     }
 
-    public void xRayAlert(String name, String block, int[] loc) {
+    void xRayAlert(String name, String block, int[] loc) {
         // TODO: Decrease spam: collect then run later.
         BaseComponent t = new TextComponent("Mined " + block + " at " + loc[0] + ", " + loc[1] + ", " + loc[2]);
         t.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tp " + loc[0] + " " + loc[1] + " " + loc[2]));
@@ -70,7 +98,8 @@ public class SpyAlert implements Listener {
         ProxiedPlayer p = (ProxiedPlayer) e.getSender();
 
         BaseComponent a = new TranslatableComponent("chat.type.admin",
-                ArcaneText.playerComponentBungee(p, "Server: " + p.getServer().getInfo().getName()), "ran " + e.getMessage());
+                ArcaneText.playerComponentBungee(p, "Server: " + p.getServer().getInfo().getName()),
+                "ran " + e.getMessage());
         a.setColor(ChatColor.GRAY);
         a.setItalic(true);
 
@@ -81,4 +110,33 @@ public class SpyAlert implements Listener {
             }
         }
     }
-}
+
+
+
+    private class DiamondCounter implements Runnable {
+        private final ProxiedPlayer p;
+        private int count = 1;
+        private String lastMined;
+
+        DiamondCounter(ProxiedPlayer p, String justMined) {
+            this.lastMined = justMined;
+            this.p = p;
+        }
+
+        void increment(String justMined) {
+            lastMined = justMined;
+            count++;
+        }
+
+        @Override
+        public void run() {
+            TextComponent msg = diamondAlertMsg(p, count, lastMined);
+            for (Player p : plugin.getServer().getOnlinePlayers()) {
+                if (p.hasPermission(DIAMOND_PERMISSION) && !(modReceive.get(p) == ReceiveLevel.NONE)) {
+                    p.spigot().sendMessage(msg);
+                }
+            }
+            plugin.getServer().getConsoleSender().sendMessage(msg.toLegacyText());
+            diamondMineMap.remove(p);
+        }
+    }}

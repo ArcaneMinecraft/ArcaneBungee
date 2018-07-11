@@ -22,7 +22,7 @@ public class VanillaEvents implements Listener {
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
         if (plugin.getSqlDatabase() != null) {
-            plugin.getSqlDatabase().playerJoin(e.getPlayer(), name -> {
+            plugin.getSqlDatabase().playerJoinThen(e.getPlayer(), name -> {
                 BaseComponent joined;
                 if (name == null) {
                     // Exceptioned out

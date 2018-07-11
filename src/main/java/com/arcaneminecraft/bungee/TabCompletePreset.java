@@ -9,20 +9,16 @@ import net.md_5.bungee.event.EventHandler;
 import java.util.*;
 
 public class TabCompletePreset implements Listener {
+    private final ArcaneBungee plugin;
     private final List<String> onlinePlayerList;
-    private final Set<String> allPlayerSet;
 
     TabCompletePreset(ArcaneBungee plugin) {
+        this.plugin = plugin;
         this.onlinePlayerList = new ArrayList<>();
 
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             this.onlinePlayerList.add(p.getName());
         }
-
-        this.allPlayerSet = new HashSet<>();
-
-        if (plugin.getSqlDatabase() != null)
-            plugin.getSqlDatabase().getAllPlayers(allPlayerSet);
     }
 
 
@@ -32,7 +28,7 @@ public class TabCompletePreset implements Listener {
     }
 
     public Iterable<String> allPlayers(String[] args) {
-        return argStartsWith(args, allPlayerSet);
+        return argStartsWith(args, plugin.getSqlDatabase().getAllPlayerName());
     }
 
 
@@ -52,15 +48,9 @@ public class TabCompletePreset implements Listener {
         return ret;
     }
 
-    // Get list of all players
-    public Set<String> getAllPlayerSet() {
-        return allPlayerSet;
-    }
-
     @EventHandler
     public void joinEvent(PostLoginEvent e) {
         onlinePlayerList.add(e.getPlayer().getName());
-        allPlayerSet.add(e.getPlayer().getName()); // is set: duplicates are not added.
     }
 
     @EventHandler

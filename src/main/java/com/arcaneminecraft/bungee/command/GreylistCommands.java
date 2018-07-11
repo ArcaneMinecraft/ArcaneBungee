@@ -17,6 +17,7 @@ import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.Collections;
+import java.util.UUID;
 
 // TODO: Cleanup all the messages
 public class GreylistCommands {
@@ -117,22 +118,21 @@ public class GreylistCommands {
                         // Get lp user object
                         User u = api.getUser(pl);
                         if (u == null) {
-                            plugin.getSqlDatabase().getPlayerUUID(pl, uuid -> {
-                                if (uuid == null) {
-                                    sender.sendMessage("Player " + ArcaneColor.FOCUS + pl + ArcaneColor.CONTENT + " doesn't exist on ArcaneBungee database.");
+                            UUID uuid = plugin.getSqlDatabase().getPlayerUUID(pl);
+                            if (uuid == null) {
+                                sender.sendMessage("Player " + ArcaneColor.FOCUS + pl + ArcaneColor.CONTENT + " doesn't exist on ArcaneBungee database.");
+                                return;
+                            }
+                            api.getUserManager().loadUser(uuid).thenAcceptAsync(user -> {
+                                if (user == null) {
+                                    // it for some reason never reaches this point.
+                                    sender.sendMessage("Player " + ArcaneColor.FOCUS + pl + ArcaneColor.CONTENT + " doesn't exist on LuckPerms database.");
                                     return;
                                 }
-                                api.getUserManager().loadUser(uuid).thenAcceptAsync(user -> {
-                                    if (user == null) {
-                                        // it for some reason never reaches this point.
-                                        sender.sendMessage("Player " + ArcaneColor.FOCUS + pl + ArcaneColor.CONTENT + " doesn't exist on LuckPerms database.");
-                                        return;
-                                    }
-                                    User ul = api.getUser(uuid);
-                                    addToGreylist(ul, sender);
-                                    api.cleanupUser(ul);
-                                }, api.getStorage().getSyncExecutor());
-                            });
+                                User ul = api.getUser(uuid);
+                                addToGreylist(ul, sender);
+                                api.cleanupUser(ul);
+                            }, api.getStorage().getSyncExecutor());
                         } else {
                             addToGreylist(api.getUser(pl), sender);
                         }

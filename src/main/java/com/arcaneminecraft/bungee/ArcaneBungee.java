@@ -20,6 +20,7 @@ public class ArcaneBungee extends Plugin {
     private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
     private TabCompletePreset tabCompletePreset;
+    private BadgeCommands badgeCommands;
 
     @Override
     public void onEnable() {
@@ -57,11 +58,14 @@ public class ArcaneBungee extends Plugin {
         }
 
         // Rest of the commands
+        this.badgeCommands = new BadgeCommands(this);
         GreylistCommands g = new GreylistCommands(this);
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
+        getProxy().getPluginManager().registerCommand(this, badgeCommands.new Badge());
+        //getProxy().getPluginManager().registerCommand(this, badgeCommands.new BadgeAdmin()); TODO
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
@@ -85,6 +89,7 @@ public class ArcaneBungee extends Plugin {
     @Override
     public void onDisable() {
         config = null;
+        badgeCommands.saveConfig();
     }
 
     public SQLDatabase getSqlDatabase() {
@@ -113,6 +118,7 @@ public class ArcaneBungee extends Plugin {
 
     private void saveDefaultConfig() {
         if (!getDataFolder().exists())
+            //noinspection ResultOfMethodCallIgnored
             getDataFolder().mkdir();
 
         if (!file.exists()) {

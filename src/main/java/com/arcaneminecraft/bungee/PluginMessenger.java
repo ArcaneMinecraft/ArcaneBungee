@@ -13,6 +13,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.util.UUID;
 
 public class PluginMessenger implements Listener {
     private final ArcaneBungee plugin;
@@ -29,7 +30,6 @@ public class PluginMessenger implements Listener {
         this.port = plugin.getConfig().getInt("arcanelog.port");
     }
 
-    @SuppressWarnings("unused") // because ArcaneAlert portion is still under development. TODO: Remove when ArcaneAlert is implemented
     @EventHandler
     public void onPluginMessage(PluginMessageEvent e) {
         try {
@@ -56,7 +56,7 @@ public class PluginMessenger implements Listener {
                     // Log chat on bungeecord console
                     TextComponent log = new TextComponent(server + ": ");
                     if (!tag.isEmpty())
-                        log.addExtra(" " + tag);
+                        log.addExtra(tag + " ");
                     log.addExtra("<" + name + "> " + msg);
                     plugin.getProxy().getConsole().sendMessage(log);
 
@@ -66,21 +66,21 @@ public class PluginMessenger implements Listener {
                 return;
             }
 
-            if (e.getTag().equalsIgnoreCase("ArcaneAlert")) {
+            if (e.getTag().equalsIgnoreCase("ArcaneAlert")) { // TODO: Optimize
                 DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
-                String server = in.readUTF();
+                in.readUTF(); // server
                 String type = in.readUTF();
-                String player = in.readUTF();
+                in.readUTF(); // player
                 String uuid = in.readUTF();
-                String world = in.readUTF();
+                in.readUTF(); // world
                 int[] loc = {in.readInt(), in.readInt(), in.readInt()}; // Location
 
                 if (type.equals("XRay")) {
                     String material = in.readUTF();
-                    spy.xRayAlert(player, material, loc);
+                    spy.xRayAlert(UUID.fromString(uuid), material, loc);
                 } else if (type.equals("Sign")) {
                     String[] lines = new String[]{in.readUTF(), in.readUTF(), in.readUTF(), in.readUTF()};
-                    spy.signAlert(player, lines, loc);
+                    spy.signAlert(UUID.fromString(uuid), lines, loc);
                 }
 
                 //return;

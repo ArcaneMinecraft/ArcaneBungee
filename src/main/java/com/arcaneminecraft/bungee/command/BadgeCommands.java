@@ -121,13 +121,18 @@ public class BadgeCommands implements Listener {
         if (u == null) {
             getLpApi().getUserManager().loadUser(uuid).thenAcceptAsync(user -> {
                 run.run(user);
-                if (save)
+                if (save) {
                     getLpApi().getUserManager().saveUser(user);
+                }
             });
         } else {
             run.run(u);
-            if (save)
+            if (save) {
+                ProxiedPlayer p = plugin.getProxy().getPlayer(u.getUuid());
+                if (p != null)
+                    plugin.getPluginMessenger().luckPermsMetaCacheReload(p);
                 getLpApi().getUserManager().saveUser(u);
+            }
         }
     }
 
@@ -414,9 +419,9 @@ public class BadgeCommands implements Listener {
         public void execute(CommandSender sender, String[] args) {
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)
-                    ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.BADGEADMIN.getPermission()));
+                    ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.BADGEADMIN.getUsage()));
                 else
-                    sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.BADGEADMIN.getPermission()));
+                    sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.BADGEADMIN.getUsage()));
                 return;
             }
 
@@ -460,6 +465,7 @@ public class BadgeCommands implements Listener {
                     else
                         sender.sendMessage(send);
                 }
+                return;
             }
 
             if (args[0].equalsIgnoreCase("set")) {
@@ -482,7 +488,8 @@ public class BadgeCommands implements Listener {
                 setCustomTagThen(uuid, prefix, user -> {
                     BaseComponent send = new TextComponent(user.getName() + "'s tag is now ");
                     send.setColor(ArcaneColor.CONTENT);
-                    send.addExtra(ChatColor.translateAlternateColorCodes('&', prefix));
+                    for (BaseComponent bp : TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', prefix)))
+                        send.addExtra(bp);
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                     else
@@ -560,7 +567,8 @@ public class BadgeCommands implements Listener {
                 setTemporaryCustomTagThen(uuid, prefix, d, u, user -> {
                     BaseComponent send = new TextComponent(user.getName() + "'s tag is now ");
                     send.setColor(ArcaneColor.CONTENT);
-                    send.addExtra(ChatColor.translateAlternateColorCodes('&', prefix));
+                    for (BaseComponent bp : TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', prefix)))
+                        send.addExtra(bp);
                     send.addExtra(" for the next " + d + " " + u.name().toLowerCase());
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
@@ -577,14 +585,14 @@ public class BadgeCommands implements Listener {
                 }
 
                 clearCustomTagThen(uuid, user -> {
-                    BaseComponent send = new TextComponent(user.getName() + "'s tag custom tag has been cleared");
+                    BaseComponent send = new TextComponent(user.getName() + "'s tag priority and custom tag has been cleared");
                     send.setColor(ArcaneColor.CONTENT);
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                     else
                         sender.sendMessage(send);
                 });
-                //return; Added to avoid confusion
+                return;
             }
 
             if (args[0].equalsIgnoreCase("reset")) {
@@ -601,15 +609,21 @@ public class BadgeCommands implements Listener {
                     else
                         sender.sendMessage(send);
                 });
-                //return; Added to avoid confusion
+                return;
             }
+
+            // No command matched
+            if (sender instanceof ProxiedPlayer)
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.BADGEADMIN.getUsage()));
+            else
+                sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.BADGEADMIN.getUsage()));
         }
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            if (args.length == 2)
-                return plugin.getTabCompletePreset().argStartsWith(args, ADMIN_SUBCOMMANDS);
             if (args.length == 1)
+                return plugin.getTabCompletePreset().argStartsWith(args, ADMIN_SUBCOMMANDS);
+            if (args.length == 2)
                 return plugin.getTabCompletePreset().allPlayers(args);
             return Collections.emptyList();
         }

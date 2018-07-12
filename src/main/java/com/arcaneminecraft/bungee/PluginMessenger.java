@@ -1,16 +1,16 @@
 package com.arcaneminecraft.bungee;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.UUID;
@@ -90,6 +90,25 @@ public class PluginMessenger implements Listener {
             e1.printStackTrace();
         }
     }
+
+    public void luckPermsMetaCacheReload(ProxiedPlayer p) {
+        ServerInfo server = p.getServer().getInfo();
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+
+        out.writeUTF("UpdateLuckPermsMetaCache"); // Subchannel
+
+        ByteArrayOutputStream byteos = new ByteArrayOutputStream();
+        try (DataOutputStream os = new DataOutputStream(byteos)) {
+            os.writeUTF(p.getUniqueId().toString());
+
+            out.writeShort(byteos.toByteArray().length);
+            out.write(byteos.toByteArray());
+            server.sendData("BungeeCord", out.toByteArray());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void coreprotect(CommandSender sender, String command, String[] args) {
         if (!(sender instanceof ProxiedPlayer))

@@ -96,6 +96,10 @@ public class ArcaneBungee extends Plugin {
         return sqlDatabase;
     }
 
+    public PluginMessenger getPluginMessenger() {
+        return pluginMessenger;
+    }
+
     public PluginMessenger getCommandLogger() {
         return pluginMessenger;
     }

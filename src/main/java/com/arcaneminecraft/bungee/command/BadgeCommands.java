@@ -45,7 +45,7 @@ public class BadgeCommands implements Listener {
     private static final int CUSTOM_PREFIX_PRIORITY = 1000000;
     private static final String PREFIX_PRIORITY_STRING = "PrefixPriority";
     private static final String CONFIG_FILENAME = "altered-prefix.yml";
-    private static final Set<String> ADMIN_SUBCOMMANDS = ImmutableSet.of("clear", "list", "reset", "set", "settemp");
+    private static final Set<String> ADMIN_SUBCOMMANDS = ImmutableSet.of("clear", "list", "reset", "set", "setpriority", "settemp");
 
     public BadgeCommands(ArcaneBungee plugin) {
         this.plugin = plugin;
@@ -81,7 +81,13 @@ public class BadgeCommands implements Listener {
     }
 
     public void saveConfig() {
-        config.set("a", alteredPrefix);
+        List<String> ap = new ArrayList<>();
+
+        for (UUID u : alteredPrefix)
+            ap.add(u.toString());
+
+        config.set("a", ap);
+
         try {
             ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, file);
         } catch (IOException e) {
@@ -98,14 +104,31 @@ public class BadgeCommands implements Listener {
 
         // Clear pre-existing custom prefix
         String prefix = md.getPrefixes().get(CUSTOM_PREFIX_PRIORITY);
-        if (prefix != null)
-            user.unsetPermission(getLpApi().getNodeFactory().makePrefixNode(CUSTOM_PREFIX_PRIORITY, prefix).build());
+        if (prefix != null) {
+            Node node = getLpApi().getNodeFactory().makePrefixNode(CUSTOM_PREFIX_PRIORITY, prefix).build();
+            if (user.unsetPermission(node).wasFailure()) {
+                // Temporary nodes will fail. Find the correct node with temporary duration and then end it.
+                for (Node n : user.getTemporaryPermissionNodes()) { // Not sure if this is big enough to hold the thread...
+                    if (!n.isPrefix())
+                        continue;
+                    try {
+                        if (!n.getPrefix().getKey().equals(CUSTOM_PREFIX_PRIORITY))
+                            continue;
+                        node = n;
+                        break;
+                    } catch (IllegalStateException ignore) {} // basically continue;
+                }
+                user.unsetPermission(node);
+            }
+        }
 
         // Clear PrefixPriority
         String ppNow = md.getMeta().get(PREFIX_PRIORITY_STRING);
         if (ppNow != null) {
             user.unsetPermission(getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, ppNow).build());
         }
+
+        alteredPrefix.remove(user.getUuid());
     }
 
     private Integer prefixToPriority(User user, String prefix) {
@@ -159,14 +182,15 @@ public class BadgeCommands implements Listener {
                 }
             }
 
-            BaseComponent ret = new TextComponent("Click to use: ");
+            BaseComponent ret = new TextComponent(admin ? user.getName() + "'s badges: " : "Your badges: ");
             ret.setColor(ArcaneColor.CONTENT);
-
-            String cmdPre = admin ? "/badgeadmin set " + user.getName() + " "  : "/badge ";
 
             TextComponent tc = new TextComponent("(hide)");
             tc.setItalic(true);
-            tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmdPre + "-1"));
+
+            String pre = admin ? "/badgeadmin setpriority " + user.getName() + " " : "/badge ";
+
+            tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, pre + "-1"));
             ret.addExtra(tc);
 
             ret.addExtra(" ");
@@ -177,7 +201,8 @@ public class BadgeCommands implements Listener {
             tc = new TextComponent(TextComponent.fromLegacyText(
                     ChatColor.translateAlternateColorCodes('&', first)
             ));
-            tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmdPre + "reset"));
+            tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    admin ? "/badgeadmin reset " + user.getName() : "/badge reset"));
             ret.addExtra(tc);
 
             while (i.hasNext()) {
@@ -188,7 +213,7 @@ public class BadgeCommands implements Listener {
                 tc = new TextComponent(TextComponent.fromLegacyText(
                         ChatColor.translateAlternateColorCodes('&', e.getValue())
                 ));
-                tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmdPre + e.getKey()));
+                tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, pre + e.getKey()));
                 ret.addExtra(tc);
             }
 
@@ -215,40 +240,48 @@ public class BadgeCommands implements Listener {
         });
     }
 
-    private void setPriorityThen(UUID uuid, int priority, ReturnRunnable<String> run) {
+    private void setPriorityThen(UUID uuid, int priority, ReturnRunnable.More<User, String> run) {
         getUserThen(uuid, true, user -> {
-            alteredPrefix.add(uuid);
             // Check if prefix by priority exists
             MetaData md = user.getCachedData().getMetaData(Contexts.global());
             String ret = priority == -1 ? "" : md.getPrefixes().get(priority);
             if (ret != null) {
-                // Replace with new PrefixPriority meta
+                // Remove old prefix priority value
                 String ppNow = md.getMeta().get(PREFIX_PRIORITY_STRING);
                 if (ppNow != null) {
                     user.unsetPermission(getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, ppNow).build());
                 }
-                Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, String.valueOf(priority)).build();
-                user.setPermission(node);
+
+                // Set new prefix priority if new priority is not the highest
+                if (!ret.equals(md.getPrefix())) {
+                    Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, String.valueOf(priority)).build();
+                    user.setPermission(node);
+                    alteredPrefix.add(uuid);
+                }
             }
-            run.run(ret);
+            run.run(user, ret);
         });
     }
 
     private void setCustomTagThen(UUID uuid, String prefix, ReturnRunnable<User> run) {
         getUserThen(uuid, true, user -> {
-            alteredPrefix.add(uuid);
-
             clearCustomTagsAndPriority(user);
 
             Integer test = prefixToPriority(user, prefix);
             if (test != null) {
-                // Set prefix priority instead
-                Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, test.toString()).build();
-                user.setPermission(node);
+                MetaData md = user.getCachedData().getMetaData(Contexts.global());
+                // Set prefix priority instead... if priority is not the higheset
+                //noinspection ConstantConditions
+                if (!md.getPrefix().equals( md.getPrefixes().get(test) )) {
+                    Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, test.toString()).build();
+                    user.setPermission(node);
+                    alteredPrefix.add(uuid);
+                }
             } else {
                 // Create and set new node
                 Node node = getLpApi().getNodeFactory().makePrefixNode(CUSTOM_PREFIX_PRIORITY, prefix).build();
                 user.setPermission(node);
+                alteredPrefix.add(uuid);
             }
 
             run.run(user);
@@ -257,12 +290,11 @@ public class BadgeCommands implements Listener {
 
     private void setTemporaryCustomTagThen(UUID uuid, String prefix, int duration, TimeUnit unit, ReturnRunnable<User> run) {
         getUserThen(uuid, true, user -> {
-            alteredPrefix.add(uuid);
-
             clearCustomTagsAndPriority(user);
 
             Node node = getLpApi().getNodeFactory().makePrefixNode(CUSTOM_PREFIX_PRIORITY, prefix).setExpiry(duration, unit).build();
             user.setPermission(node);
+            alteredPrefix.add(uuid);
 
             run.run(user);
         });
@@ -282,7 +314,6 @@ public class BadgeCommands implements Listener {
 
     private void clearCustomTagThen(UUID uuid, ReturnRunnable<User> run) {
         getUserThen(uuid, true, user -> {
-            alteredPrefix.remove(uuid);
             clearCustomTagsAndPriority(user);
             run.run(user);
         });
@@ -339,6 +370,10 @@ public class BadgeCommands implements Listener {
                 else if (args[0].equalsIgnoreCase("hide")) {
                     priority = -1;
                 }
+
+                else {
+                    prefix = args[0];
+                }
             }
 
             final Integer pri = priority;
@@ -356,7 +391,7 @@ public class BadgeCommands implements Listener {
                     return;
                 }
 
-                setPriorityThen(p.getUniqueId(), pt, newTag -> {
+                setPriorityThen(p.getUniqueId(), pt, (u, newTag) -> {
                     if (newTag == null) {
                         BaseComponent send = new TextComponent("That's an invalid choice");
                         send.setColor(ArcaneColor.NEGATIVE);
@@ -455,7 +490,7 @@ public class BadgeCommands implements Listener {
                         String name = plugin.getSqlDatabase().getPlayerName(u);
                         BaseComponent tc = new TextComponent(name);
                         tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/badgeadmin list " + name));
-                        send.addExtra(name);
+                        send.addExtra(tc);
                     }
 
                     if (sender instanceof ProxiedPlayer)
@@ -466,46 +501,71 @@ public class BadgeCommands implements Listener {
                 return;
             }
 
-            if (args[0].equalsIgnoreCase("set")) {
+            if (args[0].equalsIgnoreCase("setpriority")) {
                 if (args.length < 3) {
+                    sender.sendMessage(ArcaneText.usage("/badgeadmin setpriority <player> <prefix priority>"));
+                    return;
+                }
+
+                final int n;
+                try {
+                    n = Integer.parseInt(args[2]);
+                } catch (NumberFormatException e) {
+                    BaseComponent send = new TranslatableComponent("commands.generic.num.invalid", args[2]);
+                    send.setColor(ChatColor.RED);
+                    if (sender instanceof ProxiedPlayer)
+                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+                    else
+                        sender.sendMessage(send);
+                    return;
+                }
+
+                setPriorityThen(uuid, n, (user, newTag) -> {
+                    if (newTag == null) {
+                        BaseComponent send = new TextComponent("That's an invalid choice for " + user.getName());
+                        send.setColor(ArcaneColor.NEGATIVE);
+                        if (sender instanceof ProxiedPlayer)
+                            ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+                        else
+                            sender.sendMessage(send);
+                        return;
+                    }
+
+                    BaseComponent send = new TextComponent(user.getName() + "'s tag is now ");
+                    send.setColor(ArcaneColor.CONTENT);
+
+                    if (newTag.isEmpty()) {
+                        send.addExtra("empty");
+                    } else {
+                        for (BaseComponent bp : TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', newTag)))
+                            send.addExtra(bp);
+                    }
+
+                    if (sender instanceof ProxiedPlayer)
+                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+                    else
+                        sender.sendMessage(send);
+                });
+
+                return;
+            }
+
+            boolean isTemp = args[0].equalsIgnoreCase("settemp");
+            if (args[0].equalsIgnoreCase("set") || isTemp) {
+                if (args.length < 4 && isTemp) {
+                    sender.sendMessage(ArcaneText.usage("/badgeadmin settemp <player> <time[w|d|h|m|s]> <tag ...>"));
+                    return;
+                } else if (args.length < 3) {
                     sender.sendMessage(ArcaneText.usage("/badgeadmin set <player> <tag ...>"));
                     return;
                 }
 
                 StringBuilder prefixBuffer = new StringBuilder();
 
-                for (int i = 2; i < args.length; i++) {
-                    if (i != 2) {
-                        prefixBuffer.append(" ");
-                    }
-                    prefixBuffer.append(args[i]);
-                }
+                int start = isTemp ? 3 : 2;
 
-                String prefix = prefixBuffer.toString();
-
-                setCustomTagThen(uuid, prefix, user -> {
-                    BaseComponent send = new TextComponent(user.getName() + "'s tag is now ");
-                    send.setColor(ArcaneColor.CONTENT);
-                    for (BaseComponent bp : TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', prefix)))
-                        send.addExtra(bp);
-                    if (sender instanceof ProxiedPlayer)
-                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
-                    else
-                        sender.sendMessage(send);
-                });
-                return;
-            }
-
-            if (args[0].equalsIgnoreCase("settemp")) {
-                if (args.length < 4) {
-                    sender.sendMessage(ArcaneText.usage("/badgeadmin settemp <player> <time[w|d|h|m|s]> <tag ...>"));
-                    return;
-                }
-
-                StringBuilder prefixBuffer = new StringBuilder();
-
-                for (int i = 3; i < args.length; i++) {
-                    if (i != 3) {
+                for (int i = start; i < args.length; i++) {
+                    if (i != start) {
                         prefixBuffer.append(" ");
                     }
                     prefixBuffer.append(args[i]);
@@ -515,64 +575,75 @@ public class BadgeCommands implements Listener {
 
                 int duration;
                 TimeUnit unit;
-                try {
-                    duration = Integer.parseInt(args[2]);
-                    unit = TimeUnit.SECONDS;
-                } catch (NumberFormatException e) {
-                    String durationString = args[2].substring(0, args.length - 1);
+                final String forNextString;
+                if (isTemp) {
                     try {
-                        duration = Integer.parseInt(durationString);
-                    } catch (NumberFormatException e1) {
-                        BaseComponent send = new TranslatableComponent("commands.generic.num.invalid", durationString);
-                        send.setColor(ChatColor.RED);
-                        if (sender instanceof ProxiedPlayer)
-                            ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
-                        else
-                            sender.sendMessage(send);
-                        return;
-                    }
-
-                    String unitString = args[2].substring(args.length - 1);
-                    switch (unitString) {
-                        case "w":
-                            duration *= 7;
-                        case "d":
-                            unit = TimeUnit.DAYS;
-                            break;
-                        case "h":
-                            unit = TimeUnit.HOURS;
-                            break;
-                        case "m":
-                            unit = TimeUnit.MINUTES;
-                            break;
-                        case "s":
-                            unit = TimeUnit.SECONDS;
-                            break;
-                        default:
-                            BaseComponent send = new TranslatableComponent("commands.generic.parameter.invalid", unitString);
+                        duration = Integer.parseInt(args[2]);
+                        unit = TimeUnit.SECONDS;
+                    } catch (NumberFormatException e) {
+                        String durationString = args[2].substring(0, args[2].length() - 1);
+                        try {
+                            duration = Integer.parseInt(durationString);
+                        } catch (NumberFormatException e1) {
+                            BaseComponent send = new TranslatableComponent("commands.generic.num.invalid", durationString);
                             send.setColor(ChatColor.RED);
                             if (sender instanceof ProxiedPlayer)
                                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                             else
                                 sender.sendMessage(send);
                             return;
+                        }
+
+                        String unitString = args[2].substring(args[2].length() - 1);
+                        switch (unitString) {
+                            case "w":
+                                duration *= 7;
+                            case "d":
+                                unit = TimeUnit.DAYS;
+                                break;
+                            case "h":
+                                unit = TimeUnit.HOURS;
+                                break;
+                            case "m":
+                                unit = TimeUnit.MINUTES;
+                                break;
+                            case "s":
+                                unit = TimeUnit.SECONDS;
+                                break;
+                            default:
+                                BaseComponent send = new TranslatableComponent("commands.generic.parameter.invalid", unitString);
+                                send.setColor(ChatColor.RED);
+                                if (sender instanceof ProxiedPlayer)
+                                    ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+                                else
+                                    sender.sendMessage(send);
+                                return;
+                        }
                     }
+
+                    forNextString = " for the next " + duration + " " + unit.name().toLowerCase();
+                } else {
+                    duration = 0;
+                    unit = null;
+                    forNextString = "";
                 }
 
-                final int d = duration;
-                final TimeUnit u = unit;
-
-                setTemporaryCustomTagThen(uuid, prefix, d, u, user -> {
+                ReturnRunnable<User> run = user -> {
                     BaseComponent send = new TextComponent(user.getName() + "'s tag is now ");
                     send.setColor(ArcaneColor.CONTENT);
                     for (BaseComponent bp : TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', prefix)))
                         send.addExtra(bp);
-                    send.addExtra(" for the next " + d + " " + u.name().toLowerCase());
+                    send.addExtra(forNextString);
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                     else
                         sender.sendMessage(send);
-                });
+                };
+
+                if (isTemp)
+                    setTemporaryCustomTagThen(uuid, prefix, duration, unit, run);
+                else
+                    setCustomTagThen(uuid, prefix, run);
                 return;
             }
 
@@ -602,6 +673,14 @@ public class BadgeCommands implements Listener {
                 clearPriorityThen(uuid, user -> {
                     BaseComponent send = new TextComponent(user.getName() + "'s tag priority has been reset");
                     send.setColor(ArcaneColor.CONTENT);
+
+                    String newTag = user.getCachedData().getMetaData(Contexts.global()).getPrefix();
+                    if (newTag != null) {
+                        send.addExtra(" to ");
+                        for (BaseComponent bp : TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', newTag)))
+                            send.addExtra(bp);
+                    }
+
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                     else
@@ -622,7 +701,7 @@ public class BadgeCommands implements Listener {
             if (args.length == 1)
                 return plugin.getTabCompletePreset().argStartsWith(args, ADMIN_SUBCOMMANDS);
             if (args.length == 2)
-                return plugin.getTabCompletePreset().allPlayers(args);
+                return plugin.getTabCompletePreset().onlinePlayers(args);
             return Collections.emptyList();
         }
     }

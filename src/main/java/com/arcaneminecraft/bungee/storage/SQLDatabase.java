@@ -84,6 +84,10 @@ public class SQLDatabase {
         return allNameToUuid.get(name.toLowerCase());
     }
 
+    public String getPlayerName(UUID uuid) {
+        return allUuidToName.get(uuid);
+    }
+
     public void playerJoinThen(ProxiedPlayer p, ReturnRunnable<String> run) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
@@ -142,14 +146,16 @@ public class SQLDatabase {
      * @param first True = First join, false = last seen
      * @param run Parameters consist of: Timestamp time, String[] {username, uuid, timezone}
      */
-    public void getSeenThen(UUID uuid, boolean first, ReturnRunnable.More<Timestamp, String> run) {
+    public void getSeenThen(UUID uuid, boolean first, ReturnRunnable.More<Timestamp, String[]> run) {
         Cache cache = onlinePlayerCache.get(uuid);
         if (cache != null && first) {
             run.run(
                     cache.firstseen,
-                    cache.name,
-                    uuid.toString(),
-                    cache.timezone
+                    new String[]{
+                            cache.name,
+                            uuid.toString(),
+                            cache.timezone
+                    }
             );
             return;
         }
@@ -163,12 +169,14 @@ public class SQLDatabase {
                 if (rs.next()) {
                     run.run(
                             rs.getTimestamp(first ? "firstseen" : "lastseen"),
-                            rs.getString("username"),
-                            rs.getString("uuid"),
-                            rs.getString("timezone")
+                            new String[]{
+                                    rs.getString("username"),
+                                    rs.getString("uuid"),
+                                    rs.getString("timezone")
+                            }
                     );
                 } else {
-                    run.run(null, (String[])null);
+                    run.run(null, null);
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();

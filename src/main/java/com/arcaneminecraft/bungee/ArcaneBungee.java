@@ -65,7 +65,7 @@ public class ArcaneBungee extends Plugin {
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
         getProxy().getPluginManager().registerCommand(this, badgeCommands.new Badge());
-        //getProxy().getPluginManager().registerCommand(this, badgeCommands.new BadgeAdmin()); TODO
+        getProxy().getPluginManager().registerCommand(this, badgeCommands.new BadgeAdmin());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());

@@ -91,25 +91,6 @@ public class PluginMessenger implements Listener {
         }
     }
 
-    public void luckPermsMetaCacheReload(ProxiedPlayer p) {
-        ServerInfo server = p.getServer().getInfo();
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-
-        out.writeUTF("UpdateLuckPermsMetaCache"); // Subchannel
-
-        ByteArrayOutputStream byteos = new ByteArrayOutputStream();
-        try (DataOutputStream os = new DataOutputStream(byteos)) {
-            os.writeUTF(p.getUniqueId().toString());
-
-            out.writeShort(byteos.toByteArray().length);
-            out.write(byteos.toByteArray());
-            server.sendData("BungeeCord", out.toByteArray());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
     public void coreprotect(CommandSender sender, String command, String[] args) {
         if (!(sender instanceof ProxiedPlayer))
             return;

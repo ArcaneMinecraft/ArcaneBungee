@@ -128,10 +128,8 @@ public class BadgeCommands implements Listener {
         } else {
             run.run(u);
             if (save) {
-                ProxiedPlayer p = plugin.getProxy().getPlayer(u.getUuid());
-                if (p != null)
-                    plugin.getPluginMessenger().luckPermsMetaCacheReload(p);
                 getLpApi().getUserManager().saveUser(u);
+                getLpApi().getMessagingService().ifPresent(ms -> ms.pushUserUpdate(u));
             }
         }
     }

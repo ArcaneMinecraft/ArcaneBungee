@@ -72,15 +72,15 @@ public class PluginMessenger implements Listener {
                 String type = in.readUTF();
                 in.readUTF(); // player
                 String uuid = in.readUTF();
-                in.readUTF(); // world
+                String world = in.readUTF(); // world
                 int[] loc = {in.readInt(), in.readInt(), in.readInt()}; // Location
 
                 if (type.equals("XRay")) {
                     String material = in.readUTF();
-                    spy.xRayAlert(UUID.fromString(uuid), material, loc);
+                    spy.xRayAlert(UUID.fromString(uuid), material, loc, world);
                 } else if (type.equals("Sign")) {
                     String[] lines = new String[]{in.readUTF(), in.readUTF(), in.readUTF(), in.readUTF()};
-                    spy.signAlert(UUID.fromString(uuid), lines, loc);
+                    spy.signAlert(UUID.fromString(uuid), lines, loc, world);
                 }
 
                 //return;

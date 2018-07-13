@@ -37,46 +37,24 @@ import java.util.logging.Level;
 
 public class BadgeCommands implements Listener {
     private final ArcaneBungee plugin;
-    private final File file;
     /** Players with modified badge */
     private final Set<UUID> alteredPrefix;
-    private Configuration config;
 
     private static final int CUSTOM_PREFIX_PRIORITY = 1000000;
+    private static final String ALTERED_PREFIX_PATH = "badge-altered";
     private static final String PREFIX_PRIORITY_STRING = "PrefixPriority";
-    private static final String CONFIG_FILENAME = "altered-prefix.yml";
     private static final Set<String> ADMIN_SUBCOMMANDS = ImmutableSet.of("clear", "list", "reset", "set", "setpriority", "settemp");
 
     public BadgeCommands(ArcaneBungee plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), CONFIG_FILENAME);
         this.alteredPrefix = new HashSet<>();
 
-        // saveDefaultConfig
-        if (!plugin.getDataFolder().exists())
-            //noinspection ResultOfMethodCallIgnored
-            plugin.getDataFolder().mkdir();
-
-        if (!file.exists()) {
-            try (InputStream in = plugin.getResourceAsStream(CONFIG_FILENAME)) {
-                Files.copy(in, file.toPath());
-            } catch (IOException e) {
-                e.printStackTrace();
+        // Load UUID with modified player list
+        List<String> l = plugin.getCacheData().getStringList(ALTERED_PREFIX_PATH);
+        if (l != null) {
+            for (String s : l) {
+                this.alteredPrefix.add(UUID.fromString(s));
             }
-        }
-
-        // getConfig
-        try {
-            this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
-            // Load UUID with modified player list
-            List<String> l = this.config.getStringList("a");
-            if (l != null) {
-                for (String s : l) {
-                    this.alteredPrefix.add(UUID.fromString(s));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -86,13 +64,7 @@ public class BadgeCommands implements Listener {
         for (UUID u : alteredPrefix)
             ap.add(u.toString());
 
-        config.set("a", ap);
-
-        try {
-            ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, file);
-        } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Could not save " + CONFIG_FILENAME, e);
-        }
+        plugin.getCacheData().set(ALTERED_PREFIX_PATH, ap);
     }
 
     private LuckPermsApi getLpApi() {

@@ -1,6 +1,7 @@
 package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.bungee.command.*;
+import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -17,6 +18,7 @@ import java.util.logging.Level;
 
 public class ArcaneBungee extends Plugin {
     private File configFile;
+    private OptionsStorage optionsStorage;
     private File cacheDataFile;
     private Configuration config = null;
     private Configuration cacheData = null;
@@ -52,6 +54,7 @@ public class ArcaneBungee extends Plugin {
                 //shrug
             }
         }
+        this.optionsStorage = new OptionsStorage(this);
 
         this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
@@ -108,6 +111,10 @@ public class ArcaneBungee extends Plugin {
 
     public SQLDatabase getSqlDatabase() {
         return sqlDatabase;
+    }
+
+    public OptionsStorage getOptionsStorage() {
+        return optionsStorage;
     }
 
     public PluginMessenger getCommandLogger() {

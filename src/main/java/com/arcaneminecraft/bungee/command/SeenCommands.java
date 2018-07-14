@@ -179,7 +179,7 @@ public class SeenCommands {
                 send.addExtra(" was last seen ");
                 send.addExtra(timeText(time, locale,
                         (sender instanceof ProxiedPlayer)
-                                ? plugin.getSqlDatabase().getTimeZone(((ProxiedPlayer) sender).getUniqueId())
+                                ? plugin.getSqlDatabase().getTimeZoneSync(((ProxiedPlayer) sender).getUniqueId())
                                 : pData[2]
                 ));
                 send.setColor(ArcaneColor.CONTENT);
@@ -255,7 +255,7 @@ public class SeenCommands {
                 send.addExtra(" first logged in ");
                 send.addExtra(timeText(time, locale,
                         (sender instanceof ProxiedPlayer)
-                                ? plugin.getSqlDatabase().getTimeZone(((ProxiedPlayer) sender).getUniqueId())
+                                ? plugin.getSqlDatabase().getTimeZoneSync(((ProxiedPlayer) sender).getUniqueId())
                                 : pData[2]
                 ));
                 send.setColor(ArcaneColor.CONTENT);

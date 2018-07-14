@@ -26,6 +26,7 @@ public class SpyAlert implements Listener {
     private final ArcaneBungee plugin;
     private final int xRayWaitDuration;
     private final Map<UUID, XRayCounter> diamondMineMap;
+    private final HashMap<ProxiedPlayer, Integer> listenerMod;
     /**
      * Commands to ignore for everyone, e.g. everyone receives result of this command
      */
@@ -35,10 +36,28 @@ public class SpyAlert implements Listener {
      */
     private final HashSet<String> cmdSuspicious;
 
+    /**
+     * Nothing
+     */
+    public static final int LISTEN_NONE = 0;
+    /**
+     * Some, Non-all level listener
+     */
+    public static final int LISTEN_SOME = 1;
+    /**
+     * All, equal to some for non-all level listener
+     */
+    public static final int LISTEN_ALL = 2;
+    /**
+     * Everything, even if input is normally ignored
+     */
+    public static final int LISTEN_EVERYTHING = 3;
+
     SpyAlert(ArcaneBungee plugin) {
         this.plugin = plugin;
-        this.diamondMineMap = new HashMap<>();
         this.xRayWaitDuration = plugin.getConfig().getInt("spy.xray-wait-duration", 5);
+        this.diamondMineMap = new HashMap<>();
+        this.listenerMod = new HashMap<>();
         this.cmdIgnore = new HashSet<>(plugin.getCacheData().getStringList(IGNORE_COMMAND_PATH));
         this.cmdSuspicious = new HashSet<>(plugin.getCacheData().getStringList(SUSPICIOUS_COMMAND_PATH));
     }
@@ -48,7 +67,29 @@ public class SpyAlert implements Listener {
         plugin.getCacheData().set(IGNORE_COMMAND_PATH, ci);
         List<String> cs = new ArrayList<>(cmdSuspicious);
         plugin.getCacheData().set(SUSPICIOUS_COMMAND_PATH, cs);
+    }
 
+    boolean setPlayerListenLevel(ProxiedPlayer p, int level) {
+        if (p.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION)) {
+            if (level == LISTEN_ALL)
+                listenerMod.remove(p);
+            else
+                listenerMod.put(p, level);
+            return true;
+        }
+
+        if (p.hasPermission(RECEIVE_COMMAND_PERMISSION)) {
+            if (level == LISTEN_SOME || level == LISTEN_ALL) {
+                listenerMod.remove(p);
+            } else if (level == LISTEN_EVERYTHING) {
+                return false;
+            } else {
+                listenerMod.put(p, level);
+            }
+            return true;
+        }
+
+        return false;
     }
 
     private BaseComponent diamondAlertMsg(ProxiedPlayer p, int count, String block, int[] loc, String world) {
@@ -133,39 +174,43 @@ public class SpyAlert implements Listener {
          *            | All | Some
          * -----------+-----+------
          *        All |  x  |  x
-         * suspicious |  x  |  x
-         *       Some |  x  |
+         *       Some |  x  |  x
          *     ignore |     |
          *       None |     |
          */
 
-        boolean toListener;
-        boolean toAllListener;
+        boolean onAll;
+        boolean on;
 
         ProxiedPlayer p = (ProxiedPlayer) e.getSender();
-        if (p.hasPermission(ON_COMMAND_ALL_PERMISSION) || cmdSuspicious.contains(cmd)) {
+        if (cmdSuspicious.contains(cmd) || p.hasPermission(ON_COMMAND_ALL_PERMISSION)) {
             // Listened by all & Suspicious commands are listened by all
-            toAllListener = toListener = true;
+            on = onAll = true;
         } else if (!cmdIgnore.contains(cmd) || p.hasPermission(ON_COMMAND_PERMISSION)) {
             // Not suspicious nor ignored is heard by select few
-            toAllListener = true;
-            toListener = false;
+            on = true;
+            onAll = false;
         } else {
-            // Unheard
-            return;
+            // Default don't send
+            on = onAll = false;
         }
 
         BaseComponent msg = commandAlertMsg(p, e.getMessage());
 
         for (ProxiedPlayer rec : plugin.getProxy().getPlayers()) {
-            if (toAllListener && rec.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION)) {
-                rec.sendMessage(ChatMessageType.SYSTEM, msg);
-            } else if (toListener && rec.hasPermission(RECEIVE_COMMAND_PERMISSION)) {
-                rec.sendMessage(ChatMessageType.SYSTEM, msg);
+            Integer listenLevel = listenerMod.get(p);
+            if (listenLevel == null || listenLevel == LISTEN_ALL) {
+                if (on && (rec.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION) || (onAll && rec.hasPermission(RECEIVE_COMMAND_PERMISSION))))
+                    rec.sendMessage(ChatMessageType.SYSTEM, msg);
+            } else if (listenLevel == LISTEN_EVERYTHING) {
+                if (rec.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION) || (on && onAll && rec.hasPermission(RECEIVE_COMMAND_PERMISSION)))
+                    rec.sendMessage(ChatMessageType.SYSTEM, msg);
+            } else if (listenLevel == LISTEN_SOME) {
+                if (on && onAll && (rec.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION) || rec.hasPermission(RECEIVE_COMMAND_PERMISSION)))
+                    rec.sendMessage(ChatMessageType.SYSTEM, msg);
             }
         }
     }
-
 
     private class XRayCounter implements Runnable {
         private final ProxiedPlayer p;
@@ -207,4 +252,5 @@ public class SpyAlert implements Listener {
             }
             diamondMineMap.remove(p.getUniqueId());
         }
-    }}
+    }
+}

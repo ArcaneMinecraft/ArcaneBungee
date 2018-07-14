@@ -6,5 +6,6 @@ spy:
     - gamemode
     - op
     ignore:
+    - me
     - spawn
     - home

@@ -13,17 +13,17 @@ import java.util.UUID;
 
 /**
  * SQL Database must be MariaDB.
- * Stores: String uuid, String username, Date firstseen, Date lastseen, boolean greylist, boolean discord
+ * Stores: String uuid, String username, Timestamp firstseen, Timestamp lastseen, String timezone, int options
  */
 public class SQLDatabase {
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
     private static final String PLAYER_SELECT_BY_UUID = "SELECT * FROM ab_players WHERE uuid=? LIMIT 1";
     //private static final String PLAYER_SELECT_BY_USERNAME = "SELECT * FROM ab_players WHERE UPPER(username)=? LIMIT 1";
-    private static final String PLAYER_SELECT_ALL_USERNAME_UUID = "SELECT username,uuid FROM ab_players";
+    private static final String PLAYER_SELECT_ALL_USERNAME_AND_UUID = "SELECT username,uuid FROM ab_players";
     //private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE UPPER(username)=?";
     private static final String PLAYER_SELECT_TIMEZONE_BY_UUID = "SELECT timezone FROM ab_players WHERE uuid=?";
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
-    private static final String PLAYER_UPDATE_LAST_SEEN = "UPDATE ab_players SET lastseen=? WHERE uuid=?";
+    private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS = "UPDATE ab_players SET lastseen=?,options=?  WHERE uuid=?";
     private static final String NEWS_SELECT_LATEST = "SELECT * FROM ab_news ORDER BY id DESC LIMIT 1";
     private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
 
@@ -63,7 +63,7 @@ public class SQLDatabase {
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME_UUID)) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME_AND_UUID)) {
                     ResultSet rs = ps.executeQuery();
 
                     while(rs.next()) {
@@ -187,9 +187,10 @@ public class SQLDatabase {
     public void playerLeave(UUID uuid) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN)) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-                    ps.setString(2, uuid.toString());
+                    ps.setInt(2, onlinePlayerCache.get(uuid).options);
+                    ps.setString(3, uuid.toString());
                     ps.executeUpdate();
                 }
             } catch (SQLException ex) {
@@ -251,11 +252,19 @@ public class SQLDatabase {
         return allUuidToName.values();
     }
 
+    int getOption(ProxiedPlayer player) {
+        return onlinePlayerCache.get(player.getUniqueId()).options;
+    }
+
+    void setOption(ProxiedPlayer player, int option) {
+        onlinePlayerCache.get(player.getUniqueId()).options = option;
+    }
+
     private class Cache {
         private final String name;
         private final Timestamp firstseen;
-        final String timezone;
-        final int options;
+        private final String timezone;
+        private int options;
 
         private Cache(ProxiedPlayer p, ResultSet rs) throws SQLException {
             this.name = p.getName();
@@ -279,7 +288,7 @@ public class SQLDatabase {
      * @param uuid Player's UUID to search
      * @return Timezone in string format
      */
-    public String getTimeZone(UUID uuid) {
+    public String getTimeZoneSync(UUID uuid) {
         Cache c = onlinePlayerCache.get(uuid);
         if (c != null) {
             return c.timezone;

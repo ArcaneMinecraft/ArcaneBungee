@@ -6,9 +6,8 @@ CREATE TABLE `ab_players` (
   `username`   VARCHAR(36)        NOT NULL,
   `firstseen`  TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastseen`   TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `greylist`   BOOL               NOT NULL DEFAULT FALSE,
   `timezone`   VARCHAR(32),
-  `options`    INT UNSIGNED       NOT NULL DEFAULT 0,
+  `options`    INT                NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) DEFAULT CHARSET = utf8;
 CREATE INDEX `ab_players_uuid` ON `ab_players` (`uuid`);

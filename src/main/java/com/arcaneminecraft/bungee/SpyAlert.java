@@ -23,10 +23,12 @@ public class SpyAlert implements Listener {
     private static final String RECEIVE_COMMAND_ALL_PERMISSION = "arcane.spy.receive.command.all";
     private static final String SUSPICIOUS_COMMAND_PATH = "spy.command.suspicious";
     private static final String IGNORE_COMMAND_PATH = "spy.command.ignore";
+
+    private static SpyAlert instance;
     private final ArcaneBungee plugin;
     private final int xRayWaitDuration;
     private final Map<UUID, XRayCounter> diamondMineMap;
-    private final HashMap<ProxiedPlayer, Integer> listenerMod;
+    private final HashMap<ProxiedPlayer, CommandListenLevel> listenerMod;
     /**
      * Commands to ignore for everyone, e.g. everyone receives result of this command
      */
@@ -36,24 +38,22 @@ public class SpyAlert implements Listener {
      */
     private final HashSet<String> cmdSuspicious;
 
-    /**
-     * Nothing
-     */
-    public static final int LISTEN_NONE = 0;
-    /**
-     * Some, Non-all level listener
-     */
-    public static final int LISTEN_SOME = 1;
-    /**
-     * All, equal to some for non-all level listener
-     */
-    public static final int LISTEN_ALL = 2;
-    /**
-     * Everything, even if input is normally ignored
-     */
-    public static final int LISTEN_EVERYTHING = 3;
+    private enum CommandListenLevel {
+        NONE("false", 0),
+        SOME("some", 1),
+        ALL("true", 2),
+        EVERYTHING("all", 3);
+        private final String input;
+        private final int level;
+
+        CommandListenLevel(String input, int level) {
+            this.input = input;
+            this.level = level;
+        }
+    }
 
     SpyAlert(ArcaneBungee plugin) {
+        SpyAlert.instance = this;
         this.plugin = plugin;
         this.xRayWaitDuration = plugin.getConfig().getInt("spy.xray-wait-duration", 5);
         this.diamondMineMap = new HashMap<>();
@@ -69,9 +69,52 @@ public class SpyAlert implements Listener {
         plugin.getCacheData().set(SUSPICIOUS_COMMAND_PATH, cs);
     }
 
-    boolean setPlayerListenLevel(ProxiedPlayer p, int level) {
+    public static String getReceiveXRay(ProxiedPlayer p) {
+        return null;
+    }
+
+    public static boolean setReceiveXRay(ProxiedPlayer p, String level) {
+        return true;
+    }
+
+    public static String getReceiveSign(ProxiedPlayer p) {
+        return null;
+    }
+
+    public static boolean setReceiveSign(ProxiedPlayer p, String level) {
+        return true;
+    }
+
+    public static String getReceiveCommandLevel(ProxiedPlayer p) {
+        return null;
+    }
+
+    public static boolean setReceiveCommandLevel(ProxiedPlayer p, String level) {
+        return true;
+    }
+
+    private CommandListenLevel getPlayerListenLevel(ProxiedPlayer p) {
+        CommandListenLevel level = listenerMod.get(p);
+
         if (p.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION)) {
-            if (level == LISTEN_ALL)
+            if (level == null)
+                return CommandListenLevel.ALL;
+            return level;
+        }
+
+        if (p.hasPermission(RECEIVE_COMMAND_PERMISSION)) {
+            if (level == null)
+            return CommandListenLevel.SOME;
+
+            return level;
+        }
+
+        return CommandListenLevel.NONE;
+    }
+
+    private boolean setPlayerListenLevel(ProxiedPlayer p, CommandListenLevel level) {
+        if (p.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION)) {
+            if (level == CommandListenLevel.ALL)
                 listenerMod.remove(p);
             else
                 listenerMod.put(p, level);
@@ -79,9 +122,9 @@ public class SpyAlert implements Listener {
         }
 
         if (p.hasPermission(RECEIVE_COMMAND_PERMISSION)) {
-            if (level == LISTEN_SOME || level == LISTEN_ALL) {
+            if (level == CommandListenLevel.SOME || level == CommandListenLevel.ALL) {
                 listenerMod.remove(p);
-            } else if (level == LISTEN_EVERYTHING) {
+            } else if (level == CommandListenLevel.EVERYTHING) {
                 return false;
             } else {
                 listenerMod.put(p, level);
@@ -198,14 +241,14 @@ public class SpyAlert implements Listener {
         BaseComponent msg = commandAlertMsg(p, e.getMessage());
 
         for (ProxiedPlayer rec : plugin.getProxy().getPlayers()) {
-            Integer listenLevel = listenerMod.get(p);
-            if (listenLevel == null || listenLevel == LISTEN_ALL) {
+            CommandListenLevel listenLevel = listenerMod.get(p);
+            if (listenLevel == null || listenLevel == CommandListenLevel.ALL) {
                 if (on && (rec.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION) || (onAll && rec.hasPermission(RECEIVE_COMMAND_PERMISSION))))
                     rec.sendMessage(ChatMessageType.SYSTEM, msg);
-            } else if (listenLevel == LISTEN_EVERYTHING) {
+            } else if (listenLevel == CommandListenLevel.EVERYTHING) {
                 if (rec.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION) || (on && onAll && rec.hasPermission(RECEIVE_COMMAND_PERMISSION)))
                     rec.sendMessage(ChatMessageType.SYSTEM, msg);
-            } else if (listenLevel == LISTEN_SOME) {
+            } else if (listenLevel == CommandListenLevel.SOME) {
                 if (on && onAll && (rec.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION) || rec.hasPermission(RECEIVE_COMMAND_PERMISSION)))
                     rec.sendMessage(ChatMessageType.SYSTEM, msg);
             }

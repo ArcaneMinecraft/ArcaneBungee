@@ -18,7 +18,6 @@ import java.util.logging.Level;
 
 public class ArcaneBungee extends Plugin {
     private File configFile;
-    private OptionsStorage optionsStorage;
     private File cacheDataFile;
     private Configuration config = null;
     private Configuration cacheData = null;
@@ -54,10 +53,12 @@ public class ArcaneBungee extends Plugin {
                 //shrug
             }
         }
-        this.optionsStorage = new OptionsStorage(this);
+        new OptionsStorage(this);
 
         this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
+
+
 
         // Commnads that directly depend on SQL
         if (sqlDatabase != null) {
@@ -111,10 +112,6 @@ public class ArcaneBungee extends Plugin {
 
     public SQLDatabase getSqlDatabase() {
         return sqlDatabase;
-    }
-
-    public OptionsStorage getOptionsStorage() {
-        return optionsStorage;
     }
 
     public PluginMessenger getCommandLogger() {

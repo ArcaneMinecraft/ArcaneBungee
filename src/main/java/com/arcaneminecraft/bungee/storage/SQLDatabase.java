@@ -9,6 +9,7 @@ import org.mariadb.jdbc.MariaDbPoolDataSource;
 import java.sql.*;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.TimeZone;
 import java.util.UUID;
 
 /**
@@ -28,6 +29,7 @@ public class SQLDatabase {
     private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
 
     private final ArcaneBungee plugin;
+    private static SQLDatabase instance;
     private final HashMap<UUID, Cache> onlinePlayerCache;
     private final HashMap<String, UUID> allNameToUuid;
     private final HashMap<UUID, String> allUuidToName;
@@ -35,6 +37,7 @@ public class SQLDatabase {
 
 
     public SQLDatabase(ArcaneBungee plugin) throws SQLException {
+        SQLDatabase.instance = this;
         this.plugin = plugin;
         this.onlinePlayerCache = new HashMap<>();
         this.allNameToUuid = new HashMap<>();
@@ -260,27 +263,14 @@ public class SQLDatabase {
         onlinePlayerCache.get(player.getUniqueId()).options = option;
     }
 
-    private class Cache {
-        private final String name;
-        private final Timestamp firstseen;
-        private final String timezone;
-        private int options;
-
-        private Cache(ProxiedPlayer p, ResultSet rs) throws SQLException {
-            this.name = p.getName();
-            this.firstseen = rs.getTimestamp("firstseen");
-            this.timezone = rs.getString("timezone"); // physical server location
-            this.options = rs.getInt("options");
-        }
-
-        private Cache(ProxiedPlayer p) {
-            this.name = p.getName();
-            this.firstseen = new Timestamp(System.currentTimeMillis());
-            this.timezone = null;
-            this.options = 0;
-        }
+    public static String getTimeZoneCache(ProxiedPlayer p) {
+        return instance.onlinePlayerCache.get(p.getUniqueId()).timezone;
     }
-    // Cache-based methods below
+
+    public static TimeZone setTimeZoneCache(ProxiedPlayer p, String timeZone) {
+        instance.onlinePlayerCache.get(p.getUniqueId()).timezone = timeZone;
+        return TimeZone.getTimeZone(timeZone);
+    }
 
     /**
      * WARNING!!! When looking for player not currently online, it check database
@@ -308,6 +298,27 @@ public class SQLDatabase {
         } catch (SQLException ex) {
             ex.printStackTrace();
             return null;
+        }
+    }
+
+    private class Cache {
+        private final String name;
+        private final Timestamp firstseen;
+        private String timezone;
+        private int options;
+
+        private Cache(ProxiedPlayer p, ResultSet rs) throws SQLException {
+            this.name = p.getName();
+            this.firstseen = rs.getTimestamp("firstseen");
+            this.timezone = rs.getString("timezone"); // physical server location
+            this.options = rs.getInt("options");
+        }
+
+        private Cache(ProxiedPlayer p) {
+            this.name = p.getName();
+            this.firstseen = new Timestamp(System.currentTimeMillis());
+            this.timezone = null;
+            this.options = 0;
         }
     }
 }

@@ -24,7 +24,7 @@ public class SQLDatabase {
     //private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE UPPER(username)=?";
     private static final String PLAYER_SELECT_TIMEZONE_BY_UUID = "SELECT timezone FROM ab_players WHERE uuid=?";
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
-    private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS = "UPDATE ab_players SET lastseen=?,options=?  WHERE uuid=?";
+    private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE = "UPDATE ab_players SET lastseen=?,options=?,timezone=?  WHERE uuid=?";
     private static final String NEWS_SELECT_LATEST = "SELECT * FROM ab_news ORDER BY id DESC LIMIT 1";
     private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
 
@@ -189,18 +189,20 @@ public class SQLDatabase {
 
     public void playerLeave(UUID uuid) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            Cache cache = onlinePlayerCache.get(uuid);
+            onlinePlayerCache.remove(uuid);
             try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS)) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-                    ps.setInt(2, onlinePlayerCache.get(uuid).options);
-                    ps.setString(3, uuid.toString());
+                    ps.setInt(2, cache.options);
+                    ps.setString(3, cache.timezone);
+                    ps.setString(4, uuid.toString());
                     ps.executeUpdate();
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         });
-        onlinePlayerCache.remove(uuid);
     }
 
     public void getLatestNews(ReturnRunnable<String> run) {

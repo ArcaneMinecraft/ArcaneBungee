@@ -87,7 +87,7 @@ public class Option extends Command implements TabExecutor {
                 boolean bool;
                 if (value.equalsIgnoreCase("true"))
                     bool = true;
-                else if (value.equalsIgnoreCase("fales"))
+                else if (value.equalsIgnoreCase("false"))
                     bool = false;
                 else
                     return false;
@@ -117,7 +117,7 @@ public class Option extends Command implements TabExecutor {
         }
     }
 
-    Option(ArcaneBungee plugin) {
+    public Option(ArcaneBungee plugin) {
         super(BungeeCommandUsage.OPTION.getName(), BungeeCommandUsage.OPTION.getPermission(), BungeeCommandUsage.OPTION.getAliases());
         this.plugin = plugin;
     }
@@ -162,6 +162,7 @@ public class Option extends Command implements TabExecutor {
                 }
             }
             p.sendMessage(ChatMessageType.SYSTEM, send);
+            return;
         }
 
         String choice;

@@ -66,9 +66,9 @@ public class PluginMessenger implements Listener {
                 return;
             }
 
-            if (e.getTag().equalsIgnoreCase("ArcaneAlert")) { // TODO: Optimize
+            if (e.getTag().equalsIgnoreCase("arcaneserver:alert")) {
                 DataInputStream in = new DataInputStream(new ByteArrayInputStream(e.getData()));
-                in.readUTF(); // server
+                in.readUTF(); // server // TODO: Optimize
                 String type = in.readUTF();
                 in.readUTF(); // player
                 String uuid = in.readUTF();

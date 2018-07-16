@@ -35,7 +35,7 @@ public class ArcaneBungee extends Plugin {
 
         saveDefaultConfigs();
 
-        getProxy().registerChannel("ArcaneAlert");
+        getProxy().registerChannel("arcaneserver:alert");
 
         this.spyAlert = new SpyAlert(this);
         getProxy().getPluginManager().registerListener(this, this.spyAlert);

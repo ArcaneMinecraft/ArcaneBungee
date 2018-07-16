@@ -49,13 +49,6 @@ public class TellCommands {
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
                 else sender.sendMessage(ArcaneText.playerNotFound(args[0]));
                 return;
-            } else if (p == sender) {
-                BaseComponent send = new TranslatableComponent("commands.message.sameTarget"); // TODO: Latest 1.13 snapshot allows self-messaging
-                send.setColor(ChatColor.RED);
-                if (sender instanceof ProxiedPlayer)
-                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, send);
-                else sender.sendMessage(send);
-                return;
             }
 
             messenger(sender, p, args, 1);

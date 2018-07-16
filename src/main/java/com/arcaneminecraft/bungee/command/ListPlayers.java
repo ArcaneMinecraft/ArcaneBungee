@@ -29,7 +29,7 @@ public class ListPlayers extends Command implements TabExecutor {
         plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.LIST.getCommand(), args);
 
         Collection<ProxiedPlayer> cp = plugin.getProxy().getPlayers();
-        BaseComponent head = new TranslatableComponent("commands.players.list",
+        BaseComponent head = new TranslatableComponent("There are %s/%s players online:", // TODO: Update Translatable node
                 String.valueOf(plugin.getProxy().getOnlineCount()),
                 String.valueOf(plugin.getProxy().getConfig().getPlayerLimit()));
 

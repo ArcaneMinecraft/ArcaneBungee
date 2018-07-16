@@ -475,7 +475,7 @@ public class BadgeCommands implements Listener {
                 try {
                     n = Integer.parseInt(args[2]);
                 } catch (NumberFormatException e) {
-                    BaseComponent send = new TranslatableComponent("commands.generic.num.invalid", args[2]);
+                    BaseComponent send = new TranslatableComponent("'%s' is not a valid number", args[2]); // TODO: Update Translatable node
                     send.setColor(ChatColor.RED);
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
@@ -549,7 +549,7 @@ public class BadgeCommands implements Listener {
                         try {
                             duration = Integer.parseInt(durationString);
                         } catch (NumberFormatException e1) {
-                            BaseComponent send = new TranslatableComponent("commands.generic.num.invalid", durationString);
+                            BaseComponent send = new TranslatableComponent("'%s' is not a valid number", durationString); // TODO: Update Translatable node
                             send.setColor(ChatColor.RED);
                             if (sender instanceof ProxiedPlayer)
                                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
@@ -575,7 +575,7 @@ public class BadgeCommands implements Listener {
                                 unit = TimeUnit.SECONDS;
                                 break;
                             default:
-                                BaseComponent send = new TranslatableComponent("commands.generic.parameter.invalid", unitString);
+                                BaseComponent send = new TranslatableComponent("'%s' is not a valid parameter", unitString); // TODO: Update Translatable node
                                 send.setColor(ChatColor.RED);
                                 if (sender instanceof ProxiedPlayer)
                                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);

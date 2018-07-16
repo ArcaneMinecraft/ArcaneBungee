@@ -19,7 +19,7 @@ configurations {
 }
 
 dependencies {
-    compileOnly 'net.md-5:bungeecord-api:1.12-SNAPSHOT' // Bungeecord api
+    compileOnly 'net.md-5:bungeecord-api:1.13-SNAPSHOT' // Bungeecord api
     compileOnly 'me.lucko.luckperms:luckperms-api:4.2'
     compileOnly fileTree(dir: 'libs', include: '*.jar')
     compileOnly 'org.mariadb.jdbc:mariadb-java-client:2.2.5'

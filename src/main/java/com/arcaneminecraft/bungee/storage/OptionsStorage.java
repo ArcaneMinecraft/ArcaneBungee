@@ -18,16 +18,20 @@ public class OptionsStorage {
     }
 
     public enum Options {
-        SHOW_WELCOME_MESSAGE(1, false), // if option returns 0, show welcome message
-        SHOW_DONOR_WELCOME_MESSAGE(1 << 1, false),
-        SHOW_LAST_LOGIN_MESSAGE(1 << 2, false);
+        SHOW_WELCOME_MESSAGE(1, true), // e.g. if option is not set (0), show welcome message. If set (1), do the opposite and don't show welcome message
+        SHOW_DONOR_WELCOME_MESSAGE(1 << 1, true),
+        SHOW_LAST_LOGIN_MESSAGE(1 << 2, true);
 
         private int pos;
-        private boolean on;
+        private boolean defaultOnZero;
 
-        Options(int pos, boolean defaultOn) {
+        Options(int pos, boolean defaultOnZero) {
             this.pos = pos;
-            this.on = defaultOn;
+            this.defaultOnZero = defaultOnZero;
+        }
+
+        public boolean getDefault() {
+            return defaultOnZero;
         }
     }
 
@@ -37,12 +41,12 @@ public class OptionsStorage {
 
     public static void set(ProxiedPlayer p, Options o, boolean set) {
         sPlugin.getSqlDatabase().setOption(p,
-                o.on == set
-                        ? o(p) & ~o.pos
-                        : o(p) | o.pos);
+                o.defaultOnZero == set
+                        ? o(p) | o.pos
+                        : o(p) & ~o.pos);
     }
 
     public static boolean get(ProxiedPlayer p, Options o) {
-        return o.on == ((o(p) & o.pos) != 0);
+        return o.defaultOnZero == ((o(p) & o.pos) == 0);
     }
 }

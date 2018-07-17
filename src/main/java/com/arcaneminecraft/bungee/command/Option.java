@@ -29,12 +29,12 @@ public class Option extends Command implements TabExecutor {
         SHOW_DONOR_WELCOME_MESSAGE ("showDonorWelcomeMessage", OptionsStorage.Options.SHOW_DONOR_WELCOME_MESSAGE),
         SHOW_LAST_LOGIN_MESSAGE ("showLastLoginMessage", OptionsStorage.Options.SHOW_LAST_LOGIN_MESSAGE),
         SHOW_WELCOME_MESSAGE ("showWelcomeMessage", OptionsStorage.Options.SHOW_WELCOME_MESSAGE),
-        TIMEZONE ("timezone", SQLDatabase::getTimeZoneCache, SQLDatabase::setTimeZoneCache, null, new String[]{}),
+        TIMEZONE ("timezone", SQLDatabase::getTimeZoneCache, SQLDatabase::setTimeZoneCache, null, false, new String[]{}),
 
-        SHOW_COMMAND_ALERT ("showCommandAlert", SpyAlert::getReceiveCommandLevel, SpyAlert::setReceiveCommandLevel, "arcane.spy.receive.command"),
-        SHOW_COMMAND_ALL_ALERT ("showCommandAlert", SpyAlert::getReceiveCommandLevel, SpyAlert::setReceiveCommandLevel, "arcane.spy.receive.command.all", "all", "true", "some", "false"),
-        SHOW_SIGN_ALERT ("showSignAlert", SpyAlert::getReceiveSign, SpyAlert::setReceiveSign, "arcane.spy.receive.sign"),
-        SHOW_XRAY_ALERT ("showXRayAlert", SpyAlert::getReceiveXRay, SpyAlert::setReceiveXRay, "arcane.spy.receive.xray");
+        SHOW_COMMAND_ALERT ("showCommandAlert", SpyAlert::getReceiveCommandLevel, SpyAlert::setReceiveCommandLevel, "arcane.spy.receive.command", true),
+        SHOW_COMMAND_ALL_ALERT ("showCommandAlert", SpyAlert::getReceiveCommandLevel, SpyAlert::setReceiveCommandLevel, "arcane.spy.receive.command.all", true, "all", "true", "some", "false"),
+        SHOW_SIGN_ALERT ("showSignAlert", SpyAlert::getReceiveSign, SpyAlert::setReceiveSign, "arcane.spy.receive.sign", true),
+        SHOW_XRAY_ALERT ("showXRayAlert", SpyAlert::getReceiveXRay, SpyAlert::setReceiveXRay, "arcane.spy.receive.xray", true);
 
         private static final String PERM_PREFIX = "arcane.option.";
         private final String name;
@@ -43,6 +43,11 @@ public class Option extends Command implements TabExecutor {
         private final String[] choices;
         private final Function<ProxiedPlayer, String> get;
         private final BiConsumer<ProxiedPlayer, String> set;
+        private final String defaultValue;
+        /**
+         * The toggle lasts only this session
+         */
+        private final boolean sessionOnly;
 
         Options(String name, OptionsStorage.Options opt) {
             this(name, opt, null);
@@ -57,13 +62,15 @@ public class Option extends Command implements TabExecutor {
             this.choices = null;
             this.get = null;
             this.set = null;
+            this.defaultValue = String.valueOf(opt.getDefault());
+            this.sessionOnly = false;
         }
 
-        Options(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission) {
-            this(name, get, set, permission, (String[]) null);
+        Options(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission, boolean sessionOnly) {
+            this(name, get, set, permission, sessionOnly, (String[]) null);
         }
 
-        Options(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission, String... accept) {
+        Options(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission, boolean sessionOnly, String... accept) {
             if (get == null || set == null)
                 throw new IllegalArgumentException("Function get or set is null");
             this.name = name;
@@ -72,6 +79,8 @@ public class Option extends Command implements TabExecutor {
             this.choices = accept;
             this.get = get;
             this.set = set;
+            this.defaultValue = get.apply(null);
+            this.sessionOnly = sessionOnly;
         }
 
         private String get(ProxiedPlayer p) {
@@ -122,12 +131,6 @@ public class Option extends Command implements TabExecutor {
         this.plugin = plugin;
     }
 
-    private BaseComponent optionValue(Options option, ProxiedPlayer p) {
-        BaseComponent ret = new TextComponent(option.name + " = " + option.get(p));
-        ret.setColor(ArcaneColor.CONTENT);
-        return ret;
-    }
-
 
     @Override
     public void execute(CommandSender sender, String[] args) {
@@ -173,13 +176,8 @@ public class Option extends Command implements TabExecutor {
             choice = null;
 
         Option.Options noPerm = null;
-    /*
-commands.gamerule.usage=/gamerule <rule name> [value]
-commands.gamerule.success=Game rule %s has been updated to %s
-commands.gamerule.norule=No game rule called '%s' is available
-commands.gamerule.nopermission=Only server owners can change '%s'
-     */
 
+        BaseComponent send;
         for (Options o : Options.values()) {
             if (!args[0].equalsIgnoreCase(o.name))
                 continue;
@@ -190,23 +188,25 @@ commands.gamerule.nopermission=Only server owners can change '%s'
             }
 
             if (choice == null) {
-                p.sendMessage(optionValue(o, p));
-                return;
+                send = new TextComponent("Option " + o.name + " is currently " + o.get(p)); // TODO: Message
+            } else if (o.set(p, choice)) {
+                send = new TextComponent("Successfully set " + o.name + " to " + o); // TODO: Message
+                if (o.sessionOnly && !o.defaultValue.equalsIgnoreCase(choice))
+                send.addExtra(". This option will reset to " + o.defaultValue + "on logout");
+            } else {
+                send = new TextComponent(o + "Failed to set " + o.name + " to " + o); // TODO: Message
             }
-
-            if (o.set(p, choice)) {
-                p.sendMessage(o + "Success"); // TODO: Message
-                return;
-            }
-
-            p.sendMessage(o + "failure args"); // TODO: Message
+            send.setColor(ArcaneColor.CONTENT);
+            p.sendMessage(ChatMessageType.SYSTEM, send);
             return;
         }
 
         if (noPerm != null)
-            p.sendMessage(noPerm + "no perm msg"); // TODO: Message
+            send = new TextComponent("You do not have permission to change " + noPerm.name); // TODO: Message
         else
-            p.sendMessage("does not exist msg"); // TODO: Message
+            send = new TextComponent("This option does not exist"); // TODO: Message
+        send.setColor(ArcaneColor.NEGATIVE);
+        p.sendMessage(ChatMessageType.SYSTEM, send);
     }
 
     @Override

@@ -72,6 +72,8 @@ public class SpyAlert implements Listener {
     }
 
     public static String getReceiveXRay(ProxiedPlayer p) {
+        if (p == null)
+            return "true";
         return String.valueOf(!instance.ignoreXRay.contains(p));
     }
 
@@ -83,6 +85,8 @@ public class SpyAlert implements Listener {
     }
 
     public static String getReceiveSign(ProxiedPlayer p) {
+        if (p == null)
+            return "true";
         return String.valueOf(!instance.ignoreSign.contains(p));
     }
 
@@ -94,7 +98,9 @@ public class SpyAlert implements Listener {
     }
 
     public static String getReceiveCommandLevel(ProxiedPlayer p) {
-        return instance.getPlayerListenLevel(p).input;
+        if (p == null)
+            return CommandListenLevel.ALL.input;
+        return instance.getPlayerListenLevel(p, true).input;
     }
 
     public static void setReceiveCommandLevel(ProxiedPlayer p, String level) {
@@ -107,6 +113,10 @@ public class SpyAlert implements Listener {
     }
 
     private CommandListenLevel getPlayerListenLevel(ProxiedPlayer p) {
+        return getPlayerListenLevel(p, false);
+    }
+
+    private CommandListenLevel getPlayerListenLevel(ProxiedPlayer p, boolean forOptionDisplay) {
         CommandListenLevel level = commandListenMod.get(p);
 
         if (p.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION)) {
@@ -116,8 +126,11 @@ public class SpyAlert implements Listener {
         }
 
         if (p.hasPermission(RECEIVE_COMMAND_PERMISSION)) {
-            if (level == null || level != CommandListenLevel.NONE)
-            return CommandListenLevel.SOME;
+            if (level == null || level != CommandListenLevel.NONE) {
+                if (forOptionDisplay)
+                    return CommandListenLevel.ALL;
+                return CommandListenLevel.SOME;
+            }
 
             return level;
         }

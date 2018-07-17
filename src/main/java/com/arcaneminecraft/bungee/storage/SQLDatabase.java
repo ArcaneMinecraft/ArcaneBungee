@@ -266,6 +266,8 @@ public class SQLDatabase {
     }
 
     public static String getTimeZoneCache(ProxiedPlayer p) {
+        if (p == null)
+            return "America/Toronto"; // Default timezone of the server
         return instance.onlinePlayerCache.get(p.getUniqueId()).timezone;
     }
 

@@ -12,10 +12,10 @@ import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
-public class VanillaEvents implements Listener {
+public class JoinLeaveEvents implements Listener {
     private final ArcaneBungee plugin;
 
-    VanillaEvents (ArcaneBungee plugin) {
+    JoinLeaveEvents(ArcaneBungee plugin) {
         this.plugin = plugin;
     }
 

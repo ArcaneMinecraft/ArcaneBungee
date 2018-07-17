@@ -56,7 +56,7 @@ public class ArcaneBungee extends Plugin {
         new OptionsStorage(this);
 
         this.tabCompletePreset = new TabCompletePreset(this);
-        getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
+        getProxy().getPluginManager().registerListener(this, new JoinLeaveEvents(this));
 
 
 

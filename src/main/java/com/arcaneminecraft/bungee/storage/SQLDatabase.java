@@ -272,9 +272,8 @@ public class SQLDatabase {
         return instance.onlinePlayerCache.get(p.getUniqueId()).timezone;
     }
 
-    public static TimeZone setTimeZoneCache(ProxiedPlayer p, String timeZone) {
+    public static void setTimeZoneCache(ProxiedPlayer p, String timeZone) {
         instance.onlinePlayerCache.get(p.getUniqueId()).timezone = timeZone;
-        return TimeZone.getTimeZone(timeZone);
     }
 
     /**

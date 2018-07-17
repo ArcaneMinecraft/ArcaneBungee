@@ -42,8 +42,8 @@ public class OptionsStorage {
     public static void set(ProxiedPlayer p, Toggles o, boolean set) {
         sPlugin.getSqlDatabase().setOption(p,
                 o.defaultOnZero == set
-                        ? o(p) | o.pos
-                        : o(p) & ~o.pos);
+                        ? o(p) & ~o.pos
+                        : o(p) | o.pos);
     }
 
     public static boolean get(ProxiedPlayer p, Toggles o) {

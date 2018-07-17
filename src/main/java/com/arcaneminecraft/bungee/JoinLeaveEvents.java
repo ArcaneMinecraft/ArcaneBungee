@@ -17,7 +17,7 @@ import net.md_5.bungee.event.EventHandler;
 
 import java.text.DateFormat;
 import java.util.TimeZone;
-import java.util.logging.Level;
+import java.util.concurrent.TimeUnit;
 
 public class JoinLeaveEvents implements Listener {
     private final ArcaneBungee plugin;
@@ -64,6 +64,7 @@ public class JoinLeaveEvents implements Listener {
         temp = new TextComponent(new String(new char[80]).replace("\0", " "));
         temp.copyFormatting(line);
         this.welcomeMessage.addExtra(temp);
+        this.welcomeMessage.addExtra("\n");
     }
 
     @EventHandler
@@ -80,17 +81,34 @@ public class JoinLeaveEvents implements Listener {
                 }
 
                 if (time != null && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE)) {
-                    // NULLPOINTER EXCEPTION???
-                    try {
-                        DateFormat t = DateFormat.getTimeInstance(DateFormat.FULL, p.getLocale());
+                    // Scheduled because p.getLocale() does not load immediately
+                    plugin.getProxy().getScheduler().schedule(plugin, () -> {
                         String timezone = plugin.getSqlDatabase().getTimeZoneSync(p.getUniqueId());
-                        t.setTimeZone(TimeZone.getTimeZone(timezone == null ? "America/Toronto" : timezone));
-                        p.sendMessage(ChatMessageType.SYSTEM, new TextComponent("Your last login was " + t.format(time)));
-                        if (timezone == null)
-                            p.sendMessage(ChatMessageType.SYSTEM, new TextComponent("Tip: set your timezone using '/option timeZone <time zone ID>'!"));
-                    } catch (NullPointerException ex) {
-                        plugin.getLogger().log(Level.WARNING, "Failed to construct first login message", ex);
-                    }
+                        boolean unsetTimezone;
+                        if (timezone == null) {
+                            unsetTimezone = true;
+                            timezone = "America/Toronto";
+                        } else {
+                            unsetTimezone = false;
+                        }
+
+                        DateFormat df = p.getLocale() == null
+                                ? DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL)
+                                : DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, p.getLocale());
+                        df.setTimeZone(TimeZone.getTimeZone(timezone));
+                        BaseComponent send = new TextComponent("Your last login was on ");
+                        send.setColor(ArcaneColor.HEADING);
+                        BaseComponent timeFormat = new TextComponent(df.format(time));
+                        timeFormat.setColor(ArcaneColor.FOCUS);
+                        send.addExtra(timeFormat);
+                        p.sendMessage(ChatMessageType.SYSTEM, send);
+
+                        if (unsetTimezone) {
+                            send = new TextComponent("> Tip: set your timezone using '/option timeZone <time zone ID>'!");
+                            send.setColor(ArcaneColor.CONTENT);
+                            p.sendMessage(ChatMessageType.SYSTEM, send);
+                        }
+                    }, 1L, TimeUnit.SECONDS);
                 }
 
 

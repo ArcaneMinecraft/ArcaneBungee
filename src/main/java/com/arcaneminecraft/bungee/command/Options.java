@@ -21,14 +21,14 @@ import java.util.Collections;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class Option extends Command implements TabExecutor {
+public class Options extends Command implements TabExecutor {
     private final ArcaneBungee plugin;
 
 
-    private enum Options {
-        SHOW_DONOR_WELCOME_MESSAGE ("showDonorWelcomeMessage", OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE),
-        SHOW_LAST_LOGIN_MESSAGE ("showLastLoginMessage", OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE),
-        SHOW_WELCOME_MESSAGE ("showWelcomeMessage", OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE),
+    private enum OptionEntries {
+        SHOW_DONOR_WELCOME_MESSAGE ("showDonorWelcomeMessage", OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE, "arcane.welcome.donor"),
+        SHOW_LAST_LOGIN_MESSAGE ("showLastLoginMessage", OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE, "arcane.welcome.lastlogin.option"),
+        SHOW_WELCOME_MESSAGE ("showWelcomeMessage", OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE, "arcane.welcome.option"),
         TIMEZONE ("timeZone", SQLDatabase::getTimeZoneCache, SQLDatabase::setTimeZoneCache, null, false, new String[]{}),
 
         SHOW_COMMAND_ALERT ("showCommandAlert", SpyAlert::getReceiveCommandLevel, SpyAlert::setReceiveCommandLevel, "arcane.spy.receive.command", true),
@@ -36,7 +36,6 @@ public class Option extends Command implements TabExecutor {
         SHOW_SIGN_ALERT ("showSignAlert", SpyAlert::getReceiveSign, SpyAlert::setReceiveSign, "arcane.spy.receive.sign", true),
         SHOW_XRAY_ALERT ("showXRayAlert", SpyAlert::getReceiveXRay, SpyAlert::setReceiveXRay, "arcane.spy.receive.xray", true);
 
-        private static final String PERM_PREFIX = "arcane.option.";
         private final String name;
         private final String permission;
         private final OptionsStorage.Toggles opt;
@@ -49,15 +48,15 @@ public class Option extends Command implements TabExecutor {
          */
         private final boolean sessionOnly;
 
-        Options(String name, OptionsStorage.Toggles opt) {
+        OptionEntries(String name, OptionsStorage.Toggles opt) {
             this(name, opt, null);
         }
 
-        Options(String name, OptionsStorage.Toggles opt, String permission) {
+        OptionEntries(String name, OptionsStorage.Toggles opt, String permission) {
             if (opt == null)
-                throw new IllegalArgumentException("OPtionsStorage.Options opt is null");
+                throw new IllegalArgumentException("OptionsStorage.Options opt is null");
             this.name = name;
-            this.permission = (permission == null ? PERM_PREFIX + name : permission);
+            this.permission = permission;
             this.opt = opt;
             this.choices = null;
             this.get = null;
@@ -66,15 +65,15 @@ public class Option extends Command implements TabExecutor {
             this.sessionOnly = false;
         }
 
-        Options(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission, boolean sessionOnly) {
+        OptionEntries(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission, boolean sessionOnly) {
             this(name, get, set, permission, sessionOnly, (String[]) null);
         }
 
-        Options(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission, boolean sessionOnly, String... accept) {
+        OptionEntries(String name, Function<ProxiedPlayer, String> get, BiConsumer<ProxiedPlayer, String> set, String permission, boolean sessionOnly, String... accept) {
             if (get == null || set == null)
                 throw new IllegalArgumentException("Function get or set is null");
             this.name = name;
-            this.permission = (permission == null ? PERM_PREFIX + name : permission);
+            this.permission = permission;
             this.opt = null;
             this.choices = accept;
             this.get = get;
@@ -126,7 +125,7 @@ public class Option extends Command implements TabExecutor {
         }
     }
 
-    public Option(ArcaneBungee plugin) {
+    public Options(ArcaneBungee plugin) {
         super(BungeeCommandUsage.OPTION.getName(), BungeeCommandUsage.OPTION.getPermission(), BungeeCommandUsage.OPTION.getAliases());
         this.plugin = plugin;
     }
@@ -155,8 +154,8 @@ public class Option extends Command implements TabExecutor {
             BaseComponent send = new TextComponent("Available options:");
             send.setColor(ArcaneColor.CONTENT);
 
-            for (Options o : Options.values()) {
-                if (sender.hasPermission(o.permission)) {
+            for (OptionEntries o : OptionEntries.values()) {
+                if (o.permission == null || sender.hasPermission(o.permission)) {
                     send.addExtra(" ");
                     BaseComponent bp = new TextComponent(o.name);
                     bp.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/option " + o.name + " "));
@@ -175,14 +174,14 @@ public class Option extends Command implements TabExecutor {
         else
             choice = null;
 
-        Option.Options noPerm = null;
+        OptionEntries noPerm = null;
 
         BaseComponent send;
-        for (Options o : Options.values()) {
+        for (OptionEntries o : OptionEntries.values()) {
             if (!args[0].equalsIgnoreCase(o.name))
                 continue;
 
-            if (!p.hasPermission(o.permission)) {
+            if (o.permission != null && !p.hasPermission(o.permission)) {
                 noPerm = o;
                 continue;
             }
@@ -190,11 +189,11 @@ public class Option extends Command implements TabExecutor {
             if (choice == null) {
                 send = new TextComponent("Option " + o.name + " is currently " + o.get(p)); // TODO: Message
             } else if (o.set(p, choice)) {
-                send = new TextComponent("Successfully set " + o.name + " to " + o); // TODO: Message
+                send = new TextComponent("Successfully set " + o.name + " to " + choice); // TODO: Message
                 if (o.sessionOnly && !o.defaultValue.equalsIgnoreCase(choice))
-                send.addExtra(". This option will reset to " + o.defaultValue + "on logout");
+                send.addExtra(". This option will reset to " + o.defaultValue + " on logout");
             } else {
-                send = new TextComponent(o + "Failed to set " + o.name + " to " + o); // TODO: Message
+                send = new TextComponent("Failed to set " + o.name + " to " + choice); // TODO: Message
             }
             send.setColor(ArcaneColor.CONTENT);
             p.sendMessage(ChatMessageType.SYSTEM, send);
@@ -215,8 +214,8 @@ public class Option extends Command implements TabExecutor {
             return Collections.emptyList();
 
         ArrayList<String> ret = new ArrayList<>();
-        for (Options o : Options.values()) {
-            if (sender.hasPermission(o.permission) && o.name.toLowerCase().startsWith(args[0]))
+        for (OptionEntries o : OptionEntries.values()) {
+            if ((o.permission == null || sender.hasPermission(o.permission)) && o.name.toLowerCase().startsWith(args[0]))
                 ret.add(o.name);
         }
 

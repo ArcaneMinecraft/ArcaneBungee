@@ -17,7 +17,7 @@ public class OptionsStorage {
         OptionsStorage.sPlugin = plugin;
     }
 
-    public enum Options {
+    public enum Toggles {
         SHOW_WELCOME_MESSAGE(1, true), // e.g. if option is not set (0), show welcome message. If set (1), do the opposite and don't show welcome message
         SHOW_DONOR_WELCOME_MESSAGE(1 << 1, true),
         SHOW_LAST_LOGIN_MESSAGE(1 << 2, true);
@@ -25,7 +25,7 @@ public class OptionsStorage {
         private int pos;
         private boolean defaultOnZero;
 
-        Options(int pos, boolean defaultOnZero) {
+        Toggles(int pos, boolean defaultOnZero) {
             this.pos = pos;
             this.defaultOnZero = defaultOnZero;
         }
@@ -39,14 +39,14 @@ public class OptionsStorage {
         return sPlugin.getSqlDatabase() == null ? 0 : sPlugin.getSqlDatabase().getOption(p);
     }
 
-    public static void set(ProxiedPlayer p, Options o, boolean set) {
+    public static void set(ProxiedPlayer p, Toggles o, boolean set) {
         sPlugin.getSqlDatabase().setOption(p,
                 o.defaultOnZero == set
                         ? o(p) | o.pos
                         : o(p) & ~o.pos);
     }
 
-    public static boolean get(ProxiedPlayer p, Options o) {
+    public static boolean get(ProxiedPlayer p, Toggles o) {
         return o.defaultOnZero == ((o(p) & o.pos) == 0);
     }
 }

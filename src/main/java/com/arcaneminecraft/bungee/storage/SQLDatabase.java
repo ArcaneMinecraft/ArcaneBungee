@@ -91,7 +91,7 @@ public class SQLDatabase {
         return allUuidToName.get(uuid);
     }
 
-    public void playerJoinThen(ProxiedPlayer p, ReturnRunnable<String> run) {
+    public void playerJoinThen(ProxiedPlayer p, ReturnRunnable.More<Timestamp, String> run) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 ResultSet rs;
@@ -114,11 +114,12 @@ public class SQLDatabase {
                     }
                     // is new player: empty string
                     onlinePlayerCache.put(p.getUniqueId(), new Cache(p));
-                    run.run("");
+                    run.run(null, "");
                     return;
                 }
 
                 String name = rs.getString("username");
+                Timestamp time = rs.getTimestamp("lastseen");
 
                 if (!p.getName().equals(name)) {
                     // Username changed
@@ -134,11 +135,11 @@ public class SQLDatabase {
 
                 // Query returned data; give username from database
                 onlinePlayerCache.put(p.getUniqueId(), new Cache(p, rs));
-                run.run(name);
+                run.run(time, name);
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 // Fetch failed: null
-                run.run(null);
+                run.run(null, null);
             }
         });
     }

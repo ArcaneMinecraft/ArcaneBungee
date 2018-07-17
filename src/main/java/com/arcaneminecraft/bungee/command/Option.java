@@ -26,10 +26,10 @@ public class Option extends Command implements TabExecutor {
 
 
     private enum Options {
-        SHOW_DONOR_WELCOME_MESSAGE ("showDonorWelcomeMessage", OptionsStorage.Options.SHOW_DONOR_WELCOME_MESSAGE),
-        SHOW_LAST_LOGIN_MESSAGE ("showLastLoginMessage", OptionsStorage.Options.SHOW_LAST_LOGIN_MESSAGE),
-        SHOW_WELCOME_MESSAGE ("showWelcomeMessage", OptionsStorage.Options.SHOW_WELCOME_MESSAGE),
-        TIMEZONE ("timezone", SQLDatabase::getTimeZoneCache, SQLDatabase::setTimeZoneCache, null, false, new String[]{}),
+        SHOW_DONOR_WELCOME_MESSAGE ("showDonorWelcomeMessage", OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE),
+        SHOW_LAST_LOGIN_MESSAGE ("showLastLoginMessage", OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE),
+        SHOW_WELCOME_MESSAGE ("showWelcomeMessage", OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE),
+        TIMEZONE ("timeZone", SQLDatabase::getTimeZoneCache, SQLDatabase::setTimeZoneCache, null, false, new String[]{}),
 
         SHOW_COMMAND_ALERT ("showCommandAlert", SpyAlert::getReceiveCommandLevel, SpyAlert::setReceiveCommandLevel, "arcane.spy.receive.command", true),
         SHOW_COMMAND_ALL_ALERT ("showCommandAlert", SpyAlert::getReceiveCommandLevel, SpyAlert::setReceiveCommandLevel, "arcane.spy.receive.command.all", true, "all", "true", "some", "false"),
@@ -39,7 +39,7 @@ public class Option extends Command implements TabExecutor {
         private static final String PERM_PREFIX = "arcane.option.";
         private final String name;
         private final String permission;
-        private final OptionsStorage.Options opt;
+        private final OptionsStorage.Toggles opt;
         private final String[] choices;
         private final Function<ProxiedPlayer, String> get;
         private final BiConsumer<ProxiedPlayer, String> set;
@@ -49,11 +49,11 @@ public class Option extends Command implements TabExecutor {
          */
         private final boolean sessionOnly;
 
-        Options(String name, OptionsStorage.Options opt) {
+        Options(String name, OptionsStorage.Toggles opt) {
             this(name, opt, null);
         }
 
-        Options(String name, OptionsStorage.Options opt, String permission) {
+        Options(String name, OptionsStorage.Toggles opt, String permission) {
             if (opt == null)
                 throw new IllegalArgumentException("OPtionsStorage.Options opt is null");
             this.name = name;

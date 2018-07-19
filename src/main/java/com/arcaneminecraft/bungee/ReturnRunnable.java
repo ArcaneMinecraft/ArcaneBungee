@@ -6,6 +6,6 @@ public interface ReturnRunnable<T> {
 
     @FunctionalInterface
     interface More<T, R> {
-        void run(T arg1, R... arg2);
+        void run(T arg1, R arg2);
     }
 }

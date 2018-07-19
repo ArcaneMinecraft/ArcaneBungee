@@ -1,0 +1,11 @@
+spy:
+  command:
+    # A leading slash is always implied.
+    # For commands with two slashes (e.g. WorldEdit commands), use one slash.
+    suspicious:
+    - gamemode
+    - op
+    ignore:
+    - me
+    - spawn
+    - home

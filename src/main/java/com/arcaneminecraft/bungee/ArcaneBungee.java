@@ -1,6 +1,7 @@
 package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.bungee.command.*;
+import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -13,25 +14,34 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
+import java.util.logging.Level;
 
 public class ArcaneBungee extends Plugin {
-    private File file;
+    private File configFile;
+    private File cacheDataFile;
     private Configuration config = null;
+    private Configuration cacheData = null;
     private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
     private TabCompletePreset tabCompletePreset;
+    private BadgeCommands badgeCommands;
+    private SpyAlert spyAlert;
+    private static final String CONFIG_FILENAME = "cachedata.yml";
 
     @Override
     public void onEnable() {
-        file = new File(getDataFolder(), "config.yml");
+        configFile = new File(getDataFolder(), "config.yml");
+        cacheDataFile = new File(getDataFolder(), CONFIG_FILENAME);
 
-        saveDefaultConfig();
+        saveDefaultConfigs();
 
         getProxy().registerChannel("arcaneserver:alert");
 
-        SpyAlert spyAlert = new SpyAlert(this);
-        getProxy().getPluginManager().registerListener(this, spyAlert);
-        getProxy().getPluginManager().registerListener(this, this.pluginMessenger = new PluginMessenger(this, spyAlert));
+        this.spyAlert = new SpyAlert(this);
+        getProxy().getPluginManager().registerListener(this, this.spyAlert);
+
+        this.pluginMessenger = new PluginMessenger(this, spyAlert);
+        getProxy().getPluginManager().registerListener(this, this.pluginMessenger);
 
         if (getConfig().getBoolean("mariadb.enabled")) {
             try {
@@ -43,9 +53,12 @@ public class ArcaneBungee extends Plugin {
                 //shrug
             }
         }
+        new OptionsStorage(this);
 
         this.tabCompletePreset = new TabCompletePreset(this);
-        getProxy().getPluginManager().registerListener(this, new VanillaEvents(this));
+        getProxy().getPluginManager().registerListener(this, new JoinLeaveEvents(this));
+
+
 
         // Commnads that directly depend on SQL
         if (sqlDatabase != null) {
@@ -57,11 +70,14 @@ public class ArcaneBungee extends Plugin {
         }
 
         // Rest of the commands
+        this.badgeCommands = new BadgeCommands(this);
         GreylistCommands g = new GreylistCommands(this);
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
+        getProxy().getPluginManager().registerCommand(this, badgeCommands.new Badge());
+        getProxy().getPluginManager().registerCommand(this, badgeCommands.new BadgeAdmin());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
@@ -78,6 +94,7 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
+        getProxy().getPluginManager().registerCommand(this, new Options(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));
         getProxy().getPluginManager().registerCommand(this, new Slap(this));
     }
@@ -85,6 +102,13 @@ public class ArcaneBungee extends Plugin {
     @Override
     public void onDisable() {
         config = null;
+        badgeCommands.saveConfig();
+        spyAlert.saveConfig();
+        try {
+            ConfigurationProvider.getProvider(YamlConfiguration.class).save(cacheData, cacheDataFile);
+        } catch (IOException e) {
+            getLogger().log(Level.SEVERE, "Could not save " + CONFIG_FILENAME, e);
+        }
     }
 
     public SQLDatabase getSqlDatabase() {
@@ -102,7 +126,7 @@ public class ArcaneBungee extends Plugin {
     public Configuration getConfig() {
         if (config == null) {
             try {
-                config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+                config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -111,13 +135,33 @@ public class ArcaneBungee extends Plugin {
         return config;
     }
 
-    private void saveDefaultConfig() {
+    public Configuration getCacheData() {
+        if (cacheData == null) {
+            try {
+                this.cacheData = ConfigurationProvider.getProvider(YamlConfiguration.class).load(cacheDataFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return cacheData;
+    }
+
+    private void saveDefaultConfigs() {
         if (!getDataFolder().exists())
+            //noinspection ResultOfMethodCallIgnored
             getDataFolder().mkdir();
 
-        if (!file.exists()) {
+        if (!configFile.exists()) {
             try (InputStream in = getResourceAsStream("config.yml")) {
-                Files.copy(in, file.toPath());
+                Files.copy(in, configFile.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (!cacheDataFile.exists()) {
+            try (InputStream in = getResourceAsStream(CONFIG_FILENAME)) {
+                Files.copy(in, cacheDataFile.toPath());
             } catch (IOException e) {
                 e.printStackTrace();
             }

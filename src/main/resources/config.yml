@@ -8,3 +8,7 @@ mariadb:
 arcanelog:
   ip: localhost
   port: 25555
+
+spy:
+  # Seconds to wait before broadcasting since last mined block
+  xray-wait-duration: 5

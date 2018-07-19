@@ -3,40 +3,45 @@ package com.arcaneminecraft.bungee.storage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.ReturnRunnable;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.connection.ConnectedPlayer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 import java.sql.*;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 /**
  * SQL Database must be MariaDB.
- * Stores: String uuid, String username, Date firstseen, Date lastseen, boolean greylist, boolean discord
+ * Stores: String uuid, String username, Timestamp firstseen, Timestamp lastseen, String timezone, int options
  */
-// TODO: Cache
 public class SQLDatabase {
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
     private static final String PLAYER_SELECT_BY_UUID = "SELECT * FROM ab_players WHERE uuid=? LIMIT 1";
-    private static final String PLAYER_SELECT_BY_USERNAME = "SELECT * FROM ab_players WHERE UPPER(username)=? LIMIT 1";
-    private static final String PLAYER_SELECT_ALL_USERNAME = "SELECT username FROM ab_players";
-    private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE UPPER(username)=?";
+    //private static final String PLAYER_SELECT_BY_USERNAME = "SELECT * FROM ab_players WHERE UPPER(username)=? LIMIT 1";
+    private static final String PLAYER_SELECT_ALL_USERNAME_AND_UUID = "SELECT username,uuid FROM ab_players";
+    //private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE UPPER(username)=?";
     private static final String PLAYER_SELECT_TIMEZONE_BY_UUID = "SELECT timezone FROM ab_players WHERE uuid=?";
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
-    private static final String PLAYER_UPDATE_LAST_SEEN = "UPDATE ab_players SET lastseen=? WHERE uuid=?";
+    private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE = "UPDATE ab_players SET lastseen=?,options=?,timezone=?  WHERE uuid=?";
     private static final String NEWS_SELECT_LATEST = "SELECT * FROM ab_news ORDER BY id DESC LIMIT 1";
     private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
 
     private final ArcaneBungee plugin;
+    private static SQLDatabase instance;
     private final HashMap<UUID, Cache> onlinePlayerCache;
+    private final HashMap<String, UUID> allNameToUuid;
+    private final HashMap<UUID, String> allUuidToName;
     private final MariaDbPoolDataSource ds;
 
 
     public SQLDatabase(ArcaneBungee plugin) throws SQLException {
+        SQLDatabase.instance = this;
         this.plugin = plugin;
         this.onlinePlayerCache = new HashMap<>();
+        this.allNameToUuid = new HashMap<>();
+        this.allUuidToName = new HashMap<>();
 
         String url = "jdbc:mariadb://"
                 + plugin.getConfig().getString("mariadb.hostname")
@@ -58,28 +63,35 @@ public class SQLDatabase {
         if (time > 1000) {
             plugin.getLogger().warning("Connecting to database takes over 1 second: " + time);
         }
-    }
 
-    public void getPlayerUUID(String name, ReturnRunnable<UUID> run) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
-                ResultSet rs;
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_BY_USERNAME)) {
-                    ps.setString(1, name.toUpperCase());
-                    rs = ps.executeQuery();
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME_AND_UUID)) {
+                    ResultSet rs = ps.executeQuery();
+
+                    while(rs.next()) {
+                        String n = rs.getString("username");
+                        UUID u = UUID.fromString(rs.getString("uuid"));
+                        allNameToUuid.put(n.toLowerCase(), u);
+                        allUuidToName.put(u, n);
+                    }
                 }
-                if (rs.next())
-                    run.run(UUID.fromString(rs.getString("uuid")));
-                else
-                    run.run(null);
-            } catch (SQLException e) {
-                e.printStackTrace();
-                run.run(null);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         });
+
     }
 
-    public void playerJoin(ProxiedPlayer p, ReturnRunnable<String> run) {
+    public UUID getPlayerUUID(String name) {
+        return allNameToUuid.get(name.toLowerCase());
+    }
+
+    public String getPlayerName(UUID uuid) {
+        return allUuidToName.get(uuid);
+    }
+
+    public void playerJoinThen(ProxiedPlayer p, ReturnRunnable.More<Timestamp, String> run) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 ResultSet rs;
@@ -92,6 +104,9 @@ public class SQLDatabase {
                 // Check if query returned any data.
                 if (!rs.next()) {
                     // There is no data = new player
+                    allUuidToName.put(p.getUniqueId(), p.getName());
+                    allNameToUuid.put(p.getName(), p.getUniqueId());
+
                     try (PreparedStatement ps = c.prepareStatement(PLAYER_INSERT)) {
                         ps.setString(1, p.getUniqueId().toString());
                         ps.setString(2, p.getName());
@@ -99,13 +114,18 @@ public class SQLDatabase {
                     }
                     // is new player: empty string
                     onlinePlayerCache.put(p.getUniqueId(), new Cache(p));
-                    run.run("");
+                    run.run(null, "");
                     return;
                 }
 
                 String name = rs.getString("username");
+                Timestamp time = rs.getTimestamp("lastseen");
 
                 if (!p.getName().equals(name)) {
+                    // Username changed
+                    allUuidToName.put(p.getUniqueId(), p.getName());
+                    allNameToUuid.remove(name);
+                    allNameToUuid.put(p.getName(), p.getUniqueId());
                     try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_USERNAME)) {
                         ps.setString(1, p.getName());
                         ps.setString(2, p.getUniqueId().toString());
@@ -115,11 +135,11 @@ public class SQLDatabase {
 
                 // Query returned data; give username from database
                 onlinePlayerCache.put(p.getUniqueId(), new Cache(p, rs));
-                run.run(name);
+                run.run(time, name);
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 // Fetch failed: null
-                run.run(null);
+                run.run(null, null);
             }
         });
     }
@@ -130,14 +150,16 @@ public class SQLDatabase {
      * @param first True = First join, false = last seen
      * @param run Parameters consist of: Timestamp time, String[] {username, uuid, timezone}
      */
-    public void getSeen(UUID uuid, boolean first, ReturnRunnable.More<Timestamp, String> run) {
+    public void getSeenThen(UUID uuid, boolean first, ReturnRunnable.More<Timestamp, String[]> run) {
         Cache cache = onlinePlayerCache.get(uuid);
         if (cache != null && first) {
             run.run(
                     cache.firstseen,
-                    cache.name,
-                    uuid.toString(),
-                    cache.timezone
+                    new String[]{
+                            cache.name,
+                            uuid.toString(),
+                            cache.timezone
+                    }
             );
             return;
         }
@@ -151,40 +173,14 @@ public class SQLDatabase {
                 if (rs.next()) {
                     run.run(
                             rs.getTimestamp(first ? "firstseen" : "lastseen"),
-                            rs.getString("username"),
-                            rs.getString("uuid"),
-                            rs.getString("timezone")
+                            new String[]{
+                                    rs.getString("username"),
+                                    rs.getString("uuid"),
+                                    rs.getString("timezone")
+                            }
                     );
                 } else {
-                    run.run(null, (String[])null);
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        });
-    }
-
-    /**
-     * @param name Name of player to look up
-     * @see #getSeen(UUID, boolean, ReturnRunnable.More)
-     */
-    public void getSeen(String name, boolean first, ReturnRunnable.More<Timestamp, String> run) {
-        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            try (Connection c = ds.getConnection()) {
-                ResultSet rs;
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_BY_USERNAME)) {
-                    ps.setString(1, name.toUpperCase());
-                    rs = ps.executeQuery();
-                }
-                if (rs.next()) {
-                    run.run(
-                            rs.getTimestamp(first ? "firstseen" : "lastseen"),
-                            rs.getString("username"),
-                            rs.getString("uuid"),
-                            rs.getString("timezone")
-                    );
-                } else {
-                    run.run(null, (String[])null);
+                    run.run(null, null);
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -194,17 +190,20 @@ public class SQLDatabase {
 
     public void playerLeave(UUID uuid) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            Cache cache = onlinePlayerCache.get(uuid);
+            onlinePlayerCache.remove(uuid);
             try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN)) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-                    ps.setString(2, uuid.toString());
+                    ps.setInt(2, cache.options);
+                    ps.setString(3, cache.timezone);
+                    ps.setString(4, uuid.toString());
                     ps.executeUpdate();
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         });
-        onlinePlayerCache.remove(uuid);
     }
 
     public void getLatestNews(ReturnRunnable<String> run) {
@@ -253,45 +252,29 @@ public class SQLDatabase {
     }
 
     /**
-     * Adds all players on database to toUpdate set
-     * @param toUpdate Set to add players to
+     * Gets pre-loaded all players on database to toUpdate set
      */
-    public void getAllPlayers(Set<String> toUpdate) {
-        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME)) {
-                    ResultSet rs = ps.executeQuery();
-
-                    while(rs.next())
-                        toUpdate.add(rs.getString("username"));
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        });
+    public Collection<String> getAllPlayerName() {
+        return allUuidToName.values();
     }
 
-    private class Cache {
-        private final String name;
-        private final Timestamp firstseen;
-        final String timezone;
-        final int options;
-
-        private Cache(ProxiedPlayer p, ResultSet rs) throws SQLException {
-            this.name = p.getName();
-            this.firstseen = rs.getTimestamp("firstseen");
-            this.timezone = rs.getString("timezone"); // physical server location
-            this.options = rs.getInt("options");
-        }
-
-        private Cache(ProxiedPlayer p) {
-            this.name = p.getName();
-            this.firstseen = new Timestamp(System.currentTimeMillis());
-            this.timezone = null;
-            this.options = 0;
-        }
+    int getOption(ProxiedPlayer player) {
+        return onlinePlayerCache.get(player.getUniqueId()).options;
     }
-    // Cache-based methods below
+
+    void setOption(ProxiedPlayer player, int option) {
+        onlinePlayerCache.get(player.getUniqueId()).options = option;
+    }
+
+    public static String getTimeZoneCache(ProxiedPlayer p) {
+        if (p == null)
+            return "America/Toronto"; // Default timezone of the server
+        return instance.onlinePlayerCache.get(p.getUniqueId()).timezone;
+    }
+
+    public static void setTimeZoneCache(ProxiedPlayer p, String timeZone) {
+        instance.onlinePlayerCache.get(p.getUniqueId()).timezone = timeZone;
+    }
 
     /**
      * WARNING!!! When looking for player not currently online, it check database
@@ -299,7 +282,7 @@ public class SQLDatabase {
      * @param uuid Player's UUID to search
      * @return Timezone in string format
      */
-    public String getTimeZone(UUID uuid) {
+    public String getTimeZoneSync(UUID uuid) {
         Cache c = onlinePlayerCache.get(uuid);
         if (c != null) {
             return c.timezone;
@@ -319,6 +302,27 @@ public class SQLDatabase {
         } catch (SQLException ex) {
             ex.printStackTrace();
             return null;
+        }
+    }
+
+    private class Cache {
+        private final String name;
+        private final Timestamp firstseen;
+        private String timezone;
+        private int options;
+
+        private Cache(ProxiedPlayer p, ResultSet rs) throws SQLException {
+            this.name = p.getName();
+            this.firstseen = rs.getTimestamp("firstseen");
+            this.timezone = rs.getString("timezone"); // physical server location
+            this.options = rs.getInt("options");
+        }
+
+        private Cache(ProxiedPlayer p) {
+            this.name = p.getName();
+            this.firstseen = new Timestamp(System.currentTimeMillis());
+            this.timezone = null;
+            this.options = 0;
         }
     }
 }

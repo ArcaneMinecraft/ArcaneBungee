@@ -4,7 +4,6 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.ReturnRunnable;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -17,7 +16,10 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.sql.Timestamp;
 import java.text.DateFormat;
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.util.UUID;
 
 public class SeenCommands {
     private final ArcaneBungee plugin;
@@ -160,7 +162,12 @@ public class SeenCommands {
                 locale = Locale.getDefault();
 
             // is offline:
-            ReturnRunnable.More<Timestamp, String> run = (Timestamp time, String[] pData) -> {
+            plugin.getSqlDatabase().getSeenThen(
+                    uuid == null
+                            ? plugin.getSqlDatabase().getPlayerUUID(args[0])
+                            : uuid,
+                    false, (Timestamp time, String[] pData) ->
+            {
                 if (time == null) {
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
@@ -172,7 +179,7 @@ public class SeenCommands {
                 send.addExtra(" was last seen ");
                 send.addExtra(timeText(time, locale,
                         (sender instanceof ProxiedPlayer)
-                                ? plugin.getSqlDatabase().getTimeZone(((ProxiedPlayer) sender).getUniqueId())
+                                ? plugin.getSqlDatabase().getTimeZoneSync(((ProxiedPlayer) sender).getUniqueId())
                                 : pData[2]
                 ));
                 send.setColor(ArcaneColor.CONTENT);
@@ -181,13 +188,7 @@ public class SeenCommands {
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                 else
                     sender.sendMessage(ArcaneText.usage(send));
-            };
-
-            if (uuid != null) {
-                plugin.getSqlDatabase().getSeen(uuid, false, run);
-            } else {
-                plugin.getSqlDatabase().getSeen(args[0], false, run);
-            }
+            });
         }
 
         @Override
@@ -235,7 +236,13 @@ public class SeenCommands {
                 locale = Locale.getDefault();
 
             final ProxiedPlayer player = p;
-            ReturnRunnable.More<Timestamp, String> run = (Timestamp time, String[] pData) -> {
+
+            plugin.getSqlDatabase().getSeenThen(
+                    uuid == null
+                            ? plugin.getSqlDatabase().getPlayerUUID(args[0])
+                            : uuid,
+                    true, (Timestamp time, String[] pData) ->
+            {
                 if (time == null) {
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
@@ -248,7 +255,7 @@ public class SeenCommands {
                 send.addExtra(" first logged in ");
                 send.addExtra(timeText(time, locale,
                         (sender instanceof ProxiedPlayer)
-                                ? plugin.getSqlDatabase().getTimeZone(((ProxiedPlayer) sender).getUniqueId())
+                                ? plugin.getSqlDatabase().getTimeZoneSync(((ProxiedPlayer) sender).getUniqueId())
                                 : pData[2]
                 ));
                 send.setColor(ArcaneColor.CONTENT);
@@ -257,13 +264,7 @@ public class SeenCommands {
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                 else
                     sender.sendMessage(ArcaneText.usage(send));
-            };
-
-            if (uuid != null) {
-                plugin.getSqlDatabase().getSeen(uuid, true, run);
-            } else {
-                plugin.getSqlDatabase().getSeen(args[0], true, run);
-            }
+            });
         }
 
         @Override

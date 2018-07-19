@@ -45,7 +45,7 @@ public class FindPlayer extends Command implements TabExecutor {
             List<String> pl = new ArrayList<>();
 
             // Match all players
-            for (String name : plugin.getTabCompletePreset().getAllPlayerSet()) {
+            for (String name : plugin.getSqlDatabase().getAllPlayerName()) {
                 int start;
                 int end;
                 String nameLower = name.toLowerCase();

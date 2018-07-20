@@ -4,10 +4,10 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.ReturnRunnable;
 import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.DataMutateResult;
-import me.lucko.luckperms.api.LuckPermsApi;
-import me.lucko.luckperms.api.User;
+import me.lucko.luckperms.api.*;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -18,47 +18,91 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.Collections;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 // TODO: Cleanup all the messages
 public class GreylistCommands {
     private final ArcaneBungee plugin;
-    private static final BaseComponent LINK = ArcaneText.urlSingle("https://arcaneminecraft.com/apply/");
+    private final BaseComponent link;
+    private final String group;
+    private final String track;
 
     public GreylistCommands(ArcaneBungee plugin) {
         this.plugin = plugin;
+        this.link = ArcaneText.urlSingle("https://arcaneminecraft.com/apply/");
+        this.link.setColor(ArcaneColor.FOCUS);
+
+        this.group = plugin.getConfig().getString("greylist.group");
+        this.track = plugin.getConfig().getString("greylist.track");
+
+        Node node = getLpApi().getNodeFactory().newBuilder("arcane.build").build();
+
+        Group g = getLpApi().getGroup(this.group);
+
+        if (g == null)
+            plugin.getLogger().warning("The greylist group '" + group + "' does not exist");
+        else if (!g.hasPermission(node).asBoolean())
+            plugin.getLogger().warning("The greylist group '" + group + "' does not have arcane.build permission");
+
     }
 
-    private void addToGreylist(User u, CommandSender sender) {
-        try {
-            // Load API
-            LuckPermsApi api = LuckPerms.getApi();
+    private LuckPermsApi getLpApi() {
+        return LuckPerms.getApi();
+    }
 
-            // set permission and stuff by simulating track promotion
-            DataMutateResult r = u.setPermission(
-                    api.getNodeFactory().makeGroupNode(
-                            api.getGroup("trusted")
-                    ).build());
-            if (r.wasFailure()) {
-                sender.sendMessage("Player " + ArcaneColor.FOCUS + u.getName() + ArcaneColor.CONTENT + " was already greylisted!");
+    private void isNull(CommandSender sender, String what) {
+        BaseComponent send = new TextComponent("Greylist > An error occured: " + what + " returns null. Please contact the server administrators!");
+        send.setColor(ChatColor.RED);
+        if (sender instanceof ProxiedPlayer)
+            ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+        else
+            sender.sendMessage(send);
+    }
+
+    private void addToGreylistThen(CommandSender sender, String toGreylist, ReturnRunnable.More<Boolean, User> run) {
+        Consumer<User> then = (user) -> {
+            Group g = getLpApi().getGroup(group);
+            if (g == null) {
+                isNull(sender, "Group " + group);
                 return;
             }
-            u.unsetPermission(
-                    api.getNodeFactory().makeGroupNode(
-                            api.getGroup("default")
-                    ).build());
-            api.getStorage().saveUser(u).thenAcceptAsync( success ->{
-                if (!success) {
-                    sender.sendMessage("There was a problem while modifying groups for " + ArcaneColor.FOCUS + u.getName() + ArcaneColor.CONTENT + ".  Please contact an administrator.");
-                    return;
-                }
+            Node node = getLpApi().getNodeFactory().makeGroupNode(g).build();
+            Boolean isSuccess = user.setPermission(node).wasSuccess();
 
-                u.refreshCachedData();
-                plugin.getProxy().broadcast(ArcaneColor.META + u.getName()
-                        + " is now greylisted");
-            });
+            run.run(isSuccess, user);
 
-        } catch (IllegalStateException | NoClassDefFoundError e) {
-            sender.sendMessage("Is LuckPerms loaded on the server?");
+            Track t = getLpApi().getTrack("Track " + track);
+            if (t == null) {
+                isNull(sender, track);
+                return;
+            }
+
+            String before = t.getPrevious(g);
+            if (before == null) {
+                isNull(sender, "Previous group in track " + track);
+                return;
+            }
+
+            node = getLpApi().getNodeFactory().makeGroupNode(before).build();
+            user.unsetPermission(node);
+        };
+
+        User u = getLpApi().getUser(toGreylist);
+
+        if (u == null) {
+            UUID uuid = plugin.getSqlDatabase().getPlayerUUID(toGreylist);
+
+            if (uuid == null) {
+                if (sender instanceof ProxiedPlayer)
+                    ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(toGreylist));
+                else
+                    sender.sendMessage(ArcaneText.playerNotFound(toGreylist));
+                return;
+            }
+
+            getLpApi().getUserManager().loadUser(uuid).thenAcceptAsync(then);
+        } else {
+            then.accept(u);
         }
     }
 
@@ -87,7 +131,7 @@ public class GreylistCommands {
             }
 
             BaseComponent send = new TextComponent("Apply at: ");
-            send.addExtra(LINK);
+            send.addExtra(link);
             send.setColor(ArcaneColor.CONTENT);
             p.sendMessage(ChatMessageType.SYSTEM, send);
             // TODO: Write application in-game?
@@ -111,34 +155,25 @@ public class GreylistCommands {
                 sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.GREYLIST.getUsage()));
             } else {
                 for (String pl : args) {
-                    try {
-                        // Load API
-                        LuckPermsApi api = LuckPerms.getApi();
+                    addToGreylistThen(sender, pl, (success, user) -> {
+                        BaseComponent send = new TextComponent(ArcaneText.playerComponent(pl, null, user.getUuid().toString()));
+                        if (success) {
+                            send.addExtra(" is now greylisted");
+                            send.setColor(ArcaneColor.META);
 
-                        // Get lp user object
-                        User u = api.getUser(pl);
-                        if (u == null) {
-                            UUID uuid = plugin.getSqlDatabase().getPlayerUUID(pl);
-                            if (uuid == null) {
-                                sender.sendMessage("Player " + ArcaneColor.FOCUS + pl + ArcaneColor.CONTENT + " doesn't exist on ArcaneBungee database.");
-                                return;
-                            }
-                            api.getUserManager().loadUser(uuid).thenAcceptAsync(user -> {
-                                if (user == null) {
-                                    // it for some reason never reaches this point.
-                                    sender.sendMessage("Player " + ArcaneColor.FOCUS + pl + ArcaneColor.CONTENT + " doesn't exist on LuckPerms database.");
-                                    return;
-                                }
-                                User ul = api.getUser(uuid);
-                                addToGreylist(ul, sender);
-                                api.cleanupUser(ul);
-                            }, api.getStorage().getSyncExecutor());
+                            plugin.getProxy().getConsole().sendMessage(send);
+                            for (ProxiedPlayer p : plugin.getProxy().getPlayers())
+                                p.sendMessage(ChatMessageType.SYSTEM, send);
                         } else {
-                            addToGreylist(api.getUser(pl), sender);
+                            send.addExtra(" was already greylisted");
+                            send.setColor(ChatColor.GRAY);
+
+                            if (sender instanceof ProxiedPlayer)
+                                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+                            else
+                                sender.sendMessage(send);
                         }
-                    } catch (IllegalStateException | NoClassDefFoundError e) {
-                        sender.sendMessage("Is LuckPerms loaded on the server?");
-                    }
+                    });
                 }
             }
         }

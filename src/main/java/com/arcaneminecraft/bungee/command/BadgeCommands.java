@@ -285,7 +285,6 @@ public class BadgeCommands implements Listener {
 
     public class Badge extends Command implements TabExecutor {
 
-
         public Badge() {
             super(BungeeCommandUsage.BADGE.getName(), BungeeCommandUsage.BADGE.getPermission(), BungeeCommandUsage.BADGE.getAliases());
         }
@@ -297,6 +296,7 @@ public class BadgeCommands implements Listener {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
             }
+            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.BADGE.getCommand(), args);
 
             ProxiedPlayer p = (ProxiedPlayer)sender;
 
@@ -414,6 +414,8 @@ public class BadgeCommands implements Listener {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.BADGEADMIN.getCommand(), args);
+
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.BADGEADMIN.getUsage()));

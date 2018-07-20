@@ -36,7 +36,7 @@ public class StaffChatCommands implements Listener {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            // Command logger on ::broadcast
+            // Command logger inside this.broadcast()
 
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)

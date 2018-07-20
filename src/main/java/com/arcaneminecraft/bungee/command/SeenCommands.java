@@ -117,6 +117,8 @@ public class SeenCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.SEEN.getCommand(), args);
+
             // Look for player in question.
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)
@@ -205,6 +207,8 @@ public class SeenCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.FIRSTSEEN.getCommand(), args);
+
             // Look for player in question.
             ProxiedPlayer p;
             UUID uuid;

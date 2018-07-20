@@ -30,6 +30,8 @@ public class FindPlayer extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
+        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.FINDPLAYER.getCommand(), args);
+
         if (args.length == 0) {
             if (sender instanceof ProxiedPlayer)
                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.FINDPLAYER.getUsage()));

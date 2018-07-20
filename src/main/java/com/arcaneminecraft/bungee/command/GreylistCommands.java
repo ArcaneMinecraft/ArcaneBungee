@@ -1,8 +1,8 @@
 package com.arcaneminecraft.bungee.command;
 
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.ReturnRunnable;
 import me.lucko.luckperms.LuckPerms;
@@ -35,14 +35,25 @@ public class GreylistCommands {
         this.group = plugin.getConfig().getString("greylist.group");
         this.track = plugin.getConfig().getString("greylist.track");
 
-        Node node = getLpApi().getNodeFactory().newBuilder("arcane.build").build();
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            while (!LuckPerms.getApiSafe().isPresent()) {
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
-        Group g = getLpApi().getGroup(this.group);
+            Node node = getLpApi().getNodeFactory().newBuilder("arcane.build").build();
 
-        if (g == null)
-            plugin.getLogger().warning("The greylist group '" + group + "' does not exist");
-        else if (!g.hasPermission(node).asBoolean())
-            plugin.getLogger().warning("The greylist group '" + group + "' does not have arcane.build permission");
+            Group g = getLpApi().getGroup(this.group);
+
+            if (g == null)
+                this.plugin.getLogger().warning("The greylist group '" + group + "' does not exist");
+            else if (!g.hasPermission(node).asBoolean())
+                this.plugin.getLogger().warning("The greylist group '" + group + "' does not have arcane.build permission");
+
+        });
 
     }
 

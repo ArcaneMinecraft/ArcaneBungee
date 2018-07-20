@@ -28,28 +28,35 @@ public class ListPlayers extends Command implements TabExecutor {
     public void execute(CommandSender sender, String[] args) {
         plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.LIST.getCommand(), args);
 
+        boolean uuid = args.length != 0 && args[0].equalsIgnoreCase("uuids");
+
         Collection<ProxiedPlayer> cp = plugin.getProxy().getPlayers();
-        BaseComponent head = new TranslatableComponent("There are %s/%s players online:", // TODO: Update Translatable node
+        TranslatableComponent send = new TranslatableComponent("commands.list.players", // 1.13
                 String.valueOf(plugin.getProxy().getOnlineCount()),
                 String.valueOf(plugin.getProxy().getConfig().getPlayerLimit()));
 
         BaseComponent body = new TextComponent();
         Iterator<ProxiedPlayer> i = plugin.getProxy().getPlayers().iterator();
         if (i.hasNext()) {
-            body.addExtra(ArcaneText.playerComponentBungee(i.next()));
+            ProxiedPlayer first = i.next();
+            body.addExtra(ArcaneText.playerComponentBungee(first));
+            if (uuid)
+                body.addExtra("(" + first.getUniqueId() + ")");
 
             i.forEachRemaining((ProxiedPlayer p) -> {
                 body.addExtra(", ");
                 body.addExtra(ArcaneText.playerComponentBungee(p));
+                if (uuid)
+                    body.addExtra("(" + p.getUniqueId() + ")");
             });
         }
 
+        send.addWith(body);
+
         if (sender instanceof ProxiedPlayer) {
-            ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, head);
-            ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, body);
+            ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, send);
         } else {
-            sender.sendMessage(head);
-            sender.sendMessage(body);
+            sender.sendMessage(send);
         }
 
     }

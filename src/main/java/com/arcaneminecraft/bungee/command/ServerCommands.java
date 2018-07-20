@@ -41,7 +41,7 @@ public class ServerCommands {
             if (e == null) {
                 p.connect(server);
             } else {
-                BaseComponent send = new TextComponent("Can't connect to " + serverInfoName + " server");
+                BaseComponent send = new TextComponent("The " + serverInfoName + " server is down");
                 send.setColor(ArcaneColor.NEGATIVE);
                 p.sendMessage(ChatMessageType.SYSTEM, send);
             }

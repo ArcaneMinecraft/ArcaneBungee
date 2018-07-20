@@ -151,6 +151,8 @@ public class GreylistCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.GREYLIST.getCommand(), args);
+
             if (args.length == 0) {
                 sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.GREYLIST.getUsage()));
             } else {

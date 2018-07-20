@@ -68,6 +68,8 @@ public class TellCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            // CoreProtect logger in each if statements below
+
             if (args.length == 0) {
                 plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.REPLY.getCommand(), args);
 

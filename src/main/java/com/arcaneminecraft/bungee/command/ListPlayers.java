@@ -3,6 +3,7 @@ package com.arcaneminecraft.bungee.command;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -13,7 +14,6 @@ import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 
 public class ListPlayers extends Command implements TabExecutor {
@@ -56,6 +56,6 @@ public class ListPlayers extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        return Collections.emptyList();
+        return ImmutableSet.of("uuids");
     }
 }

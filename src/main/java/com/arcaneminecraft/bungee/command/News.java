@@ -24,6 +24,8 @@ public class News extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
+        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.NEWS.getCommand(), args);
+
         if (args.length == 0) {
             BaseComponent latest = new TextComponent("Latest news");
             latest.setColor(ArcaneColor.HEADING);

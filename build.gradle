@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     id 'java'
 }
@@ -25,10 +27,15 @@ dependencies {
     compileOnly 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
     extraLibs 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
     implementation 'net.dv8tion:JDA:3.6.0_376'
+    extraLibs 'net.dv8tion:JDA:3.6.0_376'
 }
 
 jar {
     from {
         configurations.extraLibs.collect { it.isDirectory() ? it : zipTree(it) }
     }
+}
+
+processResources {
+    filter ReplaceTokens, tokens:["version": project.version]
 }

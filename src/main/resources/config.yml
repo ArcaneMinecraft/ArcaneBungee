@@ -9,6 +9,10 @@ greylist:
   group: trusted
   track: greylist
 
+# Point the IP to webserver
+listener:
+  ip: localhost
+  port: 20000
 
 arcanelog:
   ip: localhost

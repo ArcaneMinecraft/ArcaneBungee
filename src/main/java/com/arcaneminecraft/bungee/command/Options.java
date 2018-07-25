@@ -133,7 +133,7 @@ public class Options extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.OPTION.getCommand(), args);
+        plugin.logCommand(sender, BungeeCommandUsage.OPTION.getCommand(), args);
 
         if (plugin.getSqlDatabase() == null) {
             BaseComponent send = new TextComponent("SQL database does not exist. Unable to set or change options");

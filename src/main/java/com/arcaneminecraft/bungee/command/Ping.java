@@ -24,7 +24,7 @@ public class Ping extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.PING.getCommand(), args);
+        plugin.logCommand(sender, BungeeCommandUsage.PING.getCommand(), args);
 
         if (!(sender instanceof ProxiedPlayer)) {
             sender.sendMessage(new TextComponent("Your ping will forever be <1ms."));

@@ -114,7 +114,7 @@ public class JoinLeaveEvents implements Listener {
                 if (p.hasPermission("arcane.welcome.donor") && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE)) { // TODO: Check permission node existence on ArcaneServer
                     BaseComponent send = new TextComponent(" ");
                     send.setColor(ArcaneColor.CONTENT);
-                    BaseComponent urad = new TextComponent("You are a donor!");
+                    BaseComponent urad = new TextComponent("You are a donor! ");
                     urad.setColor(ArcaneColor.DONOR);
                     send.addExtra(urad);
 

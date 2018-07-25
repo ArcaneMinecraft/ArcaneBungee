@@ -33,7 +33,7 @@ public class TellCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.MSG.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.MSG.getCommand(), args);
 
             if (args.length < 2) {
                 if (sender instanceof ProxiedPlayer)
@@ -71,7 +71,7 @@ public class TellCommands {
             // CoreProtect logger in each if statements below
 
             if (args.length == 0) {
-                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.REPLY.getCommand(), args);
+                plugin.logCommand(sender, BungeeCommandUsage.REPLY.getCommand(), args);
 
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.REPLY.getUsage()));
@@ -81,7 +81,7 @@ public class TellCommands {
 
             CommandSender p = lastReceived.get(sender);
             if (p == null) {
-                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.REPLY.getCommand(), args);
+                plugin.logCommand(sender, BungeeCommandUsage.REPLY.getCommand(), args);
 
                 BaseComponent send = new TextComponent("There is nobody to reply to");
                 send.setColor(ChatColor.RED);
@@ -94,7 +94,7 @@ public class TellCommands {
 
             if (p instanceof ProxiedPlayer) {
                 // Log with /msg instead for easier readability.
-                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.MSG.getCommand() + " " + p.getName() + " " + String.join(" ", args));
+                plugin.logCommand(sender, BungeeCommandUsage.MSG.getCommand() + " " + p.getName() + " " + String.join(" ", args));
 
                 if (!((ProxiedPlayer) p).isConnected()) {
                     if (sender instanceof ProxiedPlayer)
@@ -104,7 +104,7 @@ public class TellCommands {
                     return;
                 }
             } else {
-                plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.REPLY.getCommand(), args);
+                plugin.logCommand(sender, BungeeCommandUsage.REPLY.getCommand(), args);
             }
 
             messenger(sender, p, args, 0);

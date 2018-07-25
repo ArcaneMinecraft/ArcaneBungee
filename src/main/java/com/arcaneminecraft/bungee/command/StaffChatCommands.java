@@ -106,7 +106,7 @@ public class StaffChatCommands implements Listener {
     }
 
     private void broadcast(CommandSender sender, String msg) {
-        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.STAFFCHAT.getCommand() + " " + msg);
+        plugin.logCommand(sender, BungeeCommandUsage.STAFFCHAT.getCommand() + " " + msg);
 
         BaseComponent send = new TextComponent("Staff // ");
         send.setColor(ArcaneColor.HEADING);

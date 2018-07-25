@@ -26,8 +26,8 @@ dependencies {
     compileOnly fileTree(dir: 'libs', include: '*.jar')
     compileOnly 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
     extraLibs 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
-    implementation 'net.dv8tion:JDA:3.6.0_376'
-    extraLibs 'net.dv8tion:JDA:3.6.0_376'
+    implementation 'net.dv8tion:JDA:3.7.1_386'
+    extraLibs 'net.dv8tion:JDA:3.7.1_386'
 }
 
 jar {

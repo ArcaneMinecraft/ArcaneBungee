@@ -10,10 +10,19 @@ greylist:
   track: greylist
 
 # Point the IP to webserver
-listener:
+web-listener:
   ip: localhost
   port: 20000
 
+discord:
+  token: 0
+  guild-id: 0
+  player-role-id: 0
+  mc-chat:
+    channel-id: 0
+    webhook-url: https://discordapp.com/api/webhooks/[id]/[token]
+
+# Point to the ArcaneLog plugin's ServerSocket
 arcanelog:
   ip: localhost
   port: 25555

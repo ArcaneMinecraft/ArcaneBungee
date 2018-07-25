@@ -30,7 +30,7 @@ public class FindPlayer extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.FINDPLAYER.getCommand(), args);
+        plugin.logCommand(sender, BungeeCommandUsage.FINDPLAYER.getCommand(), args);
 
         if (args.length == 0) {
             if (sender instanceof ProxiedPlayer)

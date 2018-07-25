@@ -24,7 +24,7 @@ public class Slap extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.SLAP.getCommand(), args);
+        plugin.logCommand(sender, BungeeCommandUsage.SLAP.getCommand(), args);
 
         if (args.length == 0) {
             if (sender instanceof ProxiedPlayer)

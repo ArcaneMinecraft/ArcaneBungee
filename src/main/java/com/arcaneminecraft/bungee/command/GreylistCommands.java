@@ -125,7 +125,7 @@ public class GreylistCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.APPLY.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.APPLY.getCommand(), args);
 
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
@@ -162,7 +162,7 @@ public class GreylistCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.GREYLIST.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.GREYLIST.getCommand(), args);
 
             if (args.length == 0) {
                 sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.GREYLIST.getUsage()));

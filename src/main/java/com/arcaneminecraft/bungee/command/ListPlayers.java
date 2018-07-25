@@ -26,7 +26,7 @@ public class ListPlayers extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.LIST.getCommand(), args);
+        plugin.logCommand(sender, BungeeCommandUsage.LIST.getCommand(), args);
 
         boolean uuid = args.length != 0 && args[0].equalsIgnoreCase("uuids");
 

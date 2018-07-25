@@ -7,6 +7,7 @@ CREATE TABLE `ab_players` (
   `firstseen`  TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastseen`   TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `timezone`   VARCHAR(32),
+  `discord`    BIGINT             NOT NULL DEFAULT 0,
   `options`    INT                NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) DEFAULT CHARSET = utf8;

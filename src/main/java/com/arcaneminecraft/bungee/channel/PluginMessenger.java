@@ -1,16 +1,21 @@
-package com.arcaneminecraft.bungee;
+package com.arcaneminecraft.bungee.channel;
 
+import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.ReturnRunnable;
+import com.arcaneminecraft.bungee.SpyAlert;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.UUID;
@@ -22,7 +27,7 @@ public class PluginMessenger implements Listener {
     private final int port;
 
 
-    PluginMessenger(ArcaneBungee plugin, SpyAlert spy) {
+    public PluginMessenger(ArcaneBungee plugin, SpyAlert spy) {
         this.plugin = plugin;
         this.spy = spy;
 
@@ -55,8 +60,12 @@ public class PluginMessenger implements Listener {
 
                     // Log chat on bungeecord console
                     TextComponent log = new TextComponent(server + ": ");
-                    if (!tag.isEmpty())
-                        log.addExtra(tag + " ");
+                    if (!tag.isEmpty()) {
+                        tag = ChatColor.translateAlternateColorCodes('&', tag);
+                        for (BaseComponent bp : TextComponent.fromLegacyText(tag))
+                            log.addExtra(bp);
+                        log.addExtra(" ");
+                    }
                     log.addExtra("<" + name + "> " + msg);
                     plugin.getProxy().getConsole().sendMessage(log);
 
@@ -91,6 +100,44 @@ public class PluginMessenger implements Listener {
         }
     }
 
+    /**
+     * Transferred over from ArcaneServer's PluginMessenger.chat() method
+     */
+    void chat(@SuppressWarnings("SameParameterValue") String origin, String name, String displayName, String uuid, String msg, String tag) {
+        String channel = "Chat";
+
+        ByteArrayOutputStream byteos = new ByteArrayOutputStream();
+        try (DataOutputStream os = new DataOutputStream(byteos)) {
+
+            os.writeUTF(origin);
+            os.writeUTF(msg);
+            os.writeUTF(name);
+            os.writeUTF(displayName == null ? name : displayName);
+            os.writeUTF(uuid == null ? "" : uuid);
+            os.writeUTF(tag == null ? "" : tag);
+
+            forwardChannelMessage(channel, byteos); // Subchannel
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void forwardChannelMessage(String channel, ByteArrayOutputStream byteArrayOutputStream) {
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("Forward"); // So BungeeCord knows to forward it
+        out.writeUTF("ONLINE"); // Target server
+        out.writeUTF(channel); // Subchannel
+
+        out.writeShort(byteArrayOutputStream.toByteArray().length);
+        out.write(byteArrayOutputStream.toByteArray());
+
+        for (ServerInfo s : plugin.getProxy().getServers().values()) {
+            s.sendData("BungeeCord", out.toByteArray(), true);
+        }
+    }
+
+
+
     public void coreprotect(CommandSender sender, String command, String[] args) {
         if (!(sender instanceof ProxiedPlayer))
             return;
@@ -115,7 +162,7 @@ public class PluginMessenger implements Listener {
         toLog("LogCoreProtect", null, name, displayName, uuid, msg);
     }
 
-    private void toLog(String subChannel, ReturnRunnable<String> run, String... args) {
+    private void toLog(@SuppressWarnings("SameParameterValue") String subChannel, @SuppressWarnings("SameParameterValue") ReturnRunnable<String> run, String... args) {
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             String response = null;

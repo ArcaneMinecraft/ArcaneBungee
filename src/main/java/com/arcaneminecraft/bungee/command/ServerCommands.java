@@ -54,7 +54,7 @@ public class ServerCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.CREATIVE.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.CREATIVE.getCommand(), args);
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
@@ -69,7 +69,7 @@ public class ServerCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.SURVIVAL.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.SURVIVAL.getCommand(), args);
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
@@ -84,7 +84,7 @@ public class ServerCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.EVENT.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.EVENT.getCommand(), args);
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;

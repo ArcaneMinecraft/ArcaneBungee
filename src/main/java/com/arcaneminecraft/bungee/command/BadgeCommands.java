@@ -296,7 +296,7 @@ public class BadgeCommands implements Listener {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
             }
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.BADGE.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.BADGE.getCommand(), args);
 
             ProxiedPlayer p = (ProxiedPlayer)sender;
 
@@ -414,7 +414,7 @@ public class BadgeCommands implements Listener {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.BADGEADMIN.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.BADGEADMIN.getCommand(), args);
 
             if (args.length == 0) {
                 if (sender instanceof ProxiedPlayer)

@@ -204,7 +204,7 @@ public class SpyAlert implements Listener {
         return ret;
     }
 
-    void signAlert(UUID uuid, String[] lines, int[] loc, String world) {
+    public void signAlert(UUID uuid, String[] lines, int[] loc, String world) {
         BaseComponent msg = signAlertMsg(plugin.getProxy().getPlayer(uuid), lines, loc, world);
         for (ProxiedPlayer rec : plugin.getProxy().getPlayers()) {
             if (rec.hasPermission(SIGN_PERMISSION) && !ignoreSign.contains(rec)) {
@@ -213,7 +213,7 @@ public class SpyAlert implements Listener {
         }
     }
 
-    void xRayAlert(UUID uuid, String block, int[] loc, String world) {
+    public void xRayAlert(UUID uuid, String block, int[] loc, String world) {
         XRayCounter c;
         if ((c = diamondMineMap.get(uuid)) == null)
             diamondMineMap.put(uuid, new XRayCounter(plugin.getProxy().getPlayer(uuid), block, loc, world));

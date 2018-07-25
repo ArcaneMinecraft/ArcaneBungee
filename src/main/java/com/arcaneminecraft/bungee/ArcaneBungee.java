@@ -1,13 +1,17 @@
 package com.arcaneminecraft.bungee;
 
+import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.channel.PluginMessenger;
 import com.arcaneminecraft.bungee.command.*;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 
+import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,9 +51,9 @@ public class ArcaneBungee extends Plugin {
             try {
                 this.sqlDatabase = new SQLDatabase(this);
             } catch (SQLNonTransientConnectionException e) {
-                getLogger().severe("Cannot connect to database! Check configuration and reload the plugin.");
+                getLogger().log(Level.SEVERE, "Cannot connect to database! Check configuration and reload the plugin.", e);
             } catch (SQLException e) {
-                e.printStackTrace();
+                getLogger().log(Level.SEVERE, "SQL Exception occured. Please try restarting.", e);
                 //shrug
             }
         }
@@ -115,8 +119,29 @@ public class ArcaneBungee extends Plugin {
         return sqlDatabase;
     }
 
+    @Deprecated
     public PluginMessenger getCommandLogger() {
         return pluginMessenger;
+    }
+
+    public void logCommand(CommandSender sender, String cmd, String[] args) {
+        pluginMessenger.coreprotect(sender, cmd, args);
+    }
+
+    public void logCommand(CommandSender sender, String msg) {
+        pluginMessenger.coreprotect(sender, msg);
+    }
+
+    public void logCommand(String name, String displayName, String uuid, String msg) {
+        pluginMessenger.coreprotect(name, displayName, uuid, msg);
+    }
+
+    public PluginMessenger getPluginMessenger() {
+        return pluginMessenger;
+    }
+
+    public DiscordConnection getDiscordConnection() {
+        return discordConnection;
     }
 
     public TabCompletePreset getTabCompletePreset() {

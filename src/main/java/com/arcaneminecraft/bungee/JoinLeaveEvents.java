@@ -184,6 +184,7 @@ public class JoinLeaveEvents implements Listener {
                     if (pl.equals(e.getPlayer())) continue;
                     pl.sendMessage(ChatMessageType.SYSTEM, joined);
                 }
+                plugin.getDiscordConnection().metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
             });
         } else {
             // Fallback
@@ -192,6 +193,7 @@ public class JoinLeaveEvents implements Listener {
                 if (p.equals(e.getPlayer())) continue;
                 p.sendMessage(ChatMessageType.SYSTEM, joined);
             }
+            plugin.getDiscordConnection().metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
         }
     }
 
@@ -205,5 +207,6 @@ public class JoinLeaveEvents implements Listener {
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, left);
         }
+        plugin.getDiscordConnection().metaToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1); // TODO: Test this
     }
 }

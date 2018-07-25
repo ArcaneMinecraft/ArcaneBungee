@@ -69,6 +69,8 @@ public class PluginMessenger implements Listener {
                     log.addExtra("<" + name + "> " + msg);
                     plugin.getProxy().getConsole().sendMessage(log);
 
+                    plugin.getDiscordConnection().chatToDiscord(displayName, msg);
+
                     if (channel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);
                 }

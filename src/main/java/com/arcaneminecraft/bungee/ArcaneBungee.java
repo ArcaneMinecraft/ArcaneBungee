@@ -30,6 +30,7 @@ public class ArcaneBungee extends Plugin {
     private TabCompletePreset tabCompletePreset;
     private BadgeCommands badgeCommands;
     private SpyAlert spyAlert;
+    private DiscordConnection discordConnection;
     private static final String CONFIG_FILENAME = "cachedata.yml";
 
     @Override
@@ -58,6 +59,18 @@ public class ArcaneBungee extends Plugin {
             }
         }
         new OptionsStorage(this);
+
+        if (!getConfig().getString("discord.token", "0").equals("0")) {
+            try {
+                this.discordConnection = new DiscordConnection(this);
+            } catch (LoginException e) {
+                getLogger().log(Level.SEVERE, "Discord: Invalid Token. Please restart with valid token.", e);
+            } catch (InterruptedException e) {
+                getLogger().log(Level.SEVERE, "Discord: Login Interrupted. ", e);
+            }
+        } else {
+            getLogger().warning("Discord token is not specified. Restart with valid token if Discord is to be connected and used.");
+        }
 
         this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, new JoinLeaveEvents(this));
@@ -108,6 +121,7 @@ public class ArcaneBungee extends Plugin {
         config = null;
         badgeCommands.saveConfig();
         spyAlert.saveConfig();
+        discordConnection.onDisable();
         try {
             ConfigurationProvider.getProvider(YamlConfiguration.class).save(cacheData, cacheDataFile);
         } catch (IOException e) {
@@ -117,11 +131,6 @@ public class ArcaneBungee extends Plugin {
 
     public SQLDatabase getSqlDatabase() {
         return sqlDatabase;
-    }
-
-    @Deprecated
-    public PluginMessenger getCommandLogger() {
-        return pluginMessenger;
     }
 
     public void logCommand(CommandSender sender, String cmd, String[] args) {

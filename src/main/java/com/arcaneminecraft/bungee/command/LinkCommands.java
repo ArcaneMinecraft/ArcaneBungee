@@ -48,7 +48,7 @@ public class LinkCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.LINKS.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.LINKS.getCommand(), args);
 
             if (sender instanceof ProxiedPlayer) {
                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, WEBSITE);
@@ -80,12 +80,24 @@ public class LinkCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.DISCORD.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.DISCORD.getCommand(), args);
+
+            if (sender instanceof ProxiedPlayer && args.length != 0) {
+                if (args[0].equalsIgnoreCase("link")) {
+                    plugin.getDiscordConnection().userLink((ProxiedPlayer) sender);
+                    return;
+                }
+
+                if (args[0].equalsIgnoreCase("unlink")) {
+                    plugin.getDiscordConnection().userUnlink((ProxiedPlayer) sender);
+                    return;
+                }
+            }
 
             if (sender instanceof ProxiedPlayer)
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("website", DISCORD));
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("Discord", DISCORD));
             else
-                sender.sendMessage(singleLink("website", DISCORD));
+                sender.sendMessage(singleLink("Discord", DISCORD));
         }
 
     }
@@ -95,12 +107,12 @@ public class LinkCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.FORUM.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.FORUM.getCommand(), args);
 
             if (sender instanceof ProxiedPlayer)
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("website", FORUM));
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("forum", FORUM));
             else
-                sender.sendMessage(singleLink("website", FORUM));
+                sender.sendMessage(singleLink("forum", FORUM));
         }
 
     }
@@ -110,7 +122,7 @@ public class LinkCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.getCommandLogger().coreprotect(sender, BungeeCommandUsage.WEBSITE.getCommand(), args);
+            plugin.logCommand(sender, BungeeCommandUsage.WEBSITE.getCommand(), args);
 
             if (sender instanceof ProxiedPlayer)
                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("website", WEBSITE));

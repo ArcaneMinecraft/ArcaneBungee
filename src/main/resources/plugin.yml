@@ -3,3 +3,6 @@ version: @version@
 author: Arcane Survival
 description: Arcane Survival Network Proxy
 main: com.arcaneminecraft.bungee.ArcaneBungee
+
+depends: [ArcaneAPI]
+softdepends: [LuckPerms, LiteBans]

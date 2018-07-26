@@ -79,14 +79,12 @@ public class SQLDatabase {
                         allNameToUuid.put(n.toLowerCase(), u);
                         allUuidToName.put(u, n);
                         discordToUsername.put(d, n);
-
                     }
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         });
-
     }
 
     public UUID getPlayerUUID(String name) {
@@ -329,8 +327,8 @@ public class SQLDatabase {
         if (c == null)
             return false;
 
+        // Avoid duplicate account link
         if (discord != 0) {
-            // Avoid duplicate account link
             plugin.getProxy().getScheduler().runAsync(plugin, () -> {
                 try (Connection conn = ds.getConnection()) {
                     try (PreparedStatement ps = conn.prepareStatement(PLAYER_UPDATE_DISCORD_BY_DISCORD)) {

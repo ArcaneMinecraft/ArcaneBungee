@@ -23,6 +23,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import javax.security.auth.login.LoginException;
 import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.UUID;
 
 public class DiscordConnection {
     private final ArcaneBungee plugin;
@@ -56,7 +57,11 @@ public class DiscordConnection {
     }
 
     private Member getMember(ProxiedPlayer player) {
-        long id = plugin.getSqlDatabase().getDiscordCache(player.getUniqueId());
+        return getMember(player.getUniqueId());
+    }
+
+    private Member getMember(UUID uuid) {
+        long id = plugin.getSqlDatabase().getDiscordCache(uuid);
         if (id == 0)
             return null;
 

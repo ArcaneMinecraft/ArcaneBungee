@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -52,6 +53,10 @@ public class Slap extends Command implements TabExecutor {
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, send);
         }
+
+        DiscordConnection d = plugin.getDiscordConnection();
+        if (d != null)
+            d.metaToDiscord(send.toPlainText());
     }
 
     @Override

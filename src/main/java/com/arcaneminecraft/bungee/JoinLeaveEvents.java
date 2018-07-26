@@ -2,6 +2,7 @@ package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
+import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -163,7 +164,7 @@ public class JoinLeaveEvents implements Listener {
                 } else if (oldName.equals("")) {
                     // New player
                     BaseComponent newPlayer = new TextComponent(ArcaneText.playerComponentBungee(e.getPlayer()));
-                    newPlayer.addExtra(" has joined  " + "Arcane" + " for the first time!");
+                    newPlayer.addExtra(" has joined " + ArcaneText.getThisNetworkNameShort() + " for the first time!");
                     newPlayer.setColor(ChatColor.YELLOW);
 
                     for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
@@ -184,7 +185,9 @@ public class JoinLeaveEvents implements Listener {
                     if (pl.equals(e.getPlayer())) continue;
                     pl.sendMessage(ChatMessageType.SYSTEM, joined);
                 }
-                plugin.getDiscordConnection().metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
+                DiscordConnection d = plugin.getDiscordConnection();
+                if (d != null)
+                    d.metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
             });
         } else {
             // Fallback
@@ -193,7 +196,9 @@ public class JoinLeaveEvents implements Listener {
                 if (p.equals(e.getPlayer())) continue;
                 p.sendMessage(ChatMessageType.SYSTEM, joined);
             }
-            plugin.getDiscordConnection().metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
+            DiscordConnection d = plugin.getDiscordConnection();
+            if (d != null)
+                d.metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
         }
     }
 
@@ -207,6 +212,8 @@ public class JoinLeaveEvents implements Listener {
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, left);
         }
-        plugin.getDiscordConnection().metaToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1); // TODO: Test this
+        DiscordConnection d = plugin.getDiscordConnection();
+        if (d != null)
+            d.metaToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1); // TODO: Test this
     }
 }

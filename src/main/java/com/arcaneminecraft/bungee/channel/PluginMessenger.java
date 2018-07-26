@@ -69,7 +69,9 @@ public class PluginMessenger implements Listener {
                     log.addExtra("<" + name + "> " + msg);
                     plugin.getProxy().getConsole().sendMessage(log);
 
-                    plugin.getDiscordConnection().chatToDiscord(displayName, msg);
+                    DiscordConnection d = plugin.getDiscordConnection();
+                    if (d != null)
+                        d.chatToDiscord(displayName, msg);
 
                     if (channel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);
@@ -126,15 +128,13 @@ public class PluginMessenger implements Listener {
 
     private void forwardChannelMessage(String channel, ByteArrayOutputStream byteArrayOutputStream) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("Forward"); // So BungeeCord knows to forward it
-        out.writeUTF("ONLINE"); // Target server
         out.writeUTF(channel); // Subchannel
 
         out.writeShort(byteArrayOutputStream.toByteArray().length);
         out.write(byteArrayOutputStream.toByteArray());
 
         for (ServerInfo s : plugin.getProxy().getServers().values()) {
-            s.sendData("BungeeCord", out.toByteArray(), true);
+            s.sendData("BungeeCord", out.toByteArray(), false);
         }
     }
 

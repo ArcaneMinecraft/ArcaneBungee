@@ -121,7 +121,8 @@ public class ArcaneBungee extends Plugin {
         config = null;
         badgeCommands.saveConfig();
         spyAlert.saveConfig();
-        discordConnection.onDisable();
+        if (discordConnection != null)
+            discordConnection.onDisable();
         try {
             ConfigurationProvider.getProvider(YamlConfiguration.class).save(cacheData, cacheDataFile);
         } catch (IOException e) {

@@ -74,7 +74,7 @@ public class GreylistCommands {
         Consumer<User> then = (user) -> {
             Group g = getLpApi().getGroup(group);
             if (g == null) {
-                isNull(sender, "Group " + group);
+                isNull(sender, "Group " + "group '" + group + "'");
                 return;
             }
             Node node = getLpApi().getNodeFactory().makeGroupNode(g).build();
@@ -82,20 +82,24 @@ public class GreylistCommands {
 
             run.run(isSuccess, user);
 
-            Track t = getLpApi().getTrack("Track " + track);
-            if (t == null) {
-                isNull(sender, track);
-                return;
-            }
+            if (isSuccess) {
+                user.setPrimaryGroup(group);
+                Track t = getLpApi().getTrack(track);
+                if (t == null) {
+                    isNull(sender, "track '" + track + "'");
+                    return;
+                }
 
-            String before = t.getPrevious(g);
-            if (before == null) {
-                isNull(sender, "Previous group in track " + track);
-                return;
-            }
+                String before = t.getPrevious(g);
+                if (before == null) {
+                    isNull(sender, "Previous group in track " + track);
+                    return;
+                }
 
-            node = getLpApi().getNodeFactory().makeGroupNode(before).build();
-            user.unsetPermission(node);
+                node = getLpApi().getNodeFactory().makeGroupNode(before).build();
+                user.unsetPermission(node);
+            }
+            getLpApi().getUserManager().saveUser(user);
         };
 
         User u = getLpApi().getUser(toGreylist);

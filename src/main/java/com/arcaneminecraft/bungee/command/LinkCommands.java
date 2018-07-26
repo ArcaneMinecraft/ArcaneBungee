@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -75,8 +76,12 @@ public class LinkCommands {
 
     }
     public class Discord extends Command {
+        private final BaseComponent offlineMsg;
+
         public Discord() {
             super(BungeeCommandUsage.DISCORD.getName(), BungeeCommandUsage.DISCORD.getPermission(), BungeeCommandUsage.DISCORD.getAliases());
+            this.offlineMsg = new TextComponent("Discord Connection is not enabled or is offline");
+            this.offlineMsg.setColor(ArcaneColor.CONTENT);
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
@@ -84,12 +89,21 @@ public class LinkCommands {
 
             if (sender instanceof ProxiedPlayer && args.length != 0) {
                 if (args[0].equalsIgnoreCase("link")) {
-                    plugin.getDiscordConnection().userLink((ProxiedPlayer) sender);
+                    DiscordConnection d = plugin.getDiscordConnection();
+                    if (d != null)
+                        d.userLink((ProxiedPlayer) sender);
+                    else {
+                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, offlineMsg);
+                    }
                     return;
                 }
 
                 if (args[0].equalsIgnoreCase("unlink")) {
-                    plugin.getDiscordConnection().userUnlink((ProxiedPlayer) sender);
+                    DiscordConnection d = plugin.getDiscordConnection();
+                    if (d != null)
+                        d.userUnlink((ProxiedPlayer) sender);
+                    else
+                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, offlineMsg);
                     return;
                 }
             }

@@ -345,6 +345,9 @@ public class SQLDatabase {
                 if (cache.discord == discord)
                     cache.discord = 0;
             }
+            discordToUsername.put(discord, c.name);
+        } else {
+            discordToUsername.entrySet().removeIf(entry -> entry.getValue().equals(c.name));
         }
 
         c.discord = discord;

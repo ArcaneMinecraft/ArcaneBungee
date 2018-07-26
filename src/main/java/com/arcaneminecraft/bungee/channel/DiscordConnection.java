@@ -57,8 +57,8 @@ public class DiscordConnection {
     public synchronized void onDisable() {
         mcChatChannel.sendMessage(":wave: *Server is now offline*").complete();
         jda.getPresence().setStatus(OnlineStatus.INVISIBLE);
-        jda.shutdown();
         webhookClient.close();
+        jda.shutdown();
     }
 
     private Member getMember(ProxiedPlayer player) {

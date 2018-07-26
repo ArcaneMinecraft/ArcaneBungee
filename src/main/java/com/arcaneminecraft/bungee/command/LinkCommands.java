@@ -108,10 +108,14 @@ public class LinkCommands {
                 }
             }
 
-            if (sender instanceof ProxiedPlayer)
+            if (sender instanceof ProxiedPlayer) {
                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("Discord", DISCORD));
-            else
+                BaseComponent send = new TextComponent(" Other usage: /discord [link|unlink]");
+                send.setColor(ArcaneColor.CONTENT);
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+            } else {
                 sender.sendMessage(singleLink("Discord", DISCORD));
+            }
         }
 
     }

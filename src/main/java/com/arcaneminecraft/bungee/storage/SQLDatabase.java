@@ -19,7 +19,7 @@ public class SQLDatabase {
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
     private static final String PLAYER_SELECT_BY_UUID = "SELECT * FROM ab_players WHERE uuid=? LIMIT 1";
     //private static final String PLAYER_SELECT_BY_USERNAME = "SELECT * FROM ab_players WHERE UPPER(username)=? LIMIT 1";
-    private static final String PLAYER_SELECT_ALL_USERNAME_AND_UUID = "SELECT username,uuid FROM ab_players";
+    private static final String PLAYER_SELECT_ALL_USERNAME_AND_UUID_AND_DISCORD = "SELECT username,uuid,discord FROM ab_players";
     //private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE UPPER(username)=?";
     private static final String PLAYER_SELECT_TIMEZONE_BY_UUID = "SELECT timezone FROM ab_players WHERE uuid=?";
     private static final String PLAYER_SELECT_DISCORD_BY_UUID = "SELECT discord FROM ab_players WHERE uuid=?";
@@ -69,7 +69,7 @@ public class SQLDatabase {
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME_AND_UUID)) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME_AND_UUID_AND_DISCORD)) {
                     ResultSet rs = ps.executeQuery();
 
                     while(rs.next()) {

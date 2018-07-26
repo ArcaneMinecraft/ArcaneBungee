@@ -181,7 +181,7 @@ public class DiscordConnection {
         pos.setColor(ArcaneColor.POSITIVE);
 
         send.addExtra(pos);
-        send.addExtra(" linked with '" + member.getNickname() + "' Discord account!");
+        send.addExtra(" linked with '" + member.getEffectiveName() + "' Discord account!");
         p.sendMessage(ChatMessageType.SYSTEM, send);
     }
 

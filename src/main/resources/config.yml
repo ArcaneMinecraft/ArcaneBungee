@@ -1,3 +1,9 @@
+# If enabled, shows "Out of date" in server list for clients BELOW 1.13
+mc-version-limit:
+  enabled: true
+  version-to-display: 1.13
+
+# Database setting for all kind of data storage
 mariadb:
   enabled: false
   hostname: localhost:3306

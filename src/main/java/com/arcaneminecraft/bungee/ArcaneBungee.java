@@ -75,7 +75,9 @@ public class ArcaneBungee extends Plugin {
         this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, new JoinLeaveEvents(this));
 
-
+        // MC Version Limiter
+        if (getConfig().getBoolean("mc-version-limit.enabled"))
+            getProxy().getPluginManager().registerListener(this, new ProtocolEvent(this));
 
         // Commnads that directly depend on SQL
         if (sqlDatabase != null) {

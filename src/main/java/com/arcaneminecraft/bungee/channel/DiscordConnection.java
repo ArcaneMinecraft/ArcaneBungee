@@ -81,12 +81,11 @@ public class DiscordConnection {
         );
     }
 
-    @SuppressWarnings("WeakerAccess")
     public void metaToDiscord(String msg) {
         mcChatChannel.sendMessage(msg).complete();
     }
 
-    public void metaToDiscord(String msg, int count) {
+    public void joinLeaveToDiscord(String msg, int count) {
         metaToDiscord(msg);
 
         Game g = Game.of(Game.GameType.WATCHING,count + " player" + (count == 1 ? "" : "s"));

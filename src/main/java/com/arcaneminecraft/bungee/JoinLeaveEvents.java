@@ -187,7 +187,7 @@ public class JoinLeaveEvents implements Listener {
                 }
                 DiscordConnection d = plugin.getDiscordConnection();
                 if (d != null)
-                    d.metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
+                    d.joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
             });
         } else {
             // Fallback
@@ -198,7 +198,7 @@ public class JoinLeaveEvents implements Listener {
             }
             DiscordConnection d = plugin.getDiscordConnection();
             if (d != null)
-                d.metaToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
+                d.joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
         }
     }
 
@@ -214,6 +214,6 @@ public class JoinLeaveEvents implements Listener {
         }
         DiscordConnection d = plugin.getDiscordConnection();
         if (d != null)
-            d.metaToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1); // TODO: Test this
+            d.joinLeaveToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1); // TODO: Test this
     }
 }

@@ -92,7 +92,16 @@ public class FindPlayer extends Command implements TabExecutor {
             }
 
             pl.sort(Comparator.comparing(ChatColor::stripColor));
+
             done.set(true);
+
+            if (pl.size() > 1000 && sender instanceof ProxiedPlayer) {
+                BaseComponent send = new TextComponent("Too many players matched '" + args[0] + "' - please refine the match term");
+                send.setColor(ArcaneColor.NEGATIVE);
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+                return;
+            }
+
 
             BaseComponent head = new TextComponent("--- Players matching '");
             BaseComponent part = new TextComponent(args[0]);

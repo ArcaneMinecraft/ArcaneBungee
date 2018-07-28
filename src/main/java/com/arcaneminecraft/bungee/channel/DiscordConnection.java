@@ -28,6 +28,7 @@ import java.util.UUID;
 
 public class DiscordConnection {
     private final ArcaneBungee plugin;
+    private final String avatarSourceFormat;
     private final JDA jda;
     private final WebhookClient webhookClient;
     private final Guild guild;
@@ -41,6 +42,7 @@ public class DiscordConnection {
 
     public DiscordConnection(ArcaneBungee plugin) throws LoginException, InterruptedException {
         this.plugin = plugin;
+        this.avatarSourceFormat = plugin.getConfig().getString("discord.avatar-source", "https://crafatar.com/avatars/%s?overlay");
         String token = plugin.getConfig().getString("discord.token");
         this.jda = new JDABuilder(AccountType.BOT).setToken(token).buildBlocking();
         this.guild = jda.getGuildById(plugin.getConfig().getLong("discord.guild-id"));
@@ -73,10 +75,11 @@ public class DiscordConnection {
         return guild.getMemberById(id);
     }
 
-    void chatToDiscord(String user, String msg) {
+    void chatToDiscord(String user, String uuid, String msg) {
         webhookClient.send(new WebhookMessageBuilder()
                 .setUsername(user)
                 .setContent(msg)
+                .setAvatarUrl(String.format(avatarSourceFormat, uuid))
                 .build()
         );
     }

@@ -27,6 +27,12 @@ discord:
   mc-chat:
     channel-id: 0
     webhook-url: https://discordapp.com/api/webhooks/[id]/[token]
+  # Avatar images for all players will be fetched from this URL. %s will be replaced with UUID.
+  # Examples:
+  # https://cravatar.eu/avatar/%s
+  # https://crafatar.com/avatars/%s?overlay
+  # https://minotar.net/avatar/%s
+  avatar-source: https://crafatar.com/avatars/%s?overlay
 
 # Point to the ArcaneLog plugin's ServerSocket
 arcanelog:

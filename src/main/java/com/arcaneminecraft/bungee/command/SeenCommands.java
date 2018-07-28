@@ -163,14 +163,23 @@ public class SeenCommands {
             else
                 locale = Locale.getDefault();
 
+            if (uuid == null) {
+                uuid = plugin.getSqlDatabase().getPlayerUUID(args[0]);
+                if (uuid == null) {
+                    if (sender instanceof ProxiedPlayer)
+                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
+                    else
+                        sender.sendMessage(ArcaneText.playerNotFound(args[0]));
+                    return;
+                }
+            }
+
             // is offline:
-            plugin.getSqlDatabase().getSeenThen(
-                    uuid == null
-                            ? plugin.getSqlDatabase().getPlayerUUID(args[0])
-                            : uuid,
+            plugin.getSqlDatabase().getSeenThen(uuid,
                     false, (Timestamp time, String[] pData) ->
             {
                 if (time == null) {
+                    // will not likely reach this point
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
                     else
@@ -241,11 +250,20 @@ public class SeenCommands {
 
             final ProxiedPlayer player = p;
 
-            plugin.getSqlDatabase().getSeenThen(
-                    uuid == null
-                            ? plugin.getSqlDatabase().getPlayerUUID(args[0])
-                            : uuid,
-                    true, (Timestamp time, String[] pData) ->
+            if (uuid == null) {
+                uuid = plugin.getSqlDatabase().getPlayerUUID(args[0]);
+                if (uuid == null) {
+                    if (sender instanceof ProxiedPlayer)
+                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
+                    else
+                        sender.sendMessage(ArcaneText.playerNotFound(args[0]));
+                    return;
+                }
+            }
+
+
+
+            plugin.getSqlDatabase().getSeenThen(uuid, true, (Timestamp time, String[] pData) ->
             {
                 if (time == null) {
                     if (sender instanceof ProxiedPlayer)

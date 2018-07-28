@@ -50,29 +50,30 @@ public class FindPlayer extends Command implements TabExecutor {
             for (String name : plugin.getSqlDatabase().getAllPlayerName()) {
                 int start;
                 int end;
+                int searchLength = args[0].length();
                 String nameLower = name.toLowerCase();
                 if ((start = nameLower.indexOf(searchLower)) != -1) {
                     // make it so end - beginning = searching string
-                    end = start + args[0].length();
+                    end = start + searchLength;
 
                     StringBuilder toAdd = new StringBuilder(name.substring(0, start));
 
                     // Highlight matched portion
                     toAdd.append(ArcaneColor.FOCUS)
-                            .append(name.substring(start, end))
+                            .append(name, start, end)
                             .append(ArcaneColor.CONTENT);
 
                     // Search again until it goes through and matches the entire string.
                     while ((start = name.toLowerCase().indexOf(searchLower, end)) != -1) {
-                        toAdd.append(name.substring(end, start))
+                        toAdd.append(name, end, start)
                                 .append(ArcaneColor.FOCUS);
 
-                        end += args[0].length();
+                        end = start + searchLength;
 
-                        toAdd.append(name.substring(start, end))
+                        toAdd.append(name, start, end)
                                 .append(ArcaneColor.CONTENT);
                     }
-                    toAdd.append(name.substring(end, name.length()));
+                    toAdd.append(name, end, name.length());
 
                     // Add it to the list.
                     pl.add(toAdd.toString());

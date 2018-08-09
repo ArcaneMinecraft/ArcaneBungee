@@ -101,9 +101,11 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
-        getProxy().getPluginManager().registerCommand(this, l.new Discord());
         getProxy().getPluginManager().registerCommand(this, l.new Links());
+        getProxy().getPluginManager().registerCommand(this, l.new Discord());
+        getProxy().getPluginManager().registerCommand(this, l.new Donate());
         getProxy().getPluginManager().registerCommand(this, l.new Forum());
+        getProxy().getPluginManager().registerCommand(this, l.new Rules());
         getProxy().getPluginManager().registerCommand(this, l.new Website());
         getProxy().getPluginManager().registerCommand(this, s.new Creative());
         getProxy().getPluginManager().registerCommand(this, s.new Event());

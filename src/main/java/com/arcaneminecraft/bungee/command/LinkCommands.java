@@ -6,6 +6,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.google.common.collect.ImmutableSet;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -23,8 +24,10 @@ public class LinkCommands {
     private final ArcaneBungee plugin;
     private final List<String> candidates = Arrays.asList("discord","forum","website");
 
-    private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord/");
-    private static final BaseComponent FORUM = ArcaneText.url("https://arcaneminecraft.com/forum/");
+    private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
+    private static final BaseComponent DONATE = ArcaneText.url("https://arcaneminecraft.com/donate");
+    private static final BaseComponent FORUM = ArcaneText.url("https://arcaneminecraft.com/forum");
+    private static final BaseComponent RULES = ArcaneText.url("https://arcaneminecraft.com/rules");
     private static final BaseComponent WEBSITE = ArcaneText.url("https://arcaneminecraft.com/");
 
     public LinkCommands(ArcaneBungee plugin) {
@@ -52,13 +55,26 @@ public class LinkCommands {
             plugin.logCommand(sender, BungeeCommandUsage.LINKS.getCommand(), args);
 
             if (sender instanceof ProxiedPlayer) {
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, WEBSITE);
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, DISCORD);
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, FORUM);
+                ProxiedPlayer p = (ProxiedPlayer)sender;
+
+                BaseComponent dash = new TextComponent("- ");
+                dash.setColor(ArcaneColor.CONTENT);
+
+                BaseComponent header = new TextComponent("--- Links ---");
+                header.setColor(ChatColor.GREEN);
+
+                p.sendMessage(ChatMessageType.SYSTEM, header);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, WEBSITE);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, DISCORD);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, DONATE);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, FORUM);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, RULES);
             } else {
                 sender.sendMessage(WEBSITE);
                 sender.sendMessage(DISCORD);
+                sender.sendMessage(DONATE);
                 sender.sendMessage(FORUM);
+                sender.sendMessage(RULES);
             }
         }
         @Override
@@ -73,9 +89,9 @@ public class LinkCommands {
 
             return ImmutableSet.of();
         }
-
     }
-    public class Discord extends Command {
+
+    public class Discord extends Command implements TabExecutor {
         private final BaseComponent offlineMsg;
 
         public Discord() {
@@ -118,35 +134,54 @@ public class LinkCommands {
             }
         }
 
-    }
-    public class Forum extends Command {
-        public Forum() {
-            super(BungeeCommandUsage.FORUM.getName(), BungeeCommandUsage.FORUM.getPermission(), BungeeCommandUsage.FORUM.getAliases());
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            return plugin.getTabCompletePreset().argStartsWith(args, ImmutableSet.of("link","unlink"));
         }
+    }
+
+    public abstract class LinkCommand extends Command {
+        private final String what;
+        private final BaseComponent url;
+
+        private LinkCommand(BungeeCommandUsage bc, String what, BaseComponent url) {
+            super(bc.getName(), bc.getPermission(), bc.getAliases());
+            this.what = what;
+            this.url = url;
+        }
+
         @Override
         public void execute(CommandSender sender, String[] args) {
             plugin.logCommand(sender, BungeeCommandUsage.FORUM.getCommand(), args);
 
             if (sender instanceof ProxiedPlayer)
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("forum", FORUM));
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink(what, url));
             else
-                sender.sendMessage(singleLink("forum", FORUM));
+                sender.sendMessage(singleLink(what, url));
         }
-
     }
-    public class Website extends Command {
+
+    public class Donate extends LinkCommand {
+        public Donate() {
+            super(BungeeCommandUsage.DONATE, "donate", DONATE);
+        }
+    }
+
+    public class Forum extends LinkCommand {
+        public Forum() {
+            super(BungeeCommandUsage.FORUM, "forum", FORUM);
+        }
+    }
+
+    public class Rules extends LinkCommand {
+        public Rules() {
+            super(BungeeCommandUsage.RULES, "rules", RULES);
+        }
+    }
+
+    public class Website extends LinkCommand {
         public Website() {
-            super(BungeeCommandUsage.WEBSITE.getName(), BungeeCommandUsage.WEBSITE.getPermission(), BungeeCommandUsage.WEBSITE.getAliases());
+            super(BungeeCommandUsage.WEBSITE, "website", WEBSITE);
         }
-        @Override
-        public void execute(CommandSender sender, String[] args) {
-            plugin.logCommand(sender, BungeeCommandUsage.WEBSITE.getCommand(), args);
-
-            if (sender instanceof ProxiedPlayer)
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("website", WEBSITE));
-            else
-                sender.sendMessage(singleLink("website", WEBSITE));
-        }
-
     }
 }

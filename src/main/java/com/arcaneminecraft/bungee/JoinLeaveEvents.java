@@ -14,9 +14,11 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
+import net.md_5.bungee.api.scheduler.ScheduledTask;
 import net.md_5.bungee.event.EventHandler;
 
 import java.text.DateFormat;
+import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 public class JoinLeaveEvents implements Listener {
     private final ArcaneBungee plugin;
     private final BaseComponent welcomeMessage;
+
+    private static final String TIMEZONE_LINK = "https://game.arcaneminecraft.com/timezone/";
     private static final String[] DONOR = {
             "You're pretty awesome. Seriously.",
             "You're pretty awesome. Seriously. 100% awesome.",
@@ -54,6 +58,7 @@ public class JoinLeaveEvents implements Listener {
             "If you're looking for some building ideas, you can type /dclem.",
             "We appreciate your support.",
     };
+    private final LinkedHashMap<ProxiedPlayer, Joining> connecting = new LinkedHashMap<>();
 
     JoinLeaveEvents(ArcaneBungee plugin) {
         this.plugin = plugin;
@@ -105,29 +110,65 @@ public class JoinLeaveEvents implements Listener {
 
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
-        if (plugin.getSqlDatabase() != null) {
-            plugin.getSqlDatabase().playerJoinThen(e.getPlayer(), (time, oldName) -> {
-                ProxiedPlayer p = e.getPlayer();
-                if (OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE)) {
-                    p.sendMessage(ChatMessageType.SYSTEM, this.welcomeMessage);
-                }
+        ProxiedPlayer p = e.getPlayer();
+        connecting.put(p, new Joining(p));
+    }
 
-                if (p.hasPermission("arcane.welcome.donor") && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE)) { // TODO: Check permission node existence on ArcaneServer
-                    BaseComponent send = new TextComponent(" ");
-                    send.setColor(ArcaneColor.CONTENT);
-                    BaseComponent urad = new TextComponent("You are a donor! ");
-                    urad.setColor(ArcaneColor.DONOR);
-                    send.addExtra(urad);
+    @EventHandler
+    public void onPlayerLeave(PlayerDisconnectEvent e) {
+        // Check if player joined and left immediately
+        Joining c = connecting.get(e.getPlayer());
+        if (c != null) {
+            c.cancel();
+            return;
+        }
 
-                    for (BaseComponent bp : TextComponent.fromLegacyText(getRandomDonorMsg()))
-                        send.addExtra(bp);
+        if (plugin.getSqlDatabase() != null)
+            plugin.getSqlDatabase().playerLeave(e.getPlayer().getUniqueId());
 
-                    p.sendMessage(ChatMessageType.SYSTEM, send);
-                }
+        BaseComponent left = new TranslatableComponent("multiplayer.player.left", ArcaneText.playerComponentBungee(e.getPlayer()));
+        left.setColor(ChatColor.YELLOW);
+        for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
+            p.sendMessage(ChatMessageType.SYSTEM, left);
+        }
+        DiscordConnection d = plugin.getDiscordConnection();
+        if (d != null)
+            d.joinLeaveToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1);
+    }
 
-                if (time != null && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE)) {
-                    // Scheduled because p.getLocale() does not load immediately
-                    plugin.getProxy().getScheduler().schedule(plugin, () -> {
+    private class Joining implements Runnable {
+        private final ScheduledTask task;
+        private final ProxiedPlayer p;
+
+        Joining(ProxiedPlayer p) {
+            this.p = p;
+            this.task = plugin.getProxy().getScheduler().schedule(plugin, this, 1300, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void run() {
+            // get player info form database
+            if (plugin.getSqlDatabase() != null) {
+                plugin.getSqlDatabase().playerJoinThen(p, (time, oldName) -> {
+                    if (OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE)) {
+                        p.sendMessage(ChatMessageType.SYSTEM, welcomeMessage);
+                    }
+
+                    if (p.hasPermission("arcane.welcome.donor") && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE)) {
+                        BaseComponent send = new TextComponent(" ");
+                        send.setColor(ArcaneColor.CONTENT);
+                        BaseComponent urad = new TextComponent("You are a donor! ");
+                        urad.setColor(ArcaneColor.DONOR);
+                        send.addExtra(urad);
+
+                        for (BaseComponent bp : TextComponent.fromLegacyText(getRandomDonorMsg()))
+                            send.addExtra(bp);
+
+                        p.sendMessage(ChatMessageType.SYSTEM, send);
+                    }
+
+                    if (time != null && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE)) {
+                        // Scheduled because p.getLocale() does not load immediately
                         String timezone = plugin.getSqlDatabase().getTimeZoneSync(p.getUniqueId());
                         boolean unsetTimezone;
                         if (timezone == null) {
@@ -141,7 +182,7 @@ public class JoinLeaveEvents implements Listener {
                                 ? DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL)
                                 : DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, p.getLocale());
                         df.setTimeZone(TimeZone.getTimeZone(timezone));
-                        BaseComponent send = new TextComponent("Your last login was on ");
+                        BaseComponent send = new TextComponent(" Your last login was on ");
                         send.setColor(ArcaneColor.HEADING);
                         BaseComponent timeFormat = new TextComponent(df.format(time));
                         timeFormat.setColor(ArcaneColor.FOCUS);
@@ -149,71 +190,73 @@ public class JoinLeaveEvents implements Listener {
                         p.sendMessage(ChatMessageType.SYSTEM, send);
 
                         if (unsetTimezone) {
-                            send = new TextComponent("> Tip: set your timezone using '/option timeZone <time zone ID>'!");
+                            send = new TextComponent(" > Tip: Set to your local timezone! Visit ");
+                            send.addExtra(ArcaneText.urlSingle(TIMEZONE_LINK));
+                            send.addExtra(" for command info");
                             send.setColor(ArcaneColor.CONTENT);
                             p.sendMessage(ChatMessageType.SYSTEM, send);
                         }
-                    }, 1L, TimeUnit.SECONDS);
-                }
-
-
-                BaseComponent joined;
-                if (oldName == null) {
-                    // Exceptioned out
-                    joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(e.getPlayer()));
-                } else if (oldName.equals("")) {
-                    // New player
-                    BaseComponent newPlayer = new TextComponent(ArcaneText.playerComponentBungee(e.getPlayer()));
-                    newPlayer.addExtra(" has joined " + ArcaneText.getThisNetworkNameShort() + " for the first time!");
-                    newPlayer.setColor(ChatColor.YELLOW);
-
-                    for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
-                        pl.sendMessage(ChatMessageType.SYSTEM, newPlayer);
                     }
-                    joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(e.getPlayer()));
-                } else if (oldName.equals(e.getPlayer().getName())) {
-                    // Player with same old name
-                    joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(e.getPlayer()));
-                } else {
-                    // Player with new name
-                    joined = new TranslatableComponent("multiplayer.player.joined.renamed", ArcaneText.playerComponentBungee(e.getPlayer()), oldName);
-                }
+                    sendJoin(oldName);
 
-                joined.setColor(ChatColor.YELLOW);
+                    BaseComponent latest = new TextComponent(" Latest news");
+                    latest.setColor(ArcaneColor.HEADING);
+
+                    BaseComponent send = new TextComponent(latest);
+                    send.addExtra(": ");
+                    send.setColor(ArcaneColor.FOCUS);
+
+                    plugin.getSqlDatabase().getLatestNewsThen(news -> {
+                        send.addExtra(news);
+                        send.addExtra("\n");
+                        p.sendMessage(ChatMessageType.SYSTEM, send);
+                    });
+                });
+            } else {
+                p.sendMessage(ChatMessageType.SYSTEM, welcomeMessage);
+                sendJoin(null);
+            }
+        }
+
+        private void sendJoin(String oldName) {
+            BaseComponent joined;
+            if (oldName == null) {
+                // Exceptioned out
+                joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
+            } else if (oldName.equals("")) {
+                // New player
+                BaseComponent newPlayer = new TextComponent(ArcaneText.playerComponentBungee(p));
+                newPlayer.addExtra(" has joined " + ArcaneText.getThisNetworkNameShort() + " for the first time!");
+                newPlayer.setColor(ChatColor.YELLOW);
 
                 for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
-                    if (pl.equals(e.getPlayer())) continue;
-                    pl.sendMessage(ChatMessageType.SYSTEM, joined);
+                    pl.sendMessage(ChatMessageType.SYSTEM, newPlayer);
                 }
-                DiscordConnection d = plugin.getDiscordConnection();
-                if (d != null)
-                    d.joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
-            });
-        } else {
-            // Fallback
-            BaseComponent joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(e.getPlayer()));
-            for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
-                if (p.equals(e.getPlayer())) continue;
-                p.sendMessage(ChatMessageType.SYSTEM, joined);
+                joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
+            } else if (oldName.equals(p.getName())) {
+                // Player with same old name
+                joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
+            } else {
+                // Player with new name
+                joined = new TranslatableComponent("multiplayer.player.joined.renamed", ArcaneText.playerComponentBungee(p), oldName);
+            }
+
+            joined.setColor(ChatColor.YELLOW);
+
+            for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
+                if (pl.equals(p)) continue;
+                pl.sendMessage(ChatMessageType.SYSTEM, joined);
             }
             DiscordConnection d = plugin.getDiscordConnection();
             if (d != null)
                 d.joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
-        }
-    }
 
-    @EventHandler
-    public void onPlayerLeave(PlayerDisconnectEvent e) {
-        if (plugin.getSqlDatabase() != null)
-            plugin.getSqlDatabase().playerLeave(e.getPlayer().getUniqueId());
-
-        BaseComponent left = new TranslatableComponent("multiplayer.player.left", ArcaneText.playerComponentBungee(e.getPlayer()));
-        left.setColor(ChatColor.YELLOW);
-        for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
-            p.sendMessage(ChatMessageType.SYSTEM, left);
+            connecting.remove(p);
         }
-        DiscordConnection d = plugin.getDiscordConnection();
-        if (d != null)
-            d.joinLeaveToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1); // TODO: Test this
+
+        private void cancel() {
+            task.cancel();
+            connecting.remove(p);
+        }
     }
 }

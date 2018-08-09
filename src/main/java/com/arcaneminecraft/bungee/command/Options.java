@@ -18,12 +18,14 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.TimeZone;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class Options extends Command implements TabExecutor {
     private final ArcaneBungee plugin;
 
+    private static final String TIMEZONE_LINK = "https://game.arcaneminecraft.com/timezone/";
 
     private enum OptionEntries {
         SHOW_DONOR_WELCOME_MESSAGE ("showDonorWelcomeMessage", OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE, "arcane.welcome.donor"),
@@ -47,10 +49,6 @@ public class Options extends Command implements TabExecutor {
          * The toggle lasts only this session
          */
         private final boolean sessionOnly;
-
-        OptionEntries(String name, OptionsStorage.Toggles opt) {
-            this(name, opt, null);
-        }
 
         OptionEntries(String name, OptionsStorage.Toggles opt, String permission) {
             if (opt == null)
@@ -179,6 +177,25 @@ public class Options extends Command implements TabExecutor {
         OptionEntries noPerm = null;
 
         BaseComponent send;
+
+        if (args[0].equalsIgnoreCase("timezone")) {
+            OptionEntries o = OptionEntries.TIMEZONE;
+
+            if (choice == null) {
+                send = new TextComponent("Option " + o.name + " is currently " + o.get(p));
+            } else {
+                TimeZone tz = TimeZone.getTimeZone(choice);
+                send = new TextComponent("Successfully set " + o.name + " to " + tz.getID());
+                o.set(p, tz.getID());
+            }
+            send.addExtra("\nVisit ");
+            send.addExtra(ArcaneText.urlSingle(TIMEZONE_LINK));
+            send.addExtra(" if that's incorrect");
+            send.setColor(ArcaneColor.CONTENT);
+            p.sendMessage(ChatMessageType.SYSTEM, send);
+            return;
+        }
+
         for (OptionEntries o : OptionEntries.values()) {
             if (!args[0].equalsIgnoreCase(o.name))
                 continue;

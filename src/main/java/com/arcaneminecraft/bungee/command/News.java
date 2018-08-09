@@ -33,7 +33,7 @@ public class News extends Command implements TabExecutor {
             send.addExtra(": ");
             send.setColor(ArcaneColor.FOCUS);
 
-            plugin.getSqlDatabase().getLatestNews(news -> {
+            plugin.getSqlDatabase().getLatestNewsThen(news -> {
                 send.addExtra(news);
 
                 if (sender instanceof ProxiedPlayer) {

@@ -61,7 +61,7 @@ public class LinkCommands {
                 dash.setColor(ArcaneColor.CONTENT);
 
                 BaseComponent header = new TextComponent("--- Links ---");
-                header.setColor(ChatColor.GREEN);
+                header.setColor(ChatColor.DARK_GREEN);
 
                 p.sendMessage(ChatMessageType.SYSTEM, header);
                 p.sendMessage(ChatMessageType.SYSTEM, dash, WEBSITE);

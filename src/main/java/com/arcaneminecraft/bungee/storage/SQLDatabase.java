@@ -211,7 +211,7 @@ public class SQLDatabase {
         });
     }
 
-    public void getLatestNews(ReturnRunnable<String> run) {
+    public void getLatestNewsThen(ReturnRunnable<String> run) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(NEWS_SELECT_LATEST)) {

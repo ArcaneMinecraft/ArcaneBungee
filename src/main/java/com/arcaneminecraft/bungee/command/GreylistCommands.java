@@ -17,7 +17,6 @@ import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.Collections;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 // TODO: Cleanup all the messages
@@ -100,13 +99,17 @@ public class GreylistCommands {
                 user.unsetPermission(node);
             }
             getLpApi().getUserManager().saveUser(user);
+            getLpApi().getUserManager().cleanupUser(user);
         };
 
         User u = getLpApi().getUser(toGreylist);
 
-        if (u == null) {
-            UUID uuid = plugin.getSqlDatabase().getPlayerUUID(toGreylist);
+        if (u != null) {
+            then.accept(u);
+            return;
+        }
 
+        getLpApi().getUserManager().lookupUuid(toGreylist).thenAcceptAsync(uuid -> {
             if (uuid == null) {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(toGreylist));
@@ -114,11 +117,9 @@ public class GreylistCommands {
                     sender.sendMessage(ArcaneText.playerNotFound(toGreylist));
                 return;
             }
-
+            getLpApi().getUserManager().loadUser(uuid);
             getLpApi().getUserManager().loadUser(uuid).thenAcceptAsync(then);
-        } else {
-            then.accept(u);
-        }
+        });
     }
 
     public class Apply extends Command implements TabExecutor {

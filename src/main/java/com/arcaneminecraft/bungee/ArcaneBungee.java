@@ -79,6 +79,9 @@ public class ArcaneBungee extends Plugin {
         if (getConfig().getBoolean("mc-version-limit.enabled"))
             getProxy().getPluginManager().registerListener(this, new ProtocolEvent(this));
 
+        // Player list
+        getProxy().getPluginManager().registerListener(this, new ServerListListener(this));
+
         // Commnads that directly depend on SQL
         if (sqlDatabase != null) {
             SeenCommands fs = new SeenCommands(this);

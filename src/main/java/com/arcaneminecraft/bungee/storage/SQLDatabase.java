@@ -194,8 +194,7 @@ public class SQLDatabase {
 
     public void playerLeave(UUID uuid) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            Cache cache = onlinePlayerCache.get(uuid);
-            onlinePlayerCache.remove(uuid);
+            Cache cache = onlinePlayerCache.remove(uuid);
             try (Connection c = ds.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
@@ -260,7 +259,7 @@ public class SQLDatabase {
      * Gets pre-loaded all players on database to toUpdate set
      */
     public Collection<String> getAllPlayerName() {
-        return allUuidToName.values();
+        return allNameToUuid.keySet();
     }
 
     int getOption(ProxiedPlayer player) {

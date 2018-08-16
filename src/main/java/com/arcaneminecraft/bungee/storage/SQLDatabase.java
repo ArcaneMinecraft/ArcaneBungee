@@ -259,7 +259,7 @@ public class SQLDatabase {
      * Gets pre-loaded all players on database to toUpdate set
      */
     public Collection<String> getAllPlayerName() {
-        return allNameToUuid.keySet();
+        return allUuidToName.values();
     }
 
     int getOption(ProxiedPlayer player) {

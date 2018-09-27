@@ -198,7 +198,7 @@ public class SeenCommands {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                 else
-                    sender.sendMessage(ArcaneText.usage(send));
+                    sender.sendMessage(send);
             });
         }
 
@@ -285,7 +285,7 @@ public class SeenCommands {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                 else
-                    sender.sendMessage(ArcaneText.usage(send));
+                    sender.sendMessage(send);
             });
         }
 

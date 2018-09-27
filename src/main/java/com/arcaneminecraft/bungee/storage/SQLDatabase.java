@@ -109,7 +109,7 @@ public class SQLDatabase {
                 if (!rs.next()) {
                     // There is no data = new player
                     allUuidToName.put(p.getUniqueId(), p.getName());
-                    allNameToUuid.put(p.getName(), p.getUniqueId());
+                    allNameToUuid.put(p.getName().toLowerCase(), p.getUniqueId());
 
                     try (PreparedStatement ps = c.prepareStatement(PLAYER_INSERT)) {
                         ps.setString(1, p.getUniqueId().toString());
@@ -151,12 +151,12 @@ public class SQLDatabase {
     /**
      *
      * @param uuid UUID of player to look up
-     * @param first True = First join, false = last seen
+     * @param firstJoin True = First join, false = last seen
      * @param run Parameters consist of: Timestamp time, String[] {username, uuid, timezone}
      */
-    public void getSeenThen(UUID uuid, boolean first, ReturnRunnable.More<Timestamp, String[]> run) {
+    public void getSeenThen(UUID uuid, boolean firstJoin, ReturnRunnable.More<Timestamp, String[]> run) {
         Cache cache = onlinePlayerCache.get(uuid);
-        if (cache != null && first) {
+        if (cache != null && firstJoin) {
             run.run(
                     cache.firstseen,
                     new String[]{
@@ -176,7 +176,7 @@ public class SQLDatabase {
                 }
                 if (rs.next()) {
                     run.run(
-                            rs.getTimestamp(first ? "firstseen" : "lastseen"),
+                            rs.getTimestamp(firstJoin ? "firstseen" : "lastseen"),
                             new String[]{
                                     rs.getString("username"),
                                     rs.getString("uuid"),

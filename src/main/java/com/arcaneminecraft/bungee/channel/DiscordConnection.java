@@ -85,11 +85,11 @@ public class DiscordConnection {
             int index = user.toLowerCase().indexOf("clyde");
             char[] nc = user.toCharArray();
             if (nc[index + 4] == 'E')
-                nc[index + 4] = 'Ε'; // Epsilon
+                nc[index + 4] = '\u0395'; // Epsilon "E"
             else if (nc[index + 1] == 'l')
-                nc[index+1] = 'I'; // Upper-case i
+                nc[index+1] = 'I'; // Upper-case i "I"
             else if (nc[index + 4] == 'e')
-                nc[index + 4] = '℮'; // Estimate sign
+                nc[index + 4] = '\u212E'; // Estimate sign "e"
 
             user = String.copyValueOf(nc);
         }

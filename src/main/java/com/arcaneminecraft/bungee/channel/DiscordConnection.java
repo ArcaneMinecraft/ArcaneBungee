@@ -136,7 +136,7 @@ public class DiscordConnection {
         BaseComponent tag = new TextComponent("[Web]");
         tag.setColor(ChatColor.DARK_GREEN);
         log.addExtra(tag);
-        log.addExtra(" <" + mcName + "> " + msg.getContentStripped());
+        log.addExtra(" <" + (mcName == null ? name : mcName) + "> " + msg.getContentStripped());
         plugin.getProxy().getConsole().sendMessage(log);
     }
 

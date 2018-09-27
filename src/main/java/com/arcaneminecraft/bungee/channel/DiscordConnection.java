@@ -76,6 +76,21 @@ public class DiscordConnection {
     }
 
     void chatToDiscord(String user, String uuid, String msg) {
+        // HTTP/1.1 400 prevention: Discord disallows bot username with "clyde"
+        if (user.toLowerCase().contains("clyde")) {
+            int index = user.toLowerCase().indexOf("clyde");
+            char[] nc = user.toCharArray();
+            if (nc[index + 4] == 'E')
+                nc[index + 4] = 'Ε'; // Epsilon
+            else if (nc[index + 1] == 'l')
+                nc[index+1] = 'I'; // Upper-case i
+            else if (nc[index + 4] == 'e')
+                nc[index + 4] = '℮'; // Estimate sign
+
+            user = String.copyValueOf(nc);
+        }
+
+        // Send message
         webhookClient.send(new WebhookMessageBuilder()
                 .setUsername(user)
                 .setContent(msg)

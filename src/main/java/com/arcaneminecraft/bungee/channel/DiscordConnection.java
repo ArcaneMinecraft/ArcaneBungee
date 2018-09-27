@@ -25,6 +25,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import javax.security.auth.login.LoginException;
 import java.security.SecureRandom;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class DiscordConnection {
@@ -114,8 +115,20 @@ public class DiscordConnection {
         User user = msg.getAuthor();
         String userTag = msg.isWebhookMessage() ? null : user.getName() + "#" + user.getDiscriminator();
         String name = user.getName();
+        StringBuilder m = new StringBuilder(msg.getContentDisplay());
 
-        plugin.getPluginMessenger().chat("Discord", name, mcName, userTag, msg.getContentStripped(), ChatColor.DARK_GREEN + "[Web]");
+        // Show link to attachments in-game
+        List<Message.Attachment> attachments = msg.getAttachments();
+        if (!attachments.isEmpty()) {
+            for (Message.Attachment a : attachments) {
+                if (m.length() == 0)
+                    m.append(a.getUrl());
+                else
+                    m.append(" ").append(a.getUrl());
+            }
+        }
+
+        plugin.getPluginMessenger().chat("Discord", name, mcName, userTag, m.toString(), ChatColor.DARK_GREEN + "[Web]");
         TextComponent log = new TextComponent("Discord: ");
         BaseComponent tag = new TextComponent("[Web]");
         tag.setColor(ChatColor.DARK_GREEN);

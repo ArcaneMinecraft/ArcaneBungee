@@ -13,15 +13,14 @@ import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
+import net.md_5.bungee.api.event.SettingsChangedEvent;
 import net.md_5.bungee.api.plugin.Listener;
-import net.md_5.bungee.api.scheduler.ScheduledTask;
 import net.md_5.bungee.event.EventHandler;
 
 import java.text.DateFormat;
 import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 public class JoinLeaveEvents implements Listener {
     private final ArcaneBungee plugin;
@@ -136,13 +135,18 @@ public class JoinLeaveEvents implements Listener {
             d.joinLeaveToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1);
     }
 
+    @EventHandler
+    public void onSettingsReceived(SettingsChangedEvent e) {
+        Joining j = connecting.get(e.getPlayer());
+        if (j != null)
+            j.run();
+    }
+
     private class Joining implements Runnable {
-        private final ScheduledTask task;
         private final ProxiedPlayer p;
 
         Joining(ProxiedPlayer p) {
             this.p = p;
-            this.task = plugin.getProxy().getScheduler().schedule(plugin, this, 1300, TimeUnit.MILLISECONDS);
         }
 
         @Override
@@ -255,7 +259,6 @@ public class JoinLeaveEvents implements Listener {
         }
 
         private void cancel() {
-            task.cancel();
             connecting.remove(p);
         }
     }

@@ -118,7 +118,7 @@ public class DiscordConnection {
         User user = msg.getAuthor();
         String userTag = msg.isWebhookMessage() ? null : user.getName() + "#" + user.getDiscriminator();
         String name = user.getName();
-        StringBuilder m = new StringBuilder(msg.getContentDisplay());
+        StringBuilder m = new StringBuilder(msg.getContentStripped());
 
         // Show link to attachments in-game
         List<Message.Attachment> attachments = msg.getAttachments();
@@ -136,7 +136,7 @@ public class DiscordConnection {
         BaseComponent tag = new TextComponent("[Web]");
         tag.setColor(ChatColor.DARK_GREEN);
         log.addExtra(tag);
-        log.addExtra(" <" + (mcName == null ? name : mcName) + "> " + msg.getContentStripped());
+        log.addExtra(" <" + (mcName == null ? name : mcName) + "> " + m.toString());
         plugin.getProxy().getConsole().sendMessage(log);
     }
 

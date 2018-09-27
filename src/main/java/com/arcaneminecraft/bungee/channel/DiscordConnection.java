@@ -2,10 +2,7 @@ package com.arcaneminecraft.bungee.channel;
 
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.OnlineStatus;
+import net.dv8tion.jda.core.*;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.ReadyEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
@@ -99,7 +96,7 @@ public class DiscordConnection {
         // Send message
         webhookClient.send(new WebhookMessageBuilder()
                 .setUsername(user)
-                .setContent(msg)
+                .setContent(new MessageBuilder(msg).build().getContentStripped())
                 .setAvatarUrl(String.format(avatarSourceFormat, uuid))
                 .build()
         );
@@ -273,7 +270,8 @@ public class DiscordConnection {
                     // Send message saying to register discord to mc account
                     user.openPrivateChannel().queue(channel ->
                             channel
-                                    .sendMessage("Your message in \\#" + mcChatChannel.getName() + " was deleted because your account is not linked. Please link your account first using `/discord link` in-game.")
+                                    .sendMessage("Your message in \\#" + mcChatChannel.getName()
+                                            + " was deleted because your account is not linked. Please link your account first using `/discord link` in-game.")
                                     .complete());
                     return;
                 }

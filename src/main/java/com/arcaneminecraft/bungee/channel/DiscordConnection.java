@@ -21,6 +21,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import javax.security.auth.login.LoginException;
 import java.security.SecureRandom;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
@@ -284,6 +285,7 @@ public class DiscordConnection {
         public void onMessageReceived(MessageReceivedEvent e) {
             if (e.getMessage().getContentRaw().startsWith(PREFIX) && !e.getChannel().equals(mcChatChannel)) {
                 String[] args = e.getMessage().getContentRaw().substring(1).split(" ");
+
                 if (args[0].equalsIgnoreCase("link")) {
                     if (e.getAuthor().isBot()) {
                         e.getChannel().sendMessage("Bots cannot link Minecraft and Discord accounts.").complete();
@@ -298,6 +300,40 @@ public class DiscordConnection {
                         return;
                     }
                     e.getChannel().sendMessage("Usage: `" + PREFIX + "link <player> <token>`").complete();
+                    return;
+                }
+
+                if (args[0].equalsIgnoreCase("list")) {
+                    boolean uuid = args.length == 2 && args[1].equalsIgnoreCase("uuid");
+
+                    final String format = "__There are **%d** of a a max %d players online:__ %s";
+
+                    StringBuilder online;
+                    Iterator<ProxiedPlayer> i = plugin.getProxy().getPlayers().iterator();
+                    if (i.hasNext()) {
+                        ProxiedPlayer first = i.next();
+                        online = new StringBuilder("**").append(first.getName()).append("**");
+                        if (uuid)
+                            online.append("(").append(first.getUniqueId()).append(")");
+
+                        i.forEachRemaining((ProxiedPlayer p) -> {
+                            online.append(", **").append(p.getName()).append("**");
+                            if (uuid)
+                                online.append("(").append(p.getUniqueId()).append(")");
+                        });
+                    } else {
+                        online = new StringBuilder();
+                    }
+
+
+                    e.getChannel().sendMessage(
+                            String.format(format,
+                                    plugin.getProxy().getOnlineCount(),
+                                    plugin.getProxy().getConfig().getPlayerLimit(),
+                                    online.toString())
+                    ).complete();
+
+                    //return;
                 }
             }
         }

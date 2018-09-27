@@ -137,7 +137,6 @@ public class TellCommands {
 
         TextComponent n = new TextComponent(name);
         n.setColor(ArcaneColor.FOCUS);
-        ret.addExtra(n);
 
         if (id == 0) {
             ret.addExtra("Player '");
@@ -147,27 +146,27 @@ public class TellCommands {
         } else {
             ret.addExtra(n);
             ret.setColor(ArcaneColor.CONTENT);
-            ret.addExtra(" can be reached on Discord @");
+            ret.addExtra(" is not online and can be reached on Discord @");
 
             String[] info = plugin.getDiscordConnection().getNicknameUsernameDiscriminator(id);
-            TextComponent main,
-                    discord = new TextComponent();
+            TextComponent discord = new TextComponent();
             discord.setColor(ArcaneColor.CONTENT);
             discord.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Search for this user on Discord").create()));
 
             // if no nickname
             if (info[0] == null) {
-                main = new TextComponent(info[1]);
+                TextComponent main = new TextComponent(info[1]);
                 main.setColor(ArcaneColor.FOCUS);
                 discord.addExtra(main);
                 discord.addExtra("#" + info[2]);
             } else {
-                main = new TextComponent(info[0]);
+                TextComponent main = new TextComponent(info[0]);
                 main.setColor(ArcaneColor.FOCUS);
                 discord.addExtra(main);
                 discord.addExtra(" (" + info[1] + "#" + info[2] + ")");
             }
-            ret.addExtra("instead");
+            ret.addExtra(discord);
+            ret.addExtra(" instead");
 
         }
         return ret;

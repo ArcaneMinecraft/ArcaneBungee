@@ -289,18 +289,19 @@ public class DiscordConnection {
                 if (args[0].equalsIgnoreCase("help")) {
                     // TODO: Store this static value as class variable
                     EmbedBuilder embed = new EmbedBuilder()
-                            .setDescription("**Hello! Arcane** knows these commands on Discord so far.  Message the staff if you need help.\n" +
-                                    "Arcane " + plugin.getDescription().getVersion() + "\n" +
+                            .setDescription("**Hello!** These are Arcane commands on Discord so far.  Message the staff if you need help.\n" +
                                     "More commands are in the works. If there's any we must have right now, you may suggest them!\n\n" +
-                                    "Come build with us!")
-                            .setThumbnail("https://arcaneminecraft.com/res/img/icon/icon.svg")
+                                    "**Come build with us!**\n" +
+                                    "Arcane " + plugin.getDescription().getVersion() + "\n"
+                            )
+                            .setThumbnail("https://arcaneminecraft.com/res/img/icon/512.png")
                             .addField(PREFIX + "help","Shows this view.",true)
-                            .addField(PREFIX + "link","__**Usage**:__ " + PREFIX + "link <in-game name> <token>" +
-                                    "\nLinks your Minecraft account with Discord account. Run `/discord link` in-game first!",true)
-                            .addField(PREFIX + "list","__**Alias**:__ " + PREFIX + "players" +
-                                    "__**Usage**:__ " + PREFIX + "list [uuid]" +
-                                    "\nLists all players that are currently in-game.",true)
-                            .appendDescription("");
+                            .addField(PREFIX + "link","__Usage:__ " + PREFIX + "link <in-game name> <token>\n" +
+                                    "Links your Minecraft account with Discord account. Run `/discord link` in-game first!",true)
+                            .addField(PREFIX + "list","__Alias:__ " + PREFIX + "players\n" +
+                                    "__Usage:__ " + PREFIX + "list [uuid]\n" +
+                                    "Lists all players that are currently in-game.",true)
+                            .setColor(0xFFAA00);
 
                     e.getChannel().sendMessage(embed.build()).complete();
 
@@ -335,26 +336,28 @@ public class DiscordConnection {
                         ProxiedPlayer first = i.next();
                         online = new StringBuilder("**").append(first.getName()).append("**");
                         if (uuid)
-                            online.append("(").append(first.getUniqueId()).append(")");
+                            online.append(" (").append(first.getUniqueId()).append(")");
 
                         i.forEachRemaining((ProxiedPlayer p) -> {
                             online.append("\n**").append(p.getName()).append("**");
                             if (uuid)
-                                online.append("(").append(p.getUniqueId()).append(")");
+                                online.append(" (").append(p.getUniqueId()).append(")");
                         });
                     } else {
                         online = new StringBuilder("*nobody*");
                     }
 
 
+                    int onlineCount = plugin.getProxy().getOnlineCount();
                     EmbedBuilder embed = new EmbedBuilder()
                             .setTitle("Online Players")
                             .setDescription("Usage: " + PREFIX + "list [uuid]")
                             .addField(
-                                    String.format(onlineFormat, plugin.getProxy().getOnlineCount(), plugin.getProxy().getConfig().getPlayerLimit()),
+                                    String.format(onlineFormat, onlineCount, plugin.getProxy().getConfig().getPlayerLimit()),
                                     online.toString(),
                                     false
-                            );
+                            )
+                            .setColor(onlineCount == 0 ? 0xFFAA00 : 0x00AA00);
 
                     e.getChannel().sendMessage(embed.build()).complete();
 

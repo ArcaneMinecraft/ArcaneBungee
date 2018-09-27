@@ -7,15 +7,13 @@ import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.TranslatableComponent;
+import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public class TellCommands {
     private final ArcaneBungee plugin;
@@ -45,9 +43,7 @@ public class TellCommands {
             // Get recipient
             CommandSender p = plugin.getProxy().getPlayer(args[0]);
             if (p == null) {
-                if (sender instanceof ProxiedPlayer)
-                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[0]));
-                else sender.sendMessage(ArcaneText.playerNotFound(args[0]));
+                notFound(sender, args[0], null, false);
                 return;
             }
 
@@ -97,10 +93,7 @@ public class TellCommands {
                 plugin.logCommand(sender, BungeeCommandUsage.MSG.getCommand() + " " + p.getName() + " " + String.join(" ", args));
 
                 if (!((ProxiedPlayer) p).isConnected()) {
-                    if (sender instanceof ProxiedPlayer)
-                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(p.getName()));
-                    else
-                        sender.sendMessage(ArcaneText.playerNotFound(p.getName()));
+                    notFound(sender, p.getName(), ((ProxiedPlayer) p).getUniqueId(), true);
                     return;
                 }
             } else {
@@ -115,7 +108,71 @@ public class TellCommands {
             return plugin.getTabCompletePreset().onlinePlayers(args);
         }
     }
+    
+    private void notFound(CommandSender sender, String name, UUID uuid, final boolean isProperCase) {
+        if (uuid == null)
+            uuid = plugin.getSqlDatabase().getPlayerUUID(name);
+        
+        if (uuid == null) {
+            if (sender instanceof ProxiedPlayer)
+                ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound());
+            else
+                sender.sendMessage(ArcaneText.playerNotFound());
+        } else {
+            String caseCorrectedName = isProperCase ? name : plugin.getSqlDatabase().getPlayerName(uuid);
+            plugin.getSqlDatabase().getDiscordThen(uuid, id -> {
+                if (sender instanceof ProxiedPlayer)
+                    ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, receipentNotOnline(caseCorrectedName, id));
+                else
+                    sender.sendMessage(receipentNotOnline(caseCorrectedName, id));
+            });
+        }
+    }
+    
+    private BaseComponent receipentNotOnline(String name, long id) {
+        TextComponent gt = new TextComponent("> ");
+        gt.setColor(ChatColor.DARK_GRAY);
 
+        BaseComponent ret = new TextComponent(gt);
+
+        TextComponent n = new TextComponent(name);
+        n.setColor(ArcaneColor.FOCUS);
+        ret.addExtra(n);
+
+        if (id == 0) {
+            ret.addExtra("Player '");
+            ret.setColor(ArcaneColor.CONTENT);
+            ret.addExtra(n);
+            ret.addExtra("' is not online and does not have a linked Discord account");
+        } else {
+            ret.addExtra(n);
+            ret.setColor(ArcaneColor.CONTENT);
+            ret.addExtra(" can be reached on Discord @");
+
+            String[] info = plugin.getDiscordConnection().getNicknameUsernameDiscriminator(id);
+            TextComponent main,
+                    discord = new TextComponent();
+            discord.setColor(ArcaneColor.CONTENT);
+            discord.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Search for this user on Discord").create()));
+
+            // if no nickname
+            if (info[0] == null) {
+                main = new TextComponent(info[1]);
+                main.setColor(ArcaneColor.FOCUS);
+                discord.addExtra(main);
+                discord.addExtra("#" + info[2]);
+            } else {
+                main = new TextComponent(info[0]);
+                main.setColor(ArcaneColor.FOCUS);
+                discord.addExtra(main);
+                discord.addExtra(" (" + info[1] + "#" + info[2] + ")");
+            }
+            ret.addExtra("instead");
+
+        }
+        return ret;
+    }
+    
     private void messenger(CommandSender from, CommandSender to, String[] args, int fromIndex) {
         BaseComponent msg = ArcaneText.url(args, fromIndex);
 

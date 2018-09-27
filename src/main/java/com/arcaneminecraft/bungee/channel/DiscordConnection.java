@@ -64,6 +64,11 @@ public class DiscordConnection {
         jda.shutdown();
     }
 
+    public String[] getNicknameUsernameDiscriminator(long id) {
+        Member m = guild.getMemberById(id);
+        return new String[]{m.getNickname(),m.getUser().getName(),m.getUser().getDiscriminator()};
+    }
+
     private Member getMember(ProxiedPlayer player) {
         return getMember(player.getUniqueId());
     }
@@ -220,6 +225,7 @@ public class DiscordConnection {
         p.sendMessage(ChatMessageType.SYSTEM, send);
     }
 
+    // TODO: Make ProxiedPlayer-independent version
     public void userUnlink(ProxiedPlayer p) {
         Member member = getMember(p);
         if (member == null) {

@@ -130,23 +130,29 @@ public class TellCommands {
     }
     
     private BaseComponent receipentNotOnline(String name, long id) {
+
+        BaseComponent ret = new TextComponent();
+        ret.setColor(ArcaneColor.CONTENT);
+
         TextComponent gt = new TextComponent("> ");
         gt.setColor(ChatColor.DARK_GRAY);
-
-        BaseComponent ret = new TextComponent(gt);
+        ret.addExtra(gt);
 
         TextComponent n = new TextComponent(name);
-        n.setColor(ArcaneColor.FOCUS);
+        n.setColor(ArcaneColor.HEADING);
 
         if (id == 0) {
-            ret.addExtra("Player '");
-            ret.setColor(ArcaneColor.CONTENT);
             ret.addExtra(n);
-            ret.addExtra("' is not online and does not have a linked Discord account");
+            ret.addExtra(" is not online and does not have a linked Discord account");
         } else {
+            n.addExtra("'s Discord");
             ret.addExtra(n);
-            ret.setColor(ArcaneColor.CONTENT);
-            ret.addExtra(" is not online and can be reached on Discord @");
+
+            TextComponent colon = new TextComponent(":");
+            colon.setColor(ChatColor.DARK_GRAY);
+            ret.addExtra(colon);
+
+            ret.addExtra(" @");
 
             String[] info = plugin.getDiscordConnection().getNicknameUsernameDiscriminator(id);
             TextComponent discord = new TextComponent();
@@ -155,18 +161,16 @@ public class TellCommands {
 
             // if no nickname
             if (info[0] == null) {
-                TextComponent main = new TextComponent(info[1]);
-                main.setColor(ArcaneColor.FOCUS);
-                discord.addExtra(main);
+                discord.addExtra(info[1]);
                 discord.addExtra("#" + info[2]);
             } else {
-                TextComponent main = new TextComponent(info[0]);
-                main.setColor(ArcaneColor.FOCUS);
-                discord.addExtra(main);
+                discord.addExtra(info[0]);
                 discord.addExtra(" (" + info[1] + "#" + info[2] + ")");
             }
             ret.addExtra(discord);
-            ret.addExtra(" instead");
+            ret.addExtra(". ");
+            ret.addExtra(name);
+            ret.addExtra(" is offline, so message them on Discord instead");
 
         }
         return ret;

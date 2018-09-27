@@ -156,7 +156,7 @@ public class DiscordConnection {
         while (tokenMap.containsKey(token))
             token = generateToken();
 
-        String tokCommand = "!link " + p.getName() + " " + token;
+        String tokCommand = PREFIX + "link " + p.getName() + " " + token;
 
         BaseComponent send = new TextComponent();
         send.setColor(ArcaneColor.CONTENT);
@@ -166,7 +166,7 @@ public class DiscordConnection {
         send.addExtra(" Stay online and send '");
 
         a = new TextComponent(tokCommand);
-        a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, PREFIX + " " + tokCommand));
+        a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ " + tokCommand));
         a.setColor(ArcaneColor.FOCUS);
         send.addExtra(a);
         send.addExtra("' on Discord to finish linking.\n Tokens can be used only one time!");
@@ -292,7 +292,7 @@ public class DiscordConnection {
                             .setDescription("**Hello!** These are Arcane commands on Discord so far.  Message the staff if you need help.\n" +
                                     "More commands are in the works. If there's any we must have right now, you may suggest them!\n\n" +
                                     "**Come build with us!**\n" +
-                                    "Arcane " + plugin.getDescription().getVersion() + "\n"
+                                    "Arcane v" + plugin.getDescription().getVersion() + "\n"
                             )
                             .setThumbnail("https://arcaneminecraft.com/res/img/icon/512.png")
                             .addField(PREFIX + "help","Shows this view.",true)

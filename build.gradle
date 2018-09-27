@@ -22,12 +22,12 @@ configurations {
 
 dependencies {
     compileOnly 'net.md-5:bungeecord-api:1.13-SNAPSHOT' // Bungeecord api
-    compileOnly 'me.lucko.luckperms:luckperms-api:4.2'
+    compileOnly 'me.lucko.luckperms:luckperms-api:4.3'
     compileOnly fileTree(dir: 'libs', include: '*.jar')
     compileOnly 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
     extraLibs 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
-    implementation 'net.dv8tion:JDA:3.7.1_386'
-    extraLibs 'net.dv8tion:JDA:3.7.1_386'
+    implementation 'net.dv8tion:JDA:3.8.0_427'
+    extraLibs 'net.dv8tion:JDA:3.8.0_427'
 }
 
 jar {

@@ -166,7 +166,7 @@ public class DiscordConnection {
         send.addExtra(" Stay online and send '");
 
         a = new TextComponent(tokCommand);
-        a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ " + tokCommand));
+        a.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, PREFIX + " " + tokCommand));
         a.setColor(ArcaneColor.FOCUS);
         send.addExtra(a);
         send.addExtra("' on Discord to finish linking.\n Tokens can be used only one time!");
@@ -286,6 +286,27 @@ public class DiscordConnection {
             if (e.getMessage().getContentRaw().startsWith(PREFIX) && !e.getChannel().equals(mcChatChannel)) {
                 String[] args = e.getMessage().getContentRaw().substring(1).split(" ");
 
+                if (args[0].equalsIgnoreCase("help")) {
+                    // TODO: Store this static value as class variable
+                    EmbedBuilder embed = new EmbedBuilder()
+                            .setDescription("**Hello! Arcane** knows these commands on Discord so far.  Message the staff if you need help.\n" +
+                                    "Arcane " + plugin.getDescription().getVersion() + "\n" +
+                                    "More commands are in the works. If there's any we must have right now, you may suggest them!\n\n" +
+                                    "Come build with us!")
+                            .setThumbnail("https://arcaneminecraft.com/res/img/icon/icon.svg")
+                            .addField(PREFIX + "help","Shows this view.",true)
+                            .addField(PREFIX + "link","__**Usage**:__ " + PREFIX + "link <in-game name> <token>" +
+                                    "\nLinks your Minecraft account with Discord account. Run `/discord link` in-game first!",true)
+                            .addField(PREFIX + "list","__**Alias**:__ " + PREFIX + "players" +
+                                    "__**Usage**:__ " + PREFIX + "list [uuid]" +
+                                    "\nLists all players that are currently in-game.",true)
+                            .appendDescription("");
+
+                    e.getChannel().sendMessage(embed.build()).complete();
+
+                    return;
+                }
+
                 if (args[0].equalsIgnoreCase("link")) {
                     if (e.getAuthor().isBot()) {
                         e.getChannel().sendMessage("Bots cannot link Minecraft and Discord accounts.").complete();
@@ -303,10 +324,10 @@ public class DiscordConnection {
                     return;
                 }
 
-                if (args[0].equalsIgnoreCase("list")) {
+                if (args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("players")) {
                     boolean uuid = args.length == 2 && args[1].equalsIgnoreCase("uuid");
 
-                    final String format = "__There are **%d** of a a max %d players online:__ %s";
+                    final String onlineFormat = "There are **%d**/%d players online";
 
                     StringBuilder online;
                     Iterator<ProxiedPlayer> i = plugin.getProxy().getPlayers().iterator();
@@ -317,21 +338,25 @@ public class DiscordConnection {
                             online.append("(").append(first.getUniqueId()).append(")");
 
                         i.forEachRemaining((ProxiedPlayer p) -> {
-                            online.append(", **").append(p.getName()).append("**");
+                            online.append("\n**").append(p.getName()).append("**");
                             if (uuid)
                                 online.append("(").append(p.getUniqueId()).append(")");
                         });
                     } else {
-                        online = new StringBuilder();
+                        online = new StringBuilder("*nobody*");
                     }
 
 
-                    e.getChannel().sendMessage(
-                            String.format(format,
-                                    plugin.getProxy().getOnlineCount(),
-                                    plugin.getProxy().getConfig().getPlayerLimit(),
-                                    online.toString())
-                    ).complete();
+                    EmbedBuilder embed = new EmbedBuilder()
+                            .setTitle("Online Players")
+                            .setDescription("Usage: " + PREFIX + "list [uuid]")
+                            .addField(
+                                    String.format(onlineFormat, plugin.getProxy().getOnlineCount(), plugin.getProxy().getConfig().getPlayerLimit()),
+                                    online.toString(),
+                                    false
+                            );
+
+                    e.getChannel().sendMessage(embed.build()).complete();
 
                     //return;
                 }

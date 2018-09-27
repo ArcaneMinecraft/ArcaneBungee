@@ -267,9 +267,13 @@ public class BadgeCommands implements Listener {
     private void clearPriorityThen(UUID uuid, ReturnRunnable<User> run) {
         getUserThen(uuid, true, user -> {
             // Ideally there would be only one meta set
-            Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING,
-                    user.getCachedData().getMetaData(Contexts.global()).getMeta().get(PREFIX_PRIORITY_STRING)
-            ).build();
+            String value = user.getCachedData().getMetaData(Contexts.global()).getMeta().get(PREFIX_PRIORITY_STRING);
+            if (value == null) {
+                run.run(user);
+                return;
+            }
+
+            Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, value).build();
             user.unsetPermission(node);
 
             run.run(user);

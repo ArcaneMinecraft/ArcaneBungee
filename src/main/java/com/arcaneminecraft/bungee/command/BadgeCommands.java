@@ -43,10 +43,8 @@ public class BadgeCommands implements Listener {
 
         // Load UUID with modified player list
         List<String> l = plugin.getCacheData().getStringList(ALTERED_PREFIX_PATH);
-        if (l != null) {
-            for (String s : l) {
-                this.alteredPrefix.add(UUID.fromString(s));
-            }
+        for (String s : l) {
+            this.alteredPrefix.add(UUID.fromString(s));
         }
     }
 

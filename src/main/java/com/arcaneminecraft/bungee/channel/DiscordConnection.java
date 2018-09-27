@@ -97,7 +97,7 @@ public class DiscordConnection {
         // Send message
         webhookClient.send(new WebhookMessageBuilder()
                 .setUsername(user)
-                .setContent(stripText(msg))
+                .setContent(escapeText(msg))
                 .setAvatarUrl(String.format(avatarSourceFormat, uuid))
                 .build()
         );
@@ -371,17 +371,7 @@ public class DiscordConnection {
         return rnd.nextInt(999999);
     }
 
-    private String stripText(String text) {
-        String toBeEscaped = "~_*`\"\\";
-        StringBuilder ret = new StringBuilder();
-        for (int i = 0; i < text.length(); i++)
-        {
-            if (toBeEscaped.indexOf((int) text.charAt(i))>-1)
-            {
-                ret.append("\\");
-            }
-            ret.append(text.charAt(i));
-        }
-        return ret.toString();
+    private String escapeText(String text) {
+        return text.replaceAll("([\\\\*_~])", "\\\\$1");
     }
 }

@@ -20,13 +20,15 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import javax.security.auth.login.LoginException;
+import java.awt.Color;
 import java.security.SecureRandom;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class DiscordConnection {
+    private static final String META_MSG_MARKER = "\u200B";
+    private static final String PREFIX = "!";
+    private static final SecureRandom rnd = new SecureRandom();
+
     private final ArcaneBungee plugin;
     private final String avatarSourceFormat;
     private final JDA jda;
@@ -35,8 +37,6 @@ public class DiscordConnection {
     private final TextChannel mcChatChannel;
     private final Role playerRole;
     private final LinkedHashMap<Integer, ProxiedPlayer> tokenMap;
-    private static final SecureRandom rnd = new SecureRandom();
-    private static final String PREFIX = "!";
 
 
     public DiscordConnection(ArcaneBungee plugin) throws LoginException, InterruptedException {
@@ -104,7 +104,7 @@ public class DiscordConnection {
     }
 
     public void metaToDiscord(String msg) {
-        mcChatChannel.sendMessage(msg).complete();
+        mcChatChannel.sendMessage(META_MSG_MARKER + msg).complete();
     }
 
     public void joinLeaveToDiscord(String msg, int count) {
@@ -115,10 +115,90 @@ public class DiscordConnection {
     }
 
     private void chatToMinecraft(String mcName, Message msg) {
-        User user = msg.getAuthor();
-        String userTag = msg.isWebhookMessage() ? null : user.getName() + "#" + user.getDiscriminator();
-        String name = user.getName();
+        Member Member = msg.getMember();
+        String userTag = msg.isWebhookMessage() ? null : Member.getUser().getName() + "#" + Member.getUser().getDiscriminator();
+        String name = Member.getEffectiveName();
         StringBuilder m = new StringBuilder(msg.getContentStripped());
+
+        // If it contains an embed
+        List<MessageEmbed> embeds = msg.getEmbeds();
+        if (!embeds.isEmpty()) {
+            for (MessageEmbed e : embeds) {
+                // Skip if embed was called in response to a message containing an URL.
+                if (e.getUrl() != null)
+                    continue;
+
+                MessageEmbed.AuthorInfo author = e.getAuthor();
+                String title = e.getTitle();
+                //MessageEmbed.Provider provider = e.getSiteProvider();
+                String description = e.getDescription();
+
+                List<MessageEmbed.Field> fields = e.getFields();
+
+                MessageEmbed.ImageInfo image = e.getImage();
+                MessageEmbed.VideoInfo videoInfo = e.getVideoInfo();
+
+                MessageEmbed.Footer footer = e.getFooter();
+
+                Color color = e.getColor();
+
+                int r = color.getRed();
+                int g = color.getGreen();
+                int b = color.getBlue();
+                int cc = 0;
+
+                if (r >= 0x55 && g >= 0x55 && b >= 0x55) {
+                    cc += 1 << 3;
+                    if (r >= 0xAA)
+                        cc += 1 << 2;
+                    if (g >= 0xAA)
+                        cc += 1 << 1;
+                    if (b >= 0xAA)
+                        cc += 1;
+                } else {
+                    if (r >= 0x55)
+                        cc += 1 << 2;
+                    if (g >= 0x55)
+                        cc += 1 << 1;
+                    if (b >= 0x55)
+                        cc += 1;
+                }
+
+                String c = "\n" + ChatColor.getByChar(Integer.toHexString(cc).charAt(0)) + ChatColor.BOLD + "| ";
+
+
+                m.append(c);
+
+                if (author != null)
+                    m.append(c).append(ChatColor.WHITE).append(author.getName());
+                if (title != null)
+                    m.append(c).append(ChatColor.WHITE).append(title);
+                if (description != null)
+                    m.append(c).append(ChatColor.GRAY).append(description);
+
+                for (MessageEmbed.Field f : fields) {
+                    if (f.getName() != null)
+                        m.append(c).append(ChatColor.WHITE).append(f.getName());
+                    if (f.getValue() != null)
+                        m.append(c).append(ChatColor.GRAY).append(f.getValue());
+                }
+
+                if (image != null) {
+                    m.append(c).append(ChatColor.GRAY).append(ChatColor.ITALIC).append("Image:")
+                            .append(ChatColor.BLUE).append(' ').append(image.getUrl());
+                }
+                if (videoInfo != null) {
+                    m.append(c).append(ChatColor.GRAY).append(ChatColor.ITALIC).append("Video:")
+                            .append(ChatColor.BLUE).append(' ').append(videoInfo.getUrl());
+                }
+                if (footer != null) {
+                    m.append(c).append(ChatColor.GRAY).append(footer.getText());
+                }
+
+                m.append(c);
+
+            }
+        }
 
         // Show link to attachments in-game
         List<Message.Attachment> attachments = msg.getAttachments();
@@ -259,7 +339,8 @@ public class DiscordConnection {
                         chatToMinecraft(null, e.getMessage());
                     return;
                 } else if (e.getAuthor().isBot()) {
-                    if (jda.getSelfUser() != e.getAuthor())
+                    // Find a way to not send "joined/left"/other meta messages
+                    if (jda.getSelfUser() != e.getAuthor() || !e.getMessage().getContentRaw().startsWith(META_MSG_MARKER))
                         chatToMinecraft(null, e.getMessage());
                     return;
                 }
@@ -283,7 +364,7 @@ public class DiscordConnection {
 
         @Override
         public void onMessageReceived(MessageReceivedEvent e) {
-            if (e.getMessage().getContentRaw().startsWith(PREFIX) && !e.getChannel().equals(mcChatChannel)) {
+            if (e.getMessage().getContentRaw().startsWith(PREFIX)) {
                 String[] args = e.getMessage().getContentRaw().substring(1).split(" ");
 
                 if (args[0].equalsIgnoreCase("help")) {
@@ -330,21 +411,23 @@ public class DiscordConnection {
 
                     final String onlineFormat = "There are **%d**/%d players online";
 
+                    List<ProxiedPlayer> afk = plugin.getAfkList();
                     StringBuilder online;
                     Iterator<ProxiedPlayer> i = plugin.getProxy().getPlayers().iterator();
-                    if (i.hasNext()) {
-                        ProxiedPlayer first = i.next();
-                        online = new StringBuilder("**").append(first.getName()).append("**");
-                        if (uuid)
-                            online.append(" (").append(first.getUniqueId()).append(")");
-
-                        i.forEachRemaining((ProxiedPlayer p) -> {
-                            online.append("\n**").append(p.getName()).append("**");
+                    if (!i.hasNext()) {
+                        online = new StringBuilder("*nobody*");
+                    } else {
+                        online = new StringBuilder();
+                        while (i.hasNext()) {
+                            ProxiedPlayer p = i.next();
+                            if (afk.contains(p))
+                                online.append("[AFK] ");
+                            online.append("**").append(p.getName()).append("**");
                             if (uuid)
                                 online.append(" (").append(p.getUniqueId()).append(")");
-                        });
-                    } else {
-                        online = new StringBuilder("*nobody*");
+                            if (i.hasNext())
+                                online.append('\n');
+                        }
                     }
 
 

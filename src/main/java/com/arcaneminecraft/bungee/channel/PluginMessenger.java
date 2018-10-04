@@ -45,8 +45,8 @@ public class PluginMessenger implements Listener {
                     return;
 
                 in.readUTF(); // recipients "ONLINE"
-                String channel = in.readUTF(); // channel
-                if(channel.equals("ChatAndLog") || channel.equals("Chat")){
+                String subChannel = in.readUTF(); // channel
+                if(subChannel.equals("ChatAndLog") || subChannel.equals("Chat")) {
                     byte[] msgBytes = new byte[in.readShort()];
                     in.readFully(msgBytes);
 
@@ -73,8 +73,29 @@ public class PluginMessenger implements Listener {
                     if (d != null)
                         d.chatToDiscord(displayName, uuid, msg);
 
-                    if (channel.equals("ChatAndLog"))
+                    if (subChannel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);
+                    return;
+                }
+
+                if (subChannel.equals("AFK")) {
+                    byte[] msgBytes = new byte[in.readShort()];
+                    in.readFully(msgBytes);
+
+                    try (DataInputStream is = new DataInputStream(new ByteArrayInputStream(msgBytes))) {
+                        String server = is.readUTF();
+                        String name = is.readUTF();
+                        String displayName = is.readUTF();
+                        String uuid = is.readUTF();
+                        boolean isAFK = is.readBoolean();
+
+                        ProxiedPlayer p = plugin.getProxy().getPlayer(UUID.fromString(uuid));
+                        if (isAFK)
+                            plugin.getAfkList().add(p);
+                        else
+                            plugin.getAfkList().remove(p);
+                    }
+                    return;
                 }
                 return;
             }

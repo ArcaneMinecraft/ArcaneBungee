@@ -6,6 +6,7 @@ import com.arcaneminecraft.bungee.command.*;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
@@ -18,6 +19,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 public class ArcaneBungee extends Plugin {
@@ -32,11 +34,13 @@ public class ArcaneBungee extends Plugin {
     private SpyAlert spyAlert;
     private DiscordConnection discordConnection;
     private static final String CONFIG_FILENAME = "cachedata.yml";
+    private ArrayList<ProxiedPlayer> afkPlayers;
 
     @Override
     public void onEnable() {
-        configFile = new File(getDataFolder(), "config.yml");
-        cacheDataFile = new File(getDataFolder(), CONFIG_FILENAME);
+        this.configFile = new File(getDataFolder(), "config.yml");
+        this.cacheDataFile = new File(getDataFolder(), CONFIG_FILENAME);
+        this.afkPlayers = new ArrayList<>();
 
         saveDefaultConfigs();
 
@@ -135,6 +139,10 @@ public class ArcaneBungee extends Plugin {
         } catch (IOException e) {
             getLogger().log(Level.SEVERE, "Could not save " + CONFIG_FILENAME, e);
         }
+    }
+
+    public ArrayList<ProxiedPlayer> getAfkList() {
+        return afkPlayers;
     }
 
     public SQLDatabase getSqlDatabase() {

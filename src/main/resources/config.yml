@@ -1,0 +1,44 @@
+# If enabled, shows "Out of date" in server list for clients BELOW 1.13
+mc-version-limit:
+  enabled: true
+  version-to-display: 1.13
+
+# Database setting for all kind of data storage
+mariadb:
+  enabled: false
+  hostname: localhost:3306
+  username: name
+  password: pass
+  database: db
+
+greylist:
+  group: trusted
+  track: greylist
+
+# Point the IP to webserver
+web-listener:
+  ip: localhost
+  port: 20000
+
+discord:
+  token: 0
+  guild-id: 0
+  player-role-id: 0
+  mc-chat:
+    channel-id: 0
+    webhook-url: https://discordapp.com/api/webhooks/[id]/[token]
+  # Avatar images for all players will be fetched from this URL. %s will be replaced with UUID.
+  # Examples:
+  # https://cravatar.eu/avatar/%s
+  # https://crafatar.com/avatars/%s?overlay
+  # https://minotar.net/avatar/%s
+  avatar-source: https://crafatar.com/avatars/%s?overlay
+
+# Point to the ArcaneLog plugin's ServerSocket
+arcanelog:
+  ip: localhost
+  port: 25555
+
+spy:
+  # Seconds to wait before broadcasting since last mined block
+  xray-wait-duration: 5

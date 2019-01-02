@@ -38,14 +38,11 @@ public class JoinLeaveEvents implements Listener {
             "Thank you!",
             "Thank you for supporting Arcane!",
             "Don't forget, you have access to /slap. Use it wisely.",
-            "You can hide yourself from the Dynmap via /dynmap hide.",
             "Did you know there's a donor only section on the forums?",
             "Welcome back to Arcane Survival!",
             "We love you.",
             "We love you. A lot.",
-            "Tip: To reappear from the Dynmap if you've hidden yourself, type /dynmap show.",
             "Thank you.",
-            "If you'd like to hide yourself from our Dynmap, type /dynmap hide.",
             "Did we tell you you're awesome? You really are.",
             //"You're pretty awesome. Not as awesome as Agentred100 is, though.", // <.<
             //"You're pretty awesome. Almost as awesome as _NickV, keep it up.",  // >.>

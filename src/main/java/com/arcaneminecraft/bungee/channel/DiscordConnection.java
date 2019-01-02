@@ -223,7 +223,7 @@ public class DiscordConnection {
     public void userLink(ProxiedPlayer p) {
         Member member = getMember(p);
         if (member != null) {
-            BaseComponent send = new TextComponent("Your MC account is already linked to '" + member.getEffectiveName() + "'");
+            BaseComponent send = new TextComponent("Your MC account is already linked to '" + member.getEffectiveName() + "'. Use '/discord unlink' and try again");
             send.setColor(ArcaneColor.CONTENT);
             p.sendMessage(ChatMessageType.SYSTEM, send);
             return;
@@ -339,7 +339,7 @@ public class DiscordConnection {
                         chatToMinecraft(null, e.getMessage());
                     return;
                 } else if (e.getAuthor().isBot()) {
-                    // Find a way to not send "joined/left"/other meta messages
+                    // Don't send "joined/left"/other meta messages
                     if (jda.getSelfUser() != e.getAuthor() || !e.getMessage().getContentRaw().startsWith(META_MSG_MARKER))
                         chatToMinecraft(null, e.getMessage());
                     return;
@@ -364,6 +364,10 @@ public class DiscordConnection {
 
         @Override
         public void onMessageReceived(MessageReceivedEvent e) {
+            // Bots cannot send commands
+            if (e.getAuthor().isBot())
+                return;
+
             if (e.getMessage().getContentRaw().startsWith(PREFIX)) {
                 String[] args = e.getMessage().getContentRaw().substring(1).split(" ");
 

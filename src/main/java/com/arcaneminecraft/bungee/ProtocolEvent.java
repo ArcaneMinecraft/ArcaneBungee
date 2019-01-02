@@ -15,8 +15,8 @@ public class ProtocolEvent implements Listener {
 
     @EventHandler
     public void OnlyAbove1_13(ProxyPingEvent e){
-        if (e.getConnection().getVersion() < ProtocolConstants.MINECRAFT_1_13) {
-            ServerPing.Protocol p = new ServerPing.Protocol(versionToDisplay, ProtocolConstants.MINECRAFT_1_13);
+        if (e.getConnection().getVersion() < ProtocolConstants.MINECRAFT_1_13_2) {
+            ServerPing.Protocol p = new ServerPing.Protocol(versionToDisplay, ProtocolConstants.MINECRAFT_1_13_2);
             e.getResponse().setVersion(p);
         }
     }

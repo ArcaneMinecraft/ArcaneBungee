@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -204,7 +205,7 @@ public class SeenCommands {
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return plugin.getTabCompletePreset().allPlayers(args);
+            return TabCompletePreset.allPlayers(args);
         }
     }
 
@@ -292,9 +293,9 @@ public class SeenCommands {
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
             // Check for online players first
-            Iterable<String> ret = plugin.getTabCompletePreset().onlinePlayers(args);
+            Iterable<String> ret = TabCompletePreset.onlinePlayers(args);
             if (((List<String>)ret).size() == 0)
-                ret = plugin.getTabCompletePreset().allPlayers(args);
+                ret = TabCompletePreset.allPlayers(args);
             return ret;
         }
     }

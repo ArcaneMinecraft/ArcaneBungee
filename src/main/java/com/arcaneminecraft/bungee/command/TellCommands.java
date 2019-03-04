@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -52,7 +53,7 @@ public class TellCommands {
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return plugin.getTabCompletePreset().onlinePlayers(args);
+            return TabCompletePreset.onlinePlayers(args);
         }
     }
 
@@ -105,14 +106,14 @@ public class TellCommands {
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return plugin.getTabCompletePreset().onlinePlayers(args);
+            return TabCompletePreset.onlinePlayers(args);
         }
     }
-    
+
     private void notFound(CommandSender sender, String name, UUID uuid, final boolean isProperCase) {
         if (uuid == null)
             uuid = plugin.getSqlDatabase().getPlayerUUID(name);
-        
+
         if (uuid == null) {
             if (sender instanceof ProxiedPlayer)
                 ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound());
@@ -128,7 +129,7 @@ public class TellCommands {
             });
         }
     }
-    
+
     private BaseComponent receipentNotOnline(String name, long id) {
 
         BaseComponent ret = new TextComponent();
@@ -175,7 +176,7 @@ public class TellCommands {
         }
         return ret;
     }
-    
+
     private void messenger(CommandSender from, CommandSender to, String[] args, int fromIndex) {
         BaseComponent msg = ArcaneText.url(args, fromIndex);
 

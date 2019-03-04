@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
@@ -136,7 +137,7 @@ public class LinkCommands {
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return plugin.getTabCompletePreset().argStartsWith(args, ImmutableSet.of("link","unlink"));
+            return TabCompletePreset.argStartsWith(args, ImmutableSet.of("link","unlink"));
         }
     }
 

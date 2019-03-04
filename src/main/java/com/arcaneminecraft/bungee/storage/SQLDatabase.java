@@ -2,6 +2,7 @@ package com.arcaneminecraft.bungee.storage;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.ReturnRunnable;
+import com.arcaneminecraft.bungee.storage.sql.ReportDatabase;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
@@ -85,6 +86,10 @@ public class SQLDatabase {
                 ex.printStackTrace();
             }
         });
+    }
+
+    public static SQLDatabase getInstance() {
+        return instance;
     }
 
     public UUID getPlayerUUID(String name) {

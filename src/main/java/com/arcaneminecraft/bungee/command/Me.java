@@ -3,6 +3,7 @@ package com.arcaneminecraft.bungee.command;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -46,6 +47,6 @@ public class Me extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        return plugin.getTabCompletePreset().onlinePlayers(args);
+        return TabCompletePreset.onlinePlayers(args);
     }
 }

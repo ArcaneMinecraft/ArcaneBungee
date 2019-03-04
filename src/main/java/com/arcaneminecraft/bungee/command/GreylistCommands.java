@@ -5,6 +5,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.ReturnRunnable;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import me.lucko.luckperms.LuckPerms;
 import me.lucko.luckperms.api.*;
 import net.md_5.bungee.api.ChatColor;
@@ -199,7 +200,7 @@ public class GreylistCommands {
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
             if (args.length == 1)
-                return plugin.getTabCompletePreset().allPlayers(args);
+                return TabCompletePreset.allPlayers(args);
             return Collections.emptyList();
         }
     }

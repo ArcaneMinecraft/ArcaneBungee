@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -62,7 +63,7 @@ public class Slap extends Command implements TabExecutor {
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
         if (args.length == 1)
-            return plugin.getTabCompletePreset().onlinePlayers(args);
+            return TabCompletePreset.onlinePlayers(args);
         return Collections.emptyList();
     }
 }

@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -90,7 +91,7 @@ public class News extends Command implements TabExecutor {
         if (args.length == 1 && sender.hasPermission("arcane.command.news.set")) {
             ArrayList<String> iter = new ArrayList<>();
             iter.add("set");
-            return plugin.getTabCompletePreset().argStartsWith(args, iter);
+            return TabCompletePreset.argStartsWith(args, iter);
         }
         return Collections.emptyList();
     }

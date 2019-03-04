@@ -3,6 +3,7 @@ package com.arcaneminecraft.bungee;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.arcaneminecraft.bungee.channel.PluginMessenger;
 import com.arcaneminecraft.bungee.command.*;
+import com.arcaneminecraft.bungee.module.ChatPrefixModule;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.CommandSender;
@@ -29,15 +30,21 @@ public class ArcaneBungee extends Plugin {
     private Configuration cacheData = null;
     private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
-    private TabCompletePreset tabCompletePreset;
-    private BadgeCommands badgeCommands;
+    private ChatPrefixModule chatPrefixModule;
     private SpyAlert spyAlert;
     private DiscordConnection discordConnection;
     private static final String CONFIG_FILENAME = "cachedata.yml";
     private ArrayList<ProxiedPlayer> afkPlayers;
 
+    private static ArcaneBungee instance;
+
+    public static ArcaneBungee getInstance() {
+        return instance;
+    }
+
     @Override
     public void onEnable() {
+        ArcaneBungee.instance = this;
         this.configFile = new File(getDataFolder(), "config.yml");
         this.cacheDataFile = new File(getDataFolder(), CONFIG_FILENAME);
         this.afkPlayers = new ArrayList<>();
@@ -76,7 +83,6 @@ public class ArcaneBungee extends Plugin {
             getLogger().warning("Discord token is not specified. Restart with valid token if Discord is to be connected and used.");
         }
 
-        this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, new JoinLeaveEvents(this));
 
         // MC Version Limiter
@@ -95,15 +101,17 @@ public class ArcaneBungee extends Plugin {
             getProxy().getPluginManager().registerCommand(this, new News(this));
         }
 
+        // Modules
+        this.chatPrefixModule = new ChatPrefixModule();
+
         // Rest of the commands
-        this.badgeCommands = new BadgeCommands(this);
         GreylistCommands g = new GreylistCommands(this);
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands(this);
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
-        getProxy().getPluginManager().registerCommand(this, badgeCommands.new Badge());
-        getProxy().getPluginManager().registerCommand(this, badgeCommands.new BadgeAdmin());
+        getProxy().getPluginManager().registerCommand(this, new Badge());
+        getProxy().getPluginManager().registerCommand(this, new BadgeAdmin());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
@@ -125,12 +133,14 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new Options(this));
         getProxy().getPluginManager().registerCommand(this, new Ping(this));
         getProxy().getPluginManager().registerCommand(this, new Slap(this));
+
+        getProxy().getPluginManager().registerListener(this, new CommandEvent());
     }
 
     @Override
     public void onDisable() {
         config = null;
-        badgeCommands.saveConfig();
+        chatPrefixModule.saveConfig();
         spyAlert.saveConfig();
         if (discordConnection != null)
             discordConnection.onDisable();
@@ -145,20 +155,21 @@ public class ArcaneBungee extends Plugin {
         return afkPlayers;
     }
 
+    @Deprecated
     public SQLDatabase getSqlDatabase() {
         return sqlDatabase;
     }
 
+    @Deprecated
     public void logCommand(CommandSender sender, String cmd, String[] args) {
-        pluginMessenger.coreprotect(sender, cmd, args);
     }
 
+    @Deprecated
     public void logCommand(CommandSender sender, String msg) {
-        pluginMessenger.coreprotect(sender, msg);
     }
 
+    @Deprecated
     public void logCommand(String name, String displayName, String uuid, String msg) {
-        pluginMessenger.coreprotect(name, displayName, uuid, msg);
     }
 
     public PluginMessenger getPluginMessenger() {
@@ -167,10 +178,6 @@ public class ArcaneBungee extends Plugin {
 
     public DiscordConnection getDiscordConnection() {
         return discordConnection;
-    }
-
-    public TabCompletePreset getTabCompletePreset() {
-        return tabCompletePreset;
     }
 
     public Configuration getConfig() {

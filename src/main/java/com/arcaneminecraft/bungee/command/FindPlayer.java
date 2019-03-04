@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -144,7 +145,7 @@ public class FindPlayer extends Command implements TabExecutor {
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
         // TODO: Find how long this command takes to run.
         if (args.length == 1)
-            return plugin.getTabCompletePreset().allPlayers(args);
+            return TabCompletePreset.allPlayers( args);
         return Collections.emptyList();
     }
 }

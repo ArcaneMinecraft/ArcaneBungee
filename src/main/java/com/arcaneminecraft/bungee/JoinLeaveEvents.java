@@ -3,6 +3,7 @@ package com.arcaneminecraft.bungee;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.module.data.NewsEntry;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.ChatColor;
@@ -179,11 +180,12 @@ public class JoinLeaveEvents implements Listener {
                 send.addExtra(": ");
                 send.setColor(ArcaneColor.FOCUS);
 
-                SQLDatabase.getInstance().getLatestNewsThen(news -> {
-                    send.addExtra(news);
-                    send.addExtra("\n");
-                    p.sendMessage(ChatMessageType.SYSTEM, send);
-                });
+                NewsEntry news = plugin.getNewsModule().getLatest();
+
+                // TODO: Maybe update content i guess
+                send.addExtra(news.getContent());
+                send.addExtra("\n");
+                p.sendMessage(ChatMessageType.SYSTEM, send);
             });
         }
 

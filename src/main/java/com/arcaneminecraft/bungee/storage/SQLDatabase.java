@@ -1,24 +1,28 @@
 package com.arcaneminecraft.bungee.storage;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.ReturnRunnable;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
+import com.arcaneminecraft.bungee.module.NewsModule;
+import com.arcaneminecraft.bungee.module.data.NewsEntry;
 import com.arcaneminecraft.bungee.module.data.Player;
 import com.arcaneminecraft.bungee.storage.sql.ReportDatabase;
-import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 import java.sql.*;
-import java.util.*;
+import java.util.TimeZone;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * SQL Database must be MariaDB.
  * ab_players:
  * Stores: String uuid, String username, Timestamp firstseen, Timestamp lastseen, String timezone, long discord, int options
+ *
+ * ab_news:
+ * Stores: int id, String content, Timestamp timestamp, String username, String uuid
  *
  * ab_reports:
  * Stores: String uuid, String body, String server, String world, int x, int y, int z, int priority,
@@ -41,8 +45,8 @@ public class SQLDatabase {
     //private static final String REPORT_INSERT = "INSERT INTO ab_reports(id, uuid, body) VALUES(?, ?, ?)";
     private static final String REPORT_UPDATE_LAST_AND_PRIORITY_BY_ID = "UPDATE ab_reports SET last=?,priority=? WHERE id=?";
 
-    private static final String NEWS_SELECT_LATEST = "SELECT * FROM ab_news ORDER BY id DESC LIMIT 1";
-    private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
+    private static final String NEWS_SELECT_ALL_ID_AND_TIMESTAMP_AND_UUID_AND_CONTENT = "SELECT id,timestamp,uuid,content FROM ab_news ";
+    private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, uuid) VALUES(?, ?, ?)";
 
     private final ArcaneBungee plugin;
     private final MariaDbPoolDataSource ds;
@@ -73,8 +77,9 @@ public class SQLDatabase {
             plugin.getLogger().warning("Connecting to database takes over 1 second: " + time);
         }
 
-        final MinecraftPlayerModule mcmodule = plugin.getMinecraftPlayerModule();
-        final DiscordUserModule dcmodule = plugin.getDiscordUserModule();
+        final MinecraftPlayerModule mcModule = plugin.getMinecraftPlayerModule();
+        final DiscordUserModule dcModule = plugin.getDiscordUserModule();
+        final NewsModule nModule = plugin.getNewsModule();
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
@@ -86,9 +91,21 @@ public class SQLDatabase {
                         UUID u = UUID.fromString(rs.getString("uuid"));
                         long d = rs.getLong("discord");
 
-                        mcmodule.put(u, n);
-                        dcmodule.put(u, d);
+                        mcModule.put(u, n);
+                        dcModule.put(u, d);
                     }
+                }
+                try (PreparedStatement ps = c.prepareStatement(NEWS_SELECT_ALL_ID_AND_TIMESTAMP_AND_UUID_AND_CONTENT)) {
+                    ResultSet rs = ps.executeQuery();
+
+                    String authorUUID = rs.getString("uuid");
+
+                    int i = rs.getInt("id");
+                    Timestamp t = rs.getTimestamp("timestamp");
+                    UUID author = authorUUID == null ? null : UUID.fromString(authorUUID);
+                    String content = rs.getString("content");
+
+                    nModule.add(new NewsEntry(i, author, t, content));
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -293,44 +310,13 @@ public class SQLDatabase {
         return future;
     }
 
-    public void getLatestNewsThen(ReturnRunnable<String> run) {
+    public void addNews(UUID author, String content) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(NEWS_SELECT_LATEST)) {
-                    ResultSet rs = ps.executeQuery();
-                    // Push news posted date
-                    if (rs.next())
-                        run.run(rs.getString("content"));
-                    else
-                        run.run("There is no news");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        });
-    }
-
-    public void addNews(CommandSender sender, String news, ReturnRunnable<Boolean> run) {
-        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            String name, uuid;
-            if (sender instanceof ProxiedPlayer) {
-                name = sender.getName();
-                uuid = ((ProxiedPlayer) sender).getUniqueId().toString();
-            } else {
-                name = "Server";
-                uuid = null;
-            }
-
             try (Connection c = ds.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(NEWS_INSERT_NEWS)) {
-                    ps.setString(1, news);
-                    ps.setString(2, name);
-                    ps.setString(3, uuid);
-                    int rs = ps.executeUpdate();
-                    if (rs == 1)
-                        run.run(true);
-                    else
-                        run.run(false);
+                    ps.setString(1, content);
+                    ps.setString(2, author == null ? null : author.toString());
+                    ps.executeUpdate();
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();

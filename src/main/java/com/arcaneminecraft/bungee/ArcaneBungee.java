@@ -6,6 +6,7 @@ import com.arcaneminecraft.bungee.command.*;
 import com.arcaneminecraft.bungee.module.ChatPrefixModule;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
+import com.arcaneminecraft.bungee.module.NewsModule;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.CommandSender;
@@ -34,12 +35,17 @@ public class ArcaneBungee extends Plugin {
     private PluginMessenger pluginMessenger;
     private SpyAlert spyAlert;
     private DiscordConnection discordConnection;
-    private ChatPrefixModule chatPrefixModule;
-    private DiscordUserModule discordUserModule;
-    private MinecraftPlayerModule minecraftPlayerModule;
+
+    /* Modules */
+    private final ChatPrefixModule chatPrefixModule = new ChatPrefixModule();
+    private final DiscordUserModule discordUserModule = new DiscordUserModule();
+    private final MinecraftPlayerModule minecraftPlayerModule = new MinecraftPlayerModule();
+    private final NewsModule newsModule = new NewsModule();
 
 
     private static final String CONFIG_FILENAME = "cachedata.yml";
+
+    // TODO: Move this to Player module
     private ArrayList<ProxiedPlayer> afkPlayers;
 
     private static ArcaneBungee instance;
@@ -56,11 +62,6 @@ public class ArcaneBungee extends Plugin {
         this.afkPlayers = new ArrayList<>();
 
         saveDefaultConfigs();
-
-        // Modules
-        this.chatPrefixModule = new ChatPrefixModule();
-        this.minecraftPlayerModule = new MinecraftPlayerModule();
-        this.discordUserModule = new DiscordUserModule();
 
         // Alert
 
@@ -240,5 +241,9 @@ public class ArcaneBungee extends Plugin {
 
     public MinecraftPlayerModule getMinecraftPlayerModule() {
         return minecraftPlayerModule;
+    }
+
+    public NewsModule getNewsModule() {
+        return newsModule;
     }
 }

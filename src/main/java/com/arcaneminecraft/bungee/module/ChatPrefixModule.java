@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 public class ChatPrefixModule {
     /** Players with modified badge */
     private final Set<UUID> alteredPrefix;
-    private static ChatPrefixModule instance;
 
     private static final int CUSTOM_PREFIX_PRIORITY = 1000000;
     private static final int TEMP_PREFIX_PRIORITY = 1500000;
@@ -28,7 +27,6 @@ public class ChatPrefixModule {
     private static final String PREFIX_PRIORITY_STRING = "PrefixPriority";
 
     public ChatPrefixModule() {
-        ChatPrefixModule.instance = this;
         this.alteredPrefix = new HashSet<>();
 
         // Load UUID with modified player list
@@ -36,10 +34,6 @@ public class ChatPrefixModule {
         for (String s : l) {
             this.alteredPrefix.add(UUID.fromString(s));
         }
-    }
-
-    public static ChatPrefixModule getInstance() {
-        return instance;
     }
 
     public void saveConfig() {

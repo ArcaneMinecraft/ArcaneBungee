@@ -71,7 +71,7 @@ public class PluginMessenger implements Listener {
 
                     DiscordConnection d = plugin.getDiscordConnection();
                     if (d != null)
-                        d.chatToDiscord(displayName, uuid, msg);
+                        d.chatToDiscord(displayName, UUID.fromString(uuid), msg);
 
                     if (subChannel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);

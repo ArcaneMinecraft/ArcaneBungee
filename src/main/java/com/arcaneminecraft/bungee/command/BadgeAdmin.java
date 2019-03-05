@@ -3,8 +3,10 @@ package com.arcaneminecraft.bungee.command;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
+import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.module.ChatPrefixModule;
+import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
@@ -29,8 +31,8 @@ import java.util.function.Consumer;
 public class BadgeAdmin extends Command implements TabExecutor {
     private static final Set<String> ADMIN_SUBCOMMANDS = ImmutableSet.of("unset", "unsettemp", "list", "reset", "set", "setpriority", "settemp");
 
-    private final ChatPrefixModule module = ChatPrefixModule.getInstance();
-    private final SQLDatabase database = SQLDatabase.getInstance();
+    private final ChatPrefixModule module = ArcaneBungee.getInstance().getChatPrefixModule();
+    private final MinecraftPlayerModule mp = ArcaneBungee.getInstance().getMinecraftPlayerModule();
 
     public BadgeAdmin() {
         super(BungeeCommandUsage.BADGEADMIN.getName(), BungeeCommandUsage.BADGEADMIN.getPermission(), BungeeCommandUsage.BADGEADMIN.getAliases());
@@ -49,7 +51,7 @@ public class BadgeAdmin extends Command implements TabExecutor {
 
     private void hidePrefix(CommandSender sender, UUID uuid) {
         module.setPriority(uuid, -1).thenAcceptAsync(ignore -> {
-            BaseComponent nameBC = new TextComponent(database.getPlayerName(uuid));
+            BaseComponent nameBC = new TextComponent(mp.getName(uuid));
             nameBC.setColor(ArcaneColor.FOCUS);
 
             BaseComponent send = ArcaneText.translatable(getLocale(sender), "commands.badgeadmin.hide", nameBC);
@@ -61,12 +63,12 @@ public class BadgeAdmin extends Command implements TabExecutor {
 
     private void setPrefix(CommandSender sender, UUID uuid, String prefix) {
         module.setPrefix(uuid, prefix, true).thenAcceptAsync(
-                success -> send(sender, prefixSetMsg(sender, database.getPlayerName(uuid), prefix, success))
+                success -> send(sender, prefixSetMsg(sender, mp.getName(uuid), prefix, success))
         );
     }
 
     private void setPriority(CommandSender sender, UUID uuid, int priority) {
-        String name = database.getPlayerName(uuid);
+        String name = mp.getName(uuid);
         module.setPriority(uuid, priority).thenAcceptAsync(prefix ->
                 send(sender, prefix == null ? invalidPriorityMsg(sender, name) : prefixSetMsg(sender, name, prefix, true))
         );
@@ -113,7 +115,7 @@ public class BadgeAdmin extends Command implements TabExecutor {
         // Get UUID
         final UUID uuid;
         if (args.length > 1) {
-            uuid = database.getPlayerUUID(args[1]);
+            uuid = mp.getUUID(args[1]);
             if (uuid == null) {
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.playerNotFound(args[1]));
@@ -135,7 +137,7 @@ public class BadgeAdmin extends Command implements TabExecutor {
                 for (UUID u : module.getAlteredPrefixPlayers()) {
                     send.addExtra(" ");
 
-                    String name = database.getPlayerName(u);
+                    String name = mp.getName(u);
                     BaseComponent tc = new TextComponent(name);
                     tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/badgeadmin list " + name));
                     send.addExtra(tc);
@@ -259,7 +261,7 @@ public class BadgeAdmin extends Command implements TabExecutor {
 
             Consumer<Object> then = ignore -> {
                 // TODO: When setPrefix returns false; it has made a custom prefix instead of reassigning old prefix.
-                BaseComponent send = new TextComponent(database.getPlayerName(uuid) + "'s tag is now ");
+                BaseComponent send = new TextComponent(mp.getName(uuid) + "'s tag is now ");
                 send.setColor(ArcaneColor.CONTENT);
                 for (BaseComponent bp : TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', prefix)))
                     send.addExtra(bp);
@@ -289,7 +291,7 @@ public class BadgeAdmin extends Command implements TabExecutor {
 
             // TODO: Move to own method and separate between temp and custom
             Consumer<String> then = oldPrefix -> {
-                BaseComponent send = new TextComponent(database.getPlayerName(uuid) + "'s tag priority and custom tag has been cleared");
+                BaseComponent send = new TextComponent(mp.getName(uuid) + "'s tag priority and custom tag has been cleared");
                 send.setColor(ArcaneColor.CONTENT);
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
@@ -312,7 +314,7 @@ public class BadgeAdmin extends Command implements TabExecutor {
 
             // TODO: Move to own method
             module.clearPriority(uuid).thenAcceptAsync(prefix -> {
-                BaseComponent send = new TextComponent(database.getPlayerName(uuid) + "'s tag priority has been reset");
+                BaseComponent send = new TextComponent(mp.getName(uuid) + "'s tag priority has been reset");
                 send.setColor(ArcaneColor.CONTENT);
 
                 if (prefix != null) {

@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
+import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -17,6 +18,7 @@ import net.md_5.bungee.api.event.SettingsChangedEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.util.LinkedHashMap;
 import java.util.Random;
@@ -28,31 +30,7 @@ public class JoinLeaveEvents implements Listener {
 
     private static final String TIMEZONE_LINK = "https://game.arcaneminecraft.com/timezone/";
     private static final String[] DONOR = {
-            "You're pretty awesome. Seriously.",
-            "You're pretty awesome. Seriously. 100% awesome.",
-            "By donating, you've helped make Arcane possible. " + ChatColor.BOLD + "Thanks!",
-            "Welcome back to Arcane.",
-            "You're way cooler than everybody else.",
-            "Thank you for your support!",
-            "You should make use of your powerful /slap command.",
-            "Thank you!",
-            "Thank you for supporting Arcane!",
-            "Don't forget, you have access to /slap. Use it wisely.",
-            "Did you know there's a donor only section on the forums?",
-            "Welcome back to Arcane Survival!",
-            "We love you.",
-            "We love you. A lot.",
-            "Thank you.",
-            "Did we tell you you're awesome? You really are.",
-            //"You're pretty awesome. Not as awesome as Agentred100 is, though.", // <.<
-            //"You're pretty awesome. Almost as awesome as _NickV, keep it up.",  // >.>
-            "Thank you. You're awesome.",
-            "Welcome back to Arcane Survival.",
-            "You're a pretty cool person.",
-            "What cool stuff can we give to our donors? Let us know on the forums.",
-            "We appreciate your support.",
-            "If you're looking for some building ideas, you can type /dclem.",
-            "We appreciate your support.",
+
     };
     private final LinkedHashMap<ProxiedPlayer, Joining> connecting = new LinkedHashMap<>();
 
@@ -119,8 +97,7 @@ public class JoinLeaveEvents implements Listener {
             return;
         }
 
-        if (plugin.getSqlDatabase() != null)
-            plugin.getSqlDatabase().playerLeave(e.getPlayer().getUniqueId());
+        plugin.getMinecraftPlayerModule().onLeave(e.getPlayer());
 
         BaseComponent left = new TranslatableComponent("multiplayer.player.left", ArcaneText.playerComponentBungee(e.getPlayer()));
         left.setColor(ChatColor.YELLOW);
@@ -149,74 +126,65 @@ public class JoinLeaveEvents implements Listener {
         @Override
         public void run() {
             // get player info form database
-            if (plugin.getSqlDatabase() != null) {
-                plugin.getSqlDatabase().playerJoinThen(p, (time, oldName) -> {
-                    if (OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE)) {
-                        p.sendMessage(ChatMessageType.SYSTEM, welcomeMessage);
-                    }
+            plugin.getMinecraftPlayerModule().onJoin(p).thenAccept(player -> {
+                Timestamp time = player.getLastLeft();
+                String oldName = player.getOldName();
 
-                    if (p.hasPermission("arcane.welcome.donor") && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE)) {
-                        BaseComponent send = new TextComponent(" ");
+                if (OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE)) {
+                    p.sendMessage(ChatMessageType.SYSTEM, welcomeMessage);
+                }
+
+                if (p.hasPermission("arcane.welcome.donor") && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE)) {
+                    BaseComponent send = new TextComponent(" ");
+                    send.setColor(ArcaneColor.CONTENT);
+                    BaseComponent urad = new TextComponent("You are a donor! ");
+                    urad.setColor(ArcaneColor.DONOR);
+                    send.addExtra(urad);
+
+                    for (BaseComponent bp : TextComponent.fromLegacyText(getRandomDonorMsg()))
+                        send.addExtra(bp);
+
+                    p.sendMessage(ChatMessageType.SYSTEM, send);
+                }
+
+                if (time != null && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE)) {
+                    // Scheduled because p.getLocale() does not load immediately
+                    TimeZone timezone = player.getTimezone();
+
+                    DateFormat df = p.getLocale() == null
+                            ? DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL)
+                            : DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, p.getLocale());
+                    df.setTimeZone(timezone); // TODO: Test if null timezone works
+                    BaseComponent send = new TextComponent(" Your last login was on ");
+                    send.setColor(ArcaneColor.HEADING);
+                    BaseComponent timeFormat = new TextComponent(df.format(time));
+                    timeFormat.setColor(ArcaneColor.FOCUS);
+                    send.addExtra(timeFormat);
+                    p.sendMessage(ChatMessageType.SYSTEM, send);
+
+                    if (timezone == null) {
+                        send = new TextComponent(" > Tip: Set to your local timezone! Visit ");
+                        send.addExtra(ArcaneText.urlSingle(TIMEZONE_LINK));
+                        send.addExtra(" for command info");
                         send.setColor(ArcaneColor.CONTENT);
-                        BaseComponent urad = new TextComponent("You are a donor! ");
-                        urad.setColor(ArcaneColor.DONOR);
-                        send.addExtra(urad);
-
-                        for (BaseComponent bp : TextComponent.fromLegacyText(getRandomDonorMsg()))
-                            send.addExtra(bp);
-
                         p.sendMessage(ChatMessageType.SYSTEM, send);
                     }
+                }
+                sendJoin(oldName);
 
-                    if (time != null && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE)) {
-                        // Scheduled because p.getLocale() does not load immediately
-                        String timezone = plugin.getSqlDatabase().getTimeZoneSync(p.getUniqueId());
-                        boolean unsetTimezone;
-                        if (timezone == null) {
-                            unsetTimezone = true;
-                            timezone = "America/Toronto";
-                        } else {
-                            unsetTimezone = false;
-                        }
+                BaseComponent latest = new TextComponent(" Latest news");
+                latest.setColor(ArcaneColor.HEADING);
 
-                        DateFormat df = p.getLocale() == null
-                                ? DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL)
-                                : DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, p.getLocale());
-                        df.setTimeZone(TimeZone.getTimeZone(timezone));
-                        BaseComponent send = new TextComponent(" Your last login was on ");
-                        send.setColor(ArcaneColor.HEADING);
-                        BaseComponent timeFormat = new TextComponent(df.format(time));
-                        timeFormat.setColor(ArcaneColor.FOCUS);
-                        send.addExtra(timeFormat);
-                        p.sendMessage(ChatMessageType.SYSTEM, send);
+                BaseComponent send = new TextComponent(latest);
+                send.addExtra(": ");
+                send.setColor(ArcaneColor.FOCUS);
 
-                        if (unsetTimezone) {
-                            send = new TextComponent(" > Tip: Set to your local timezone! Visit ");
-                            send.addExtra(ArcaneText.urlSingle(TIMEZONE_LINK));
-                            send.addExtra(" for command info");
-                            send.setColor(ArcaneColor.CONTENT);
-                            p.sendMessage(ChatMessageType.SYSTEM, send);
-                        }
-                    }
-                    sendJoin(oldName);
-
-                    BaseComponent latest = new TextComponent(" Latest news");
-                    latest.setColor(ArcaneColor.HEADING);
-
-                    BaseComponent send = new TextComponent(latest);
-                    send.addExtra(": ");
-                    send.setColor(ArcaneColor.FOCUS);
-
-                    plugin.getSqlDatabase().getLatestNewsThen(news -> {
-                        send.addExtra(news);
-                        send.addExtra("\n");
-                        p.sendMessage(ChatMessageType.SYSTEM, send);
-                    });
+                SQLDatabase.getInstance().getLatestNewsThen(news -> {
+                    send.addExtra(news);
+                    send.addExtra("\n");
+                    p.sendMessage(ChatMessageType.SYSTEM, send);
                 });
-            } else {
-                p.sendMessage(ChatMessageType.SYSTEM, welcomeMessage);
-                sendJoin(null);
-            }
+            });
         }
 
         private void sendJoin(String oldName) {

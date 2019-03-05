@@ -24,6 +24,7 @@ import java.security.SecureRandom;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 public class DiscordConnection {
     private static DiscordConnection instance;
@@ -39,8 +40,6 @@ public class DiscordConnection {
     private final WebhookClient webhookClient;
     private final TextChannel mcChatChannel;
     private final Role playerRole;
-    private final LinkedHashMap<Integer, ProxiedPlayer> tokenMap;
-
 
     public DiscordConnection(ArcaneBungee plugin) throws LoginException, InterruptedException {
         DiscordConnection.instance = this;
@@ -55,13 +54,15 @@ public class DiscordConnection {
         this.webhookClient = new WebhookClientBuilder(plugin.getConfig().getString("discord.mc-chat.webhook-url")).build();
         this.jda.addEventListener(new DiscordListener(this, webhookClient, mcChatChannel));
 
-        this.tokenMap = new LinkedHashMap<>();
-
         mcChatChannel.sendMessage(":ok_hand: *Server is now online*").complete();
     }
 
     public static DiscordConnection getInstance() {
         return instance;
+    }
+
+    public String getPrefix() {
+        return PREFIX;
     }
 
     public ArcaneBungee getPlugin() {
@@ -72,50 +73,58 @@ public class DiscordConnection {
         return jda;
     }
 
-    public synchronized void onDisable() {
+    public synchronized void disable() {
         mcChatChannel.sendMessage(":wave: *Server is now offline*").complete();
         jda.getPresence().setStatus(OnlineStatus.INVISIBLE);
         webhookClient.close();
         jda.shutdown();
+
+        DiscordConnection.instance = null;
     }
 
+
+    public String getNickname(long id) {
+        return guild.getMemberById(id).getEffectiveName();
+    }
+
+    public String getUserTag(long id) {
+        User u = jda.getUserById(id);
+        return u.getName() + "#" + u.getDiscriminator();
+    }
+
+    // wtf??
+    @Deprecated
     public String[] getNicknameUsernameDiscriminator(long id) {
         Member m = guild.getMemberById(id);
         return new String[]{m.getNickname(),m.getUser().getName(),m.getUser().getDiscriminator()};
     }
 
+    @Deprecated
     private Member getMember(ProxiedPlayer player) {
         return getMember(player.getUniqueId());
     }
 
+    @Deprecated
     private Member getMember(UUID uuid) {
-        long id = plugin.getSqlDatabase().getDiscordCache(uuid);
-        if (id == 0)
+        Long id = 0L;
+        try {
+            id = plugin.getMinecraftPlayerModule().getDiscord(uuid).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        if (id == null || id == 0L)
             return null;
 
         return guild.getMemberById(id);
     }
 
-    void chatToDiscord(String user, String uuid, String msg) {
-        // HTTP/1.1 400 prevention: Discord disallows bot username with "clyde"
-        if (user.toLowerCase().contains("clyde")) {
-            int index = user.toLowerCase().indexOf("clyde");
-            char[] nc = user.toCharArray();
-            if (nc[index + 4] == 'E')
-                nc[index + 4] = '\u0395'; // Epsilon "E"
-            else if (nc[index + 1] == 'l')
-                nc[index+1] = 'I'; // Upper-case i "I"
-            else if (nc[index + 4] == 'e')
-                nc[index + 4] = '\u212E'; // Estimate sign "e"
-
-            user = String.copyValueOf(nc);
-        }
-
+    public void chatToDiscord(String user, UUID uuid, String msg) {
         // Send message
         webhookClient.send(new WebhookMessageBuilder()
                 .setUsername(user)
                 .setContent(escapeText(msg))
-                .setAvatarUrl(String.format(avatarSourceFormat, uuid))
+                .setAvatarUrl(String.format(avatarSourceFormat, uuid.toString()))
                 .build()
         );
     }
@@ -237,6 +246,7 @@ public class DiscordConnection {
         plugin.getProxy().getConsole().sendMessage(log);
     }
 
+/*
     public void userLink(ProxiedPlayer p) {
         Member member = getMember(p);
         if (member != null) {
@@ -247,7 +257,6 @@ public class DiscordConnection {
         }
 
         // Remove if token was generated before
-        tokenMap.entrySet().removeIf(entry -> entry.getValue() == p);
 
         int token = generateToken();
         while (tokenMap.containsKey(token))
@@ -271,7 +280,9 @@ public class DiscordConnection {
         tokenMap.put(token, p);
         p.sendMessage(ChatMessageType.SYSTEM, send);
     }
+*/
 
+/*
     public void userLinkConfirm(String username, String token, User user, MessageChannel channel) {
         Member member = guild.getMember(user);
 
@@ -300,10 +311,7 @@ public class DiscordConnection {
         }
 
         // do linked account things
-        if (!p.isConnected() || !plugin.getSqlDatabase().setDiscordCache(p.getUniqueId(), user.getIdLong())) {
-            channel.sendMessage(p.getName() + " must be online. " + newTokenMsg).complete();
-            return;
-        }
+        plugin.getMinecraftPlayerModule().setDiscord(p.getUniqueId(), user.getIdLong());
 
         guild.getController().addSingleRoleToMember(member, playerRole).complete();
 
@@ -319,22 +327,15 @@ public class DiscordConnection {
         send.addExtra(" linked with '" + member.getEffectiveName() + "' Discord account!");
         p.sendMessage(ChatMessageType.SYSTEM, send);
     }
+*/
 
-    // TODO: Make ProxiedPlayer-independent version
-    public void userUnlink(ProxiedPlayer p) {
-        Member member = getMember(p);
+    public void userUnlink(long id) {
+        Member member = guild.getMemberById(id);
         if (member == null) {
-            BaseComponent send = new TextComponent("Your MC account was not linked to a Discord account");
-            send.setColor(ArcaneColor.CONTENT);
-            p.sendMessage(ChatMessageType.SYSTEM, send);
             return;
         }
 
         guild.getController().removeSingleRoleFromMember(member, playerRole).complete();
-        plugin.getSqlDatabase().setDiscordCache(p.getUniqueId(), 0);
-        BaseComponent send = new TextComponent("Your MC account is no longer linked to '" + member.getEffectiveName() + "' Discord account");
-        send.setColor(ArcaneColor.CONTENT);
-        p.sendMessage(ChatMessageType.SYSTEM, send);
     }
 
     private int generateToken() {

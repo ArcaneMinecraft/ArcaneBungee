@@ -24,7 +24,7 @@ public class Badge extends Command implements TabExecutor {
     private static final String SUBC_RESET = "-reset";
     private static final String SUBC_HIDE = "-hide";
 
-    private final ChatPrefixModule module = ChatPrefixModule.getInstance();
+    private final ChatPrefixModule module = ArcaneBungee.getInstance().getChatPrefixModule();
 
     public Badge() {
         super(BungeeCommandUsage.BADGE.getName(), BungeeCommandUsage.BADGE.getPermission(), BungeeCommandUsage.BADGE.getAliases());

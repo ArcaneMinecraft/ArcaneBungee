@@ -2,15 +2,18 @@ package com.arcaneminecraft.bungee.storage;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.ReturnRunnable;
+import com.arcaneminecraft.bungee.module.DiscordUserModule;
+import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
+import com.arcaneminecraft.bungee.module.data.Player;
 import com.arcaneminecraft.bungee.storage.sql.ReportDatabase;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 import java.sql.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * SQL Database must be MariaDB.
@@ -21,6 +24,8 @@ import java.util.UUID;
  * Stores: String uuid, String body, String server, String world, int x, int y, int z, int priority,
  */
 public class SQLDatabase {
+    private static SQLDatabase instance;
+
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
     private static final String PLAYER_SELECT_BY_UUID = "SELECT * FROM ab_players WHERE uuid=? LIMIT 1";
     //private static final String PLAYER_SELECT_BY_USERNAME = "SELECT * FROM ab_players WHERE UPPER(username)=? LIMIT 1";
@@ -31,29 +36,21 @@ public class SQLDatabase {
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD = "UPDATE ab_players SET lastseen=?,options=?,timezone=?,discord=?  WHERE uuid=?";
     private static final String PLAYER_UPDATE_DISCORD_BY_DISCORD = "UPDATE ab_players SET discord=? WHERE discord=?";
+    private static final String PLAYER_UPDATE_DISCORD_BY_UUID = "UPDATE ab_players SET discord=? WHERE uuid=?";
 
-    private static final String REPORT_INSERT = "INSERT INTO ab_reports(id, uuid, body) VALUES(?, ?, ?)";
+    //private static final String REPORT_INSERT = "INSERT INTO ab_reports(id, uuid, body) VALUES(?, ?, ?)";
     private static final String REPORT_UPDATE_LAST_AND_PRIORITY_BY_ID = "UPDATE ab_reports SET last=?,priority=? WHERE id=?";
 
     private static final String NEWS_SELECT_LATEST = "SELECT * FROM ab_news ORDER BY id DESC LIMIT 1";
     private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
 
     private final ArcaneBungee plugin;
-    private static SQLDatabase instance;
-    private final HashMap<UUID, Cache> onlinePlayerCache;
-    private final HashMap<String, UUID> allNameToUuid;
-    private final HashMap<UUID, String> allUuidToName;
-    private final HashMap<Long, String> discordToUsername;
     private final MariaDbPoolDataSource ds;
 
 
     public SQLDatabase(ArcaneBungee plugin) throws SQLException {
         SQLDatabase.instance = this;
         this.plugin = plugin;
-        this.onlinePlayerCache = new HashMap<>();
-        this.allNameToUuid = new HashMap<>();
-        this.allUuidToName = new HashMap<>();
-        this.discordToUsername = new HashMap<>();
 
         String url = "jdbc:mariadb://"
                 + plugin.getConfig().getString("mariadb.hostname")
@@ -76,6 +73,9 @@ public class SQLDatabase {
             plugin.getLogger().warning("Connecting to database takes over 1 second: " + time);
         }
 
+        final MinecraftPlayerModule mcmodule = plugin.getMinecraftPlayerModule();
+        final DiscordUserModule dcmodule = plugin.getDiscordUserModule();
+
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_ALL_USERNAME_AND_UUID_AND_DISCORD)) {
@@ -85,9 +85,9 @@ public class SQLDatabase {
                         String n = rs.getString("username");
                         UUID u = UUID.fromString(rs.getString("uuid"));
                         long d = rs.getLong("discord");
-                        allNameToUuid.put(n.toLowerCase(), u);
-                        allUuidToName.put(u, n);
-                        discordToUsername.put(d, n);
+
+                        mcmodule.put(u, n);
+                        dcmodule.put(u, d);
                     }
                 }
             } catch (SQLException ex) {
@@ -100,18 +100,33 @@ public class SQLDatabase {
         return instance;
     }
 
-    public UUID getPlayerUUID(String name) {
-        return allNameToUuid.get(name.toLowerCase());
-    }
+    private CompletableFuture<ResultSet> getPlayerResultSet(UUID uuid) {
+        CompletableFuture<ResultSet> future = new CompletableFuture<>();
 
-    public String getPlayerName(UUID uuid) {
-        return allUuidToName.get(uuid);
-    }
-
-    public void playerJoinThen(ProxiedPlayer p, ReturnRunnable.More<Timestamp, String> run) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 ResultSet rs;
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_BY_UUID)) {
+                    ps.setString(1, uuid.toString());
+                    rs = ps.executeQuery();
+                }
+
+                future.complete(rs);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                future.complete(null);
+            }
+        });
+        return future;
+    }
+
+    public CompletableFuture<Player> playerJoin(ProxiedPlayer p) {
+        CompletableFuture<Player> future = new CompletableFuture<>();
+
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            try (Connection c = ds.getConnection()) {
+                ResultSet rs;
+
                 // Get player info: player name
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_BY_UUID)) {
                     ps.setString(1, p.getUniqueId().toString());
@@ -121,106 +136,161 @@ public class SQLDatabase {
                 // Check if query returned any data.
                 if (!rs.next()) {
                     // There is no data = new player
-                    allUuidToName.put(p.getUniqueId(), p.getName());
-                    allNameToUuid.put(p.getName().toLowerCase(), p.getUniqueId());
 
                     try (PreparedStatement ps = c.prepareStatement(PLAYER_INSERT)) {
                         ps.setString(1, p.getUniqueId().toString());
                         ps.setString(2, p.getName());
                         ps.executeUpdate();
                     }
-                    // is new player: empty string
-                    onlinePlayerCache.put(p.getUniqueId(), new Cache(p));
-                    run.run(null, "");
+
+                    future.complete(new Player(p));
                     return;
                 }
 
                 String name = rs.getString("username");
-                Timestamp time = rs.getTimestamp("lastseen");
 
                 if (!p.getName().equals(name)) {
                     // Username changed
-                    allUuidToName.put(p.getUniqueId(), p.getName());
-                    allNameToUuid.remove(name);
-                    allNameToUuid.put(p.getName(), p.getUniqueId());
-                    try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_USERNAME)) {
-                        ps.setString(1, p.getName());
-                        ps.setString(2, p.getUniqueId().toString());
-                        ps.executeUpdate();
-                    }
+                    ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
+                        try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_USERNAME)) {
+                            ps.setString(1, p.getName());
+                            ps.setString(2, p.getUniqueId().toString());
+                            ps.executeUpdate();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    });
                 }
+                Timestamp firstseen = rs.getTimestamp("firstseen");
+                Timestamp lastseen = rs.getTimestamp("lastseen");
+                String timezone = rs.getString("timezone"); // physical server location
+                long discord = rs.getLong("discord");
+                int options = rs.getInt("options");
 
                 // Query returned data; give username from database
-                onlinePlayerCache.put(p.getUniqueId(), new Cache(p, rs));
-                run.run(time, name);
+                future.complete(new Player(p, name, firstseen, lastseen, TimeZone.getTimeZone(timezone), discord, options));
+
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 // Fetch failed: null
-                run.run(null, null);
+                future.complete(null);
             }
         });
+
+        return future;
     }
 
-    /**
-     *
-     * @param uuid UUID of player to look up
-     * @param firstJoin True = First join, false = last seen
-     * @param run Parameters consist of: Timestamp time, String[] {username, uuid, timezone}
-     */
-    public void getSeenThen(UUID uuid, boolean firstJoin, ReturnRunnable.More<Timestamp, String[]> run) {
-        Cache cache = onlinePlayerCache.get(uuid);
-        if (cache != null && firstJoin) {
-            run.run(
-                    cache.firstseen,
-                    new String[]{
-                            cache.name,
-                            uuid.toString(),
-                            cache.timezone
-                    }
-            );
-            return;
-        }
-        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            try (Connection c = ds.getConnection()) {
-                ResultSet rs;
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_BY_UUID)) {
-                    ps.setString(1, uuid.toString());
-                    rs = ps.executeQuery();
-                }
-                if (rs.next()) {
-                    run.run(
-                            rs.getTimestamp(firstJoin ? "firstseen" : "lastseen"),
-                            new String[]{
-                                    rs.getString("username"),
-                                    rs.getString("uuid"),
-                                    rs.getString("timezone")
-                            }
-                    );
-                } else {
-                    run.run(null, null);
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
+    public CompletableFuture<Timestamp> getFirstSeen(UUID uuid) {
+        CompletableFuture<Timestamp> future = new CompletableFuture<>();
+
+        getPlayerResultSet(uuid).thenAcceptAsync(rs -> {
+            try {
+                future.complete(rs.getTimestamp("firstseen"));
+            } catch (SQLException e) {
+                e.printStackTrace();
+                future.complete(null);
             }
         });
+
+        return future;
     }
 
-    public void playerLeave(UUID uuid) {
+    public CompletableFuture<Timestamp> getLastSeen(UUID uuid) {
+        CompletableFuture<Timestamp> future = new CompletableFuture<>();
+
+        getPlayerResultSet(uuid).thenAcceptAsync(rs -> {
+            try {
+                future.complete(rs.getTimestamp("lastSeen"));
+            } catch (SQLException e) {
+                e.printStackTrace();
+                future.complete(null);
+            }
+        });
+
+        return future;
+    }
+
+    public void updatePlayer(Player p) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            Cache cache = onlinePlayerCache.remove(uuid);
             try (Connection c = ds.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-                    ps.setInt(2, cache.options);
-                    ps.setString(3, cache.timezone);
-                    ps.setLong(4, cache.discord);
-                    ps.setString(5, uuid.toString());
+                    ps.setInt(2, p.getOptions());
+                    ps.setString(3, p.getTimezone().getID());
+                    ps.setLong(4, p.getDiscord());
+                    ps.setString(5, p.getProxiedPlayer().getUniqueId().toString());
                     ps.executeUpdate();
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         });
+    }
+
+    public CompletableFuture<TimeZone> getTimeZone(UUID uuid) {
+        CompletableFuture<TimeZone> future = new CompletableFuture<>();
+
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
+        try (Connection conn = ds.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(PLAYER_SELECT_TIMEZONE_BY_UUID)) {
+                ps.setString(1, uuid.toString());
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    future.complete(TimeZone.getTimeZone(rs.getString("timezone")));
+                } else {
+                    future.complete(null);
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            future.complete(null);
+        }});
+
+        return future;
+    }
+
+    public void setDiscord(UUID uuid, long id) {
+        // Remove possibly duplicate Discord
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
+            try (Connection conn = ds.getConnection()) {
+                try (PreparedStatement ps = conn.prepareStatement(PLAYER_UPDATE_DISCORD_BY_DISCORD)) {
+                    ps.setLong(1, 0);
+                    ps.setLong(2, id);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(PLAYER_UPDATE_DISCORD_BY_UUID)) {
+                    ps.setLong(1, id);
+                    ps.setString(2, uuid.toString());
+                    ps.executeUpdate();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
+    public CompletableFuture<Long> getDiscord(UUID uuid) {
+        CompletableFuture<Long> future = new CompletableFuture<>();
+
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
+            try (Connection conn = ds.getConnection()) {
+                try (PreparedStatement ps = conn.prepareStatement(PLAYER_SELECT_DISCORD_BY_UUID)) {
+                    ps.setString(1, uuid.toString());
+                    ResultSet rs = ps.executeQuery();
+
+                    if (rs.next())
+                        future.complete(rs.getLong("discord"));
+                    else
+                        future.complete(0L);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                future.complete(null);
+            }
+        });
+
+        return future;
     }
 
     public void getLatestNewsThen(ReturnRunnable<String> run) {
@@ -268,159 +338,6 @@ public class SQLDatabase {
         });
     }
 
-    /**
-     * Gets pre-loaded all players on database to toUpdate set
-     */
-    public Collection<String> getAllPlayerName() {
-        return allUuidToName.values();
-    }
-
-    int getOption(ProxiedPlayer player) {
-        return onlinePlayerCache.get(player.getUniqueId()).options;
-    }
-
-    void setOption(ProxiedPlayer player, int option) {
-        onlinePlayerCache.get(player.getUniqueId()).options = option;
-    }
-
-    public String getUsernameFromDiscord(long discord) {
-        return discordToUsername.get(discord);
-    }
-
-    public static String getTimeZoneCache(ProxiedPlayer p) {
-        if (p == null)
-            return "America/Toronto"; // Default timezone of the server
-        return instance.onlinePlayerCache.get(p.getUniqueId()).timezone;
-    }
-
-    public static void setTimeZoneCache(ProxiedPlayer p, String timeZone) {
-        instance.onlinePlayerCache.get(p.getUniqueId()).timezone = timeZone;
-    }
-
-    /**
-     * WARNING!!! When looking for player not currently online, it check database
-     * SYNCHRONOUSLY, meaning it will hold the thread until the result is fetched.
-     * @param uuid Player's UUID to search
-     * @return Timezone in string format
-     */
-    public String getTimeZoneSync(UUID uuid) {
-        Cache c = onlinePlayerCache.get(uuid);
-        if (c != null) {
-            return c.timezone;
-        }
-
-        // If player is not online
-        try (Connection conn = ds.getConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(PLAYER_SELECT_TIMEZONE_BY_UUID)) {
-                ps.setString(1, uuid.toString());
-                ResultSet rs = ps.executeQuery();
-
-                if (rs.next())
-                    return rs.getString("timezone");
-                else
-                    return null;
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return null;
-        }
-    }
-
-    public long getDiscordCache(UUID uuid) {
-        Cache c = onlinePlayerCache.get(uuid);
-        if (c != null)
-            return c.discord;
-        else
-            return 0;
-    }
-
-    public boolean setDiscordCache(UUID uuid, long discord) {
-        Cache c = onlinePlayerCache.get(uuid);
-        if (c == null)
-            return false;
-
-        // Avoid duplicate account link
-        if (discord != 0) {
-            plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-                try (Connection conn = ds.getConnection()) {
-                    try (PreparedStatement ps = conn.prepareStatement(PLAYER_UPDATE_DISCORD_BY_DISCORD)) {
-                        ps.setLong(1, 0);
-                        ps.setLong(2, discord);
-                        ps.executeUpdate();
-                    }
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            });
-
-            for (Cache cache : onlinePlayerCache.values()) {
-                if (cache.discord == discord)
-                    cache.discord = 0;
-            }
-            discordToUsername.put(discord, c.name);
-        } else {
-            discordToUsername.entrySet().removeIf(entry -> entry.getValue().equals(c.name));
-        }
-
-        c.discord = discord;
-
-        return true;
-    }
-
-    public void getDiscordThen(UUID uuid, ReturnRunnable<Long> run) {
-        Cache c = onlinePlayerCache.get(uuid);
-        if (c != null) {
-            run.run(c.discord);
-            return;
-        }
-
-        long id;
-        // If player is not online
-        try (Connection conn = ds.getConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(PLAYER_SELECT_DISCORD_BY_UUID)) {
-                ps.setString(1, uuid.toString());
-                ResultSet rs = ps.executeQuery();
-
-                if (rs.next())
-                    id = rs.getLong("discord");
-                else
-                    id = 0;
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            run.run(null);
-            return;
-        }
-
-        run.run(id);
-    }
-
-    private class Cache {
-        private final String name;
-        private final UUID uuid;
-        private final Timestamp firstseen;
-        private String timezone;
-        private long discord;
-        private int options;
-
-        private Cache(ProxiedPlayer p, ResultSet rs) throws SQLException {
-            this.name = p.getName();
-            this.uuid = p.getUniqueId();
-            this.firstseen = rs.getTimestamp("firstseen");
-            this.timezone = rs.getString("timezone"); // physical server location
-            this.discord = rs.getLong("discord");
-            this.options = rs.getInt("options");
-        }
-
-        private Cache(ProxiedPlayer p) {
-            this.name = p.getName();
-            this.uuid = p.getUniqueId();
-            this.firstseen = new Timestamp(System.currentTimeMillis());
-            this.timezone = null;
-            this.discord = 0;
-            this.options = 0;
-        }
-    }
 
     /*
      *
@@ -433,7 +350,7 @@ public class SQLDatabase {
      */
 
     public void reportUpdatePriority(int id, ReportDatabase.Priority priority) {
-        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(REPORT_UPDATE_LAST_AND_PRIORITY_BY_ID)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));

@@ -48,7 +48,7 @@ public class FindPlayer extends Command implements TabExecutor {
             List<String> pl = new ArrayList<>();
 
             // Match all players
-            for (String name : plugin.getSqlDatabase().getAllPlayerName()) {
+            for (String name : plugin.getMinecraftPlayerModule().getAllNames()) {
                 int start;
                 int end;
                 int searchLength = args[0].length();

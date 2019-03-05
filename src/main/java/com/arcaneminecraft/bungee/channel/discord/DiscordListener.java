@@ -12,10 +12,14 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.webhook.WebhookClient;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 public class DiscordListener extends ListenerAdapter {
     private static final String META_MSG_MARKER = "\u200B";
@@ -59,8 +63,8 @@ public class DiscordListener extends ListenerAdapter {
             }
             User user = e.getAuthor();
 
-            String name = plugin.getSqlDatabase().getUsernameFromDiscord(user.getIdLong());
-            if (name == null) {
+            UUID uuid = plugin.getDiscordUserModule().getMinecraftUuid(user.getIdLong());
+            if (uuid == null) {
                 e.getMessage().delete().complete();
                 // Send message saying to register discord to mc account
                 user.openPrivateChannel().queue(channel ->
@@ -71,7 +75,7 @@ public class DiscordListener extends ListenerAdapter {
                 return;
             }
 
-            dc.chatToMinecraft(name, e.getMessage());
+            dc.chatToMinecraft(plugin.getMinecraftPlayerModule().getDisplayName(uuid), e.getMessage());
         }
     }
 
@@ -113,9 +117,22 @@ public class DiscordListener extends ListenerAdapter {
                 }
                 if (args.length >= 3) {
                     String username = args[1];
-                    String token = args[2];
+                    int token = Integer.parseInt(args[2]);
 
-                    dc.userLinkConfirm(username, token, e.getAuthor(), e.getChannel());
+                    UUID uuid = plugin.getMinecraftPlayerModule().getUUID(username);
+
+                    if (plugin.getDiscordUserModule().confirmLink(uuid, e.getAuthor().getIdLong(), token)) {
+                        e.getChannel().sendMessage("Success").complete();
+                        ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuid);
+                        if (p != null)
+                            p.sendMessage(ChatMessageType.SYSTEM, new TextComponent("Linked to Discord"));
+                    } else {
+                        e.getChannel().sendMessage("Failure").complete();
+                        ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuid);
+                        if (p != null)
+                            p.sendMessage(ChatMessageType.SYSTEM, new TextComponent("Attempt made to link to Discord; if you attempted try again"));
+                    }
+
 
                     return;
                 }

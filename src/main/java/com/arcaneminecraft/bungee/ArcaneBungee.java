@@ -4,6 +4,8 @@ import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.arcaneminecraft.bungee.channel.PluginMessenger;
 import com.arcaneminecraft.bungee.command.*;
 import com.arcaneminecraft.bungee.module.ChatPrefixModule;
+import com.arcaneminecraft.bungee.module.DiscordUserModule;
+import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.storage.OptionsStorage;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.CommandSender;
@@ -30,9 +32,13 @@ public class ArcaneBungee extends Plugin {
     private Configuration cacheData = null;
     private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
-    private ChatPrefixModule chatPrefixModule;
     private SpyAlert spyAlert;
     private DiscordConnection discordConnection;
+    private ChatPrefixModule chatPrefixModule;
+    private DiscordUserModule discordUserModule;
+    private MinecraftPlayerModule minecraftPlayerModule;
+
+
     private static final String CONFIG_FILENAME = "cachedata.yml";
     private ArrayList<ProxiedPlayer> afkPlayers;
 
@@ -50,6 +56,13 @@ public class ArcaneBungee extends Plugin {
         this.afkPlayers = new ArrayList<>();
 
         saveDefaultConfigs();
+
+        // Modules
+        this.chatPrefixModule = new ChatPrefixModule();
+        this.minecraftPlayerModule = new MinecraftPlayerModule();
+        this.discordUserModule = new DiscordUserModule();
+
+        // Alert
 
         getProxy().registerChannel("arcaneserver:alert");
 
@@ -101,9 +114,6 @@ public class ArcaneBungee extends Plugin {
             getProxy().getPluginManager().registerCommand(this, new News(this));
         }
 
-        // Modules
-        this.chatPrefixModule = new ChatPrefixModule();
-
         // Rest of the commands
         GreylistCommands g = new GreylistCommands(this);
         TellCommands t = new TellCommands(this);
@@ -143,7 +153,7 @@ public class ArcaneBungee extends Plugin {
         chatPrefixModule.saveConfig();
         spyAlert.saveConfig();
         if (discordConnection != null)
-            discordConnection.onDisable();
+            discordConnection.disable();
         try {
             ConfigurationProvider.getProvider(YamlConfiguration.class).save(cacheData, cacheDataFile);
         } catch (IOException e) {
@@ -153,11 +163,6 @@ public class ArcaneBungee extends Plugin {
 
     public ArrayList<ProxiedPlayer> getAfkList() {
         return afkPlayers;
-    }
-
-    @Deprecated
-    public SQLDatabase getSqlDatabase() {
-        return sqlDatabase;
     }
 
     @Deprecated
@@ -223,5 +228,17 @@ public class ArcaneBungee extends Plugin {
                 e.printStackTrace();
             }
         }
+    }
+
+    public ChatPrefixModule getChatPrefixModule() {
+        return chatPrefixModule;
+    }
+
+    public DiscordUserModule getDiscordUserModule() {
+        return discordUserModule;
+    }
+
+    public MinecraftPlayerModule getMinecraftPlayerModule() {
+        return minecraftPlayerModule;
     }
 }

@@ -14,7 +14,11 @@ import java.util.UUID;
 
 /**
  * SQL Database must be MariaDB.
+ * ab_players:
  * Stores: String uuid, String username, Timestamp firstseen, Timestamp lastseen, String timezone, long discord, int options
+ *
+ * ab_reports:
+ * Stores: String uuid, String body, String server, String world, int x, int y, int z, int priority,
  */
 public class SQLDatabase {
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
@@ -27,6 +31,10 @@ public class SQLDatabase {
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD = "UPDATE ab_players SET lastseen=?,options=?,timezone=?,discord=?  WHERE uuid=?";
     private static final String PLAYER_UPDATE_DISCORD_BY_DISCORD = "UPDATE ab_players SET discord=? WHERE discord=?";
+
+    private static final String REPORT_INSERT = "INSERT INTO ab_reports(id, uuid, body) VALUES(?, ?, ?)";
+    private static final String REPORT_UPDATE_LAST_AND_PRIORITY_BY_ID = "UPDATE ab_reports SET last=?,priority=? WHERE id=?";
+
     private static final String NEWS_SELECT_LATEST = "SELECT * FROM ab_news ORDER BY id DESC LIMIT 1";
     private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, username, uuid) VALUES(?, ?, ?)";
 
@@ -412,5 +420,30 @@ public class SQLDatabase {
             this.discord = 0;
             this.options = 0;
         }
+    }
+
+    /*
+     *
+     *
+     * Report Database stuff
+     *
+     *
+     *
+     *
+     */
+
+    public void reportUpdatePriority(int id, ReportDatabase.Priority priority) {
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            try (Connection c = ds.getConnection()) {
+                try (PreparedStatement ps = c.prepareStatement(REPORT_UPDATE_LAST_AND_PRIORITY_BY_ID)) {
+                    ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                    ps.setInt(2, priority.getValue());
+                    ps.setInt(3, id);
+                    ps.executeUpdate();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 }

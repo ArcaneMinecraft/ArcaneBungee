@@ -1,11 +1,8 @@
 package com.arcaneminecraft.bungee.command;
 
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ArcaneColor;
-import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.TabCompletePreset;
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -22,7 +19,6 @@ import java.util.List;
 
 // TODO: Make the output of each individual commands prettier (cause it's a mess as of now)
 public class LinkCommands {
-    private final ArcaneBungee plugin;
     private final List<String> candidates = Arrays.asList("discord","forum","website");
 
     private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
@@ -31,9 +27,7 @@ public class LinkCommands {
     private static final BaseComponent RULES = ArcaneText.url("https://arcaneminecraft.com/rules");
     private static final BaseComponent WEBSITE = ArcaneText.url("https://arcaneminecraft.com/");
 
-    public LinkCommands(ArcaneBungee plugin) {
-        this.plugin = plugin;
-        // Configuration for adding more custom links?
+    public LinkCommands() {
     }
 
     private BaseComponent singleLink(String what, BaseComponent link) {
@@ -53,7 +47,6 @@ public class LinkCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.logCommand(sender, BungeeCommandUsage.LINKS.getCommand(), args);
 
             if (sender instanceof ProxiedPlayer) {
                 ProxiedPlayer p = (ProxiedPlayer)sender;
@@ -92,55 +85,6 @@ public class LinkCommands {
         }
     }
 
-    public class Discord extends Command implements TabExecutor {
-        private final BaseComponent offlineMsg;
-
-        public Discord() {
-            super(BungeeCommandUsage.DISCORD.getName(), BungeeCommandUsage.DISCORD.getPermission(), BungeeCommandUsage.DISCORD.getAliases());
-            this.offlineMsg = new TextComponent("Discord Connection is not enabled or is offline");
-            this.offlineMsg.setColor(ArcaneColor.CONTENT);
-        }
-        @Override
-        public void execute(CommandSender sender, String[] args) {
-            plugin.logCommand(sender, BungeeCommandUsage.DISCORD.getCommand(), args);
-
-            if (sender instanceof ProxiedPlayer && args.length != 0) {
-                if (args[0].equalsIgnoreCase("link")) {
-                    DiscordConnection d = plugin.getDiscordConnection();
-                    if (d != null)
-                        d.userLink((ProxiedPlayer) sender);
-                    else {
-                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, offlineMsg);
-                    }
-                    return;
-                }
-
-                if (args[0].equalsIgnoreCase("unlink")) {
-                    DiscordConnection d = plugin.getDiscordConnection();
-                    if (d != null)
-                        d.userUnlink((ProxiedPlayer) sender);
-                    else
-                        ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, offlineMsg);
-                    return;
-                }
-            }
-
-            if (sender instanceof ProxiedPlayer) {
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink("Discord", DISCORD));
-                BaseComponent send = new TextComponent(" Other usage: /discord [link|unlink]");
-                send.setColor(ArcaneColor.CONTENT);
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
-            } else {
-                sender.sendMessage(singleLink("Discord", DISCORD));
-            }
-        }
-
-        @Override
-        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return TabCompletePreset.argStartsWith(args, ImmutableSet.of("link","unlink"));
-        }
-    }
-
     public abstract class LinkCommand extends Command {
         private final String what;
         private final BaseComponent url;
@@ -153,8 +97,6 @@ public class LinkCommands {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.logCommand(sender, BungeeCommandUsage.FORUM.getCommand(), args);
-
             if (sender instanceof ProxiedPlayer)
                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink(what, url));
             else

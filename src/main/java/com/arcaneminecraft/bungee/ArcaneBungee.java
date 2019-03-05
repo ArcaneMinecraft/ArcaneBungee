@@ -107,17 +107,17 @@ public class ArcaneBungee extends Plugin {
         // Rest of the commands
         GreylistCommands g = new GreylistCommands(this);
         TellCommands t = new TellCommands(this);
-        LinkCommands l = new LinkCommands(this);
+        LinkCommands l = new LinkCommands();
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
         getProxy().getPluginManager().registerCommand(this, new Badge());
         getProxy().getPluginManager().registerCommand(this, new BadgeAdmin());
+        getProxy().getPluginManager().registerCommand(this, new Discord());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
         getProxy().getPluginManager().registerCommand(this, l.new Links());
-        getProxy().getPluginManager().registerCommand(this, l.new Discord());
         getProxy().getPluginManager().registerCommand(this, l.new Donate());
         getProxy().getPluginManager().registerCommand(this, l.new Forum());
         getProxy().getPluginManager().registerCommand(this, l.new Rules());

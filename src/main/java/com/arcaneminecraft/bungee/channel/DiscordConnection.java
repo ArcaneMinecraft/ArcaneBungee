@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class DiscordConnection {
+    private static DiscordConnection instance;
+
     private static final SecureRandom rnd = new SecureRandom();
     private static final String META_MSG_MARKER = "\u200B";
     private static final String PREFIX = "!";
@@ -41,6 +43,8 @@ public class DiscordConnection {
 
 
     public DiscordConnection(ArcaneBungee plugin) throws LoginException, InterruptedException {
+        DiscordConnection.instance = this;
+
         this.plugin = plugin;
         this.avatarSourceFormat = plugin.getConfig().getString("discord.avatar-source", "https://crafatar.com/avatars/%s?overlay");
         String token = plugin.getConfig().getString("discord.token");
@@ -54,6 +58,10 @@ public class DiscordConnection {
         this.tokenMap = new LinkedHashMap<>();
 
         mcChatChannel.sendMessage(":ok_hand: *Server is now online*").complete();
+    }
+
+    public static DiscordConnection getInstance() {
+        return instance;
     }
 
     public ArcaneBungee getPlugin() {

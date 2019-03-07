@@ -32,7 +32,7 @@ public class JoinLeaveEvents implements Listener {
 
     private static final String TIMEZONE_LINK = "https://game.arcaneminecraft.com/timezone/";
     private static final String[] DONOR = {
-        "Updating the plugin; donor messages will return!"
+        "Updating the plugin; donor welcome messages will return!"
     };
     private final LinkedHashMap<ProxiedPlayer, Joining> connecting = new LinkedHashMap<>();
 

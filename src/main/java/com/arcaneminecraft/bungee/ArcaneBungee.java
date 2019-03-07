@@ -111,7 +111,7 @@ public class ArcaneBungee extends Plugin {
             SeenCommands fs = new SeenCommands(this);
             getProxy().getPluginManager().registerCommand(this, fs.new Seen());
             getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
-            getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
+            getProxy().getPluginManager().registerCommand(this, new FindPlayerCommand(this));
             getProxy().getPluginManager().registerCommand(this, new News(this));
         }
 

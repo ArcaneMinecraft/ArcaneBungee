@@ -106,6 +106,16 @@ public class MinecraftPlayerModule {
         );
     }
 
+    public void setTimeZone(UUID uuid, TimeZone timeZone) {
+        Player data = getPlayerData(uuid);
+        if (data != null) {
+            data.setTimeZone(timeZone);
+            return;
+        }
+
+        SQLDatabase.getInstance().setTimeZone(uuid, timeZone);
+    }
+
     @SuppressWarnings("unchecked")
     public CompletableFuture<TimeZone> getTimeZone(UUID uuid) {
         return (CompletableFuture<TimeZone>) get(
@@ -132,6 +142,25 @@ public class MinecraftPlayerModule {
                 uuid,
                 getPlayerData(uuid)::getDiscord,
                 SQLDatabase.getInstance()::getDiscord
+        );
+    }
+
+    public void setOptions(UUID uuid, int options) {
+        Player data = getPlayerData(uuid);
+        if (data != null) {
+            data.setOptions(options);
+            return;
+        }
+
+        SQLDatabase.getInstance().setOption(uuid, options);
+    }
+
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Integer> getOptions(UUID uuid) {
+        return (CompletableFuture<Integer>) get(
+                uuid,
+                getPlayerData(uuid)::getOptions,
+                SQLDatabase.getInstance()::getOptions
         );
     }
 }

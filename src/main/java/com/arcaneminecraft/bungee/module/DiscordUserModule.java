@@ -26,7 +26,7 @@ public class DiscordUserModule {
         return ArcaneBungee.getInstance().getMinecraftPlayerModule();
     }
 
-    public void put(UUID uuid, Long id) {
+    public void put(UUID uuid, long id) {
         Long oldId = minecraftToDiscord.put(uuid, id);
         if (oldId != null)
             discordToMinecraft.remove(oldId);
@@ -65,7 +65,7 @@ public class DiscordUserModule {
         return token;
     }
 
-    public int linkToken(Long id) {
+    public int linkToken(long id) {
         if (discordToMinecraft.containsKey(id))
             return -1;
         int token = generateToken();
@@ -91,10 +91,10 @@ public class DiscordUserModule {
         return true;
     }
 
-    public Long unlink(UUID uuid) {
+    public long unlink(UUID uuid) {
         Long id = minecraftToDiscord.remove(uuid);
         if (id == null)
-            return null;
+            return 0;
 
         getDC().userUnlink(id);
         getMPModule().getPlayerData(uuid).setDiscord(0);
@@ -102,7 +102,7 @@ public class DiscordUserModule {
         return id;
     }
 
-    public UUID unlink(Long id) {
+    public UUID unlink(long id) {
         UUID uuid = discordToMinecraft.remove(id);
         if (uuid == null)
             return null;

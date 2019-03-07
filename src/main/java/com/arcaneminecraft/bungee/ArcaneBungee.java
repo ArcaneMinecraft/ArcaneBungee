@@ -7,7 +7,7 @@ import com.arcaneminecraft.bungee.module.ChatPrefixModule;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.NewsModule;
-import com.arcaneminecraft.bungee.storage.OptionsStorage;
+import com.arcaneminecraft.bungee.module.SettingModule;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -41,6 +41,7 @@ public class ArcaneBungee extends Plugin {
     private final DiscordUserModule discordUserModule = new DiscordUserModule();
     private final MinecraftPlayerModule minecraftPlayerModule = new MinecraftPlayerModule();
     private final NewsModule newsModule = new NewsModule();
+    private final SettingModule settingModule = new SettingModule();
 
 
     private static final String CONFIG_FILENAME = "cachedata.yml";
@@ -83,7 +84,6 @@ public class ArcaneBungee extends Plugin {
                 //shrug
             }
         }
-        new OptionsStorage(this);
 
         if (!getConfig().getString("discord.token", "0").equals("0")) {
             try {
@@ -123,7 +123,7 @@ public class ArcaneBungee extends Plugin {
         StaffChatCommands sc = new StaffChatCommands(this);
         getProxy().getPluginManager().registerCommand(this, new Badge());
         getProxy().getPluginManager().registerCommand(this, new BadgeAdmin());
-        getProxy().getPluginManager().registerCommand(this, new Discord());
+        getProxy().getPluginManager().registerCommand(this, new DiscordCommand());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
@@ -141,7 +141,7 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
         getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
         getProxy().getPluginManager().registerCommand(this, new Me(this));
-        getProxy().getPluginManager().registerCommand(this, new Options(this));
+        getProxy().getPluginManager().registerCommand(this, new OptionCommand());
         getProxy().getPluginManager().registerCommand(this, new Ping(this));
         getProxy().getPluginManager().registerCommand(this, new Slap(this));
 
@@ -245,5 +245,9 @@ public class ArcaneBungee extends Plugin {
 
     public NewsModule getNewsModule() {
         return newsModule;
+    }
+
+    public SettingModule getSettingModule() {
+        return settingModule;
     }
 }

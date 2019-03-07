@@ -4,8 +4,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.arcaneminecraft.bungee.module.data.NewsEntry;
-import com.arcaneminecraft.bungee.storage.OptionsStorage;
-import com.arcaneminecraft.bungee.storage.SQLDatabase;
+import com.arcaneminecraft.bungee.module.SettingModule;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -24,14 +23,16 @@ import java.text.DateFormat;
 import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.UUID;
 
 public class JoinLeaveEvents implements Listener {
     private final ArcaneBungee plugin;
     private final BaseComponent welcomeMessage;
+    private final SettingModule sModule = ArcaneBungee.getInstance().getSettingModule();
 
     private static final String TIMEZONE_LINK = "https://game.arcaneminecraft.com/timezone/";
     private static final String[] DONOR = {
-
+        "Updating the plugin; donor messages will return!"
     };
     private final LinkedHashMap<ProxiedPlayer, Joining> connecting = new LinkedHashMap<>();
 
@@ -130,12 +131,13 @@ public class JoinLeaveEvents implements Listener {
             plugin.getMinecraftPlayerModule().onJoin(p).thenAccept(player -> {
                 Timestamp time = player.getLastLeft();
                 String oldName = player.getOldName();
+                UUID uuid = p.getUniqueId();
 
-                if (OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_WELCOME_MESSAGE)) {
+                if (sModule.getNow(SettingModule.Option.SHOW_WELCOME_MESSAGE, uuid)) {
                     p.sendMessage(ChatMessageType.SYSTEM, welcomeMessage);
                 }
 
-                if (p.hasPermission("arcane.welcome.donor") && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_DONOR_WELCOME_MESSAGE)) {
+                if (p.hasPermission("arcane.welcome.donor") && sModule.getNow(SettingModule.Option.SHOW_DONOR_WELCOME_MESSAGE, uuid)) {
                     BaseComponent send = new TextComponent(" ");
                     send.setColor(ArcaneColor.CONTENT);
                     BaseComponent urad = new TextComponent("You are a donor! ");
@@ -148,7 +150,7 @@ public class JoinLeaveEvents implements Listener {
                     p.sendMessage(ChatMessageType.SYSTEM, send);
                 }
 
-                if (time != null && OptionsStorage.get(p, OptionsStorage.Toggles.SHOW_LAST_LOGIN_MESSAGE)) {
+                if (time != null && sModule.getNow(SettingModule.Option.SHOW_LAST_LOGIN_MESSAGE, uuid)) {
                     // Scheduled because p.getLocale() does not load immediately
                     TimeZone timezone = player.getTimezone();
 

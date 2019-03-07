@@ -56,7 +56,7 @@ public class Player {
         return timezone;
     }
 
-    public void setTimezone(TimeZone timezone) {
+    public void setTimeZone(TimeZone timezone) {
         this.timezone = timezone;
     }
 

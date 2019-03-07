@@ -7,7 +7,6 @@ import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
-import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -18,15 +17,14 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-public class Discord extends Command implements TabExecutor {
+public class DiscordCommand extends Command implements TabExecutor {
     private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
 
     private final DiscordConnection dc = ArcaneBungee.getInstance().getDiscordConnection();
     private final DiscordUserModule module = ArcaneBungee.getInstance().getDiscordUserModule();
-    private final MinecraftPlayerModule mcModule = ArcaneBungee.getInstance().getMinecraftPlayerModule();
 
 
-    public Discord() {
+    public DiscordCommand() {
         super(BungeeCommandUsage.DISCORD.getName(), BungeeCommandUsage.DISCORD.getPermission(), BungeeCommandUsage.DISCORD.getAliases());
     }
 
@@ -57,12 +55,16 @@ public class Discord extends Command implements TabExecutor {
             }
 
             if (args[0].equalsIgnoreCase("unlink")) {
-                Long discordId = module.unlink(p.getUniqueId());
-                if (discordId == null) {
-                    // failure
+                long discordId = module.unlink(p.getUniqueId());
+                BaseComponent send;
+                if (discordId == 0) {
+                    send = ArcaneText.translatable(p.getLocale(), "commands.discord.unlink.dne");
+                    send.setColor(ArcaneColor.NEGATIVE);
                 } else {
-                    // success
+                    send = ArcaneText.translatable(p.getLocale(), "commands.discord.unlink.success", module.getUserTag(discordId));
+                    send.setColor(ArcaneColor.CONTENT);
                 }
+                p.sendMessage(ChatMessageType.SYSTEM, send);
                 return;
             }
         }
@@ -84,7 +86,7 @@ public class Discord extends Command implements TabExecutor {
 
     private BaseComponent singleLink() {
         BaseComponent ret = new TextComponent("Link to Discord:");
-        ret.addExtra(Discord.DISCORD);
+        ret.addExtra(DiscordCommand.DISCORD);
         ret.setColor(ArcaneColor.CONTENT);
         return ret;
     }

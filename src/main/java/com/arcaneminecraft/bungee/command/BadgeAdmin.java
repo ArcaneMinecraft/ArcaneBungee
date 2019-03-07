@@ -7,7 +7,6 @@ import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.module.ChatPrefixModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
-import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;

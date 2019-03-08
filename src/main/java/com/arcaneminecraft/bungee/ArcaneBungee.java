@@ -3,11 +3,7 @@ package com.arcaneminecraft.bungee;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import com.arcaneminecraft.bungee.channel.PluginMessenger;
 import com.arcaneminecraft.bungee.command.*;
-import com.arcaneminecraft.bungee.module.ChatPrefixModule;
-import com.arcaneminecraft.bungee.module.DiscordUserModule;
-import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
-import com.arcaneminecraft.bungee.module.NewsModule;
-import com.arcaneminecraft.bungee.module.SettingModule;
+import com.arcaneminecraft.bungee.module.*;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -42,6 +38,7 @@ public class ArcaneBungee extends Plugin {
     private final MinecraftPlayerModule minecraftPlayerModule = new MinecraftPlayerModule();
     private final NewsModule newsModule = new NewsModule();
     private final SettingModule settingModule = new SettingModule();
+    private final PermissionsModule permissionsModule = new PermissionsModule();
 
 
     private static final String CONFIG_FILENAME = "cachedata.yml";
@@ -116,7 +113,7 @@ public class ArcaneBungee extends Plugin {
         }
 
         // Rest of the commands
-        GreylistCommands g = new GreylistCommands(this);
+        GreylistCommands g = new GreylistCommands();
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands();
         ServerCommands s = new ServerCommands(this);
@@ -249,5 +246,9 @@ public class ArcaneBungee extends Plugin {
 
     public SettingModule getSettingModule() {
         return settingModule;
+    }
+
+    public PermissionsModule getPermissionsModule() {
+        return permissionsModule;
     }
 }

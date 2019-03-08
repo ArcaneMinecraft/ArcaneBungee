@@ -57,7 +57,10 @@ public class ChatPrefixModule {
         CompletableFuture<User> future = new CompletableFuture<>();
         User u = getLpApi().getUser(uuid);
         if (u == null) {
-            getLpApi().getUserManager().loadUser(uuid).thenAcceptAsync(future::complete);
+            getLpApi().getUserManager().loadUser(uuid).thenAcceptAsync((user) -> {
+                future.complete(user);
+                getLpApi().cleanupUser(user);
+            });
         } else {
             future.complete(u);
         }
@@ -70,13 +73,13 @@ public class ChatPrefixModule {
     }
 
     // Return true if changed
-    private boolean setPriority(User user, int priority) {
+    private void setPriority(User user, int priority) {
         // Check
         String oldPriority = user.getCachedData().getMetaData(Contexts.global()).getMeta().get(PREFIX_PRIORITY_STRING);
 
         // If already the same
         if (String.valueOf(priority).equals(oldPriority))
-            return false;
+            return;
 
         clearPriority(user);
 
@@ -84,8 +87,6 @@ public class ChatPrefixModule {
         Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, String.valueOf(priority)).build();
         user.setPermission(node);
         alteredPrefix.add(user.getUuid());
-
-        return true;
     }
 
     // Return true if changed
@@ -180,7 +181,7 @@ public class ChatPrefixModule {
     public CompletableFuture<SortedMap<Integer, String>> listBadges(UUID uuid) {
         CompletableFuture<SortedMap<Integer, String>> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             MetaData md = user.getCachedData().getMetaData(Contexts.global());
             SortedMap<Integer, String> l = md.getPrefixes();
             future.complete(l);
@@ -193,7 +194,7 @@ public class ChatPrefixModule {
     public CompletableFuture<BaseComponent> badgeList(UUID uuid, boolean admin) {
         CompletableFuture<BaseComponent> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             MetaData md = user.getCachedData().getMetaData(Contexts.global());
             SortedMap<Integer, String> l = md.getPrefixes();
 
@@ -280,7 +281,7 @@ public class ChatPrefixModule {
     public CompletableFuture<String> setPriority(UUID uuid, int priority) {
         CompletableFuture<String> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             // Check if prefix by priority exists
             MetaData md = user.getCachedData().getMetaData(Contexts.global());
             String ret = priority == -1 ? "" : md.getPrefixes().get(priority);
@@ -302,7 +303,7 @@ public class ChatPrefixModule {
     public CompletableFuture<Boolean> setPrefix(UUID uuid, String prefix, boolean customPrefix) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             Integer priority = prefixToPriority(user, prefix);
 
             if (priority != null) {
@@ -342,7 +343,7 @@ public class ChatPrefixModule {
     public CompletableFuture<Void> setTempPrefix(UUID uuid, String prefix, int duration, TimeUnit unit) {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             clearTempPrefix(user);
             clearPriority(user);
 
@@ -361,7 +362,7 @@ public class ChatPrefixModule {
     public CompletableFuture<String> clearPriority(UUID uuid) {
         CompletableFuture<String> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             // Ideally there would be only one meta set
             boolean changed = clearPriority(user);
             future.complete(getCurrentPrefix(user));
@@ -376,7 +377,7 @@ public class ChatPrefixModule {
     public CompletableFuture<String> clearCustomPrefix(UUID uuid) {
         CompletableFuture<String> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             boolean changed = clearCustomPrefix(user);
             future.complete(getCurrentPrefix(user));
             if (changed)
@@ -389,7 +390,7 @@ public class ChatPrefixModule {
     public CompletableFuture<String> clearTempPrefix(UUID uuid) {
         CompletableFuture<String> future = new CompletableFuture<>();
 
-        getUser(uuid).thenAcceptAsync(user -> {
+        getUser(uuid).thenAccept(user -> {
             boolean changed = (clearTempPrefix(user));
             future.complete(getCurrentPrefix(user));
             if (changed)

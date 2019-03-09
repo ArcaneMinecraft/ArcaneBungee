@@ -19,11 +19,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FindPlayerCommand extends Command implements TabExecutor {
-    private final ArcaneBungee plugin;
+    private final ArcaneBungee plugin = ArcaneBungee.getInstance();
 
-    public FindPlayerCommand(ArcaneBungee plugin) {
+    public FindPlayerCommand() {
         super(BungeeCommandUsage.FINDPLAYER.getName(), BungeeCommandUsage.FINDPLAYER.getPermission(), BungeeCommandUsage.FINDPLAYER.getAliases());
-        this.plugin = plugin;
     }
 
     @Override
@@ -101,7 +100,7 @@ public class FindPlayerCommand extends Command implements TabExecutor {
 
             BaseComponent part = new TextComponent(args[0]);
             part.setColor(ArcaneColor.LIST);
-            BaseComponent head = ArcaneText.translatable(locale, "commands.findplayer.complete", part);
+            BaseComponent head = ArcaneText.translatable(locale, "commands.findplayer.header", part);
             head.setColor(ChatColor.DARK_GREEN);
 
             BaseComponent[] content = TextComponent.fromLegacyText(ArcaneColor.CONTENT + String.join(", ", pl));

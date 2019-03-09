@@ -3,7 +3,6 @@ package com.arcaneminecraft.bungee.command;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -13,14 +12,11 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.Locale;
 
 // TODO: Make the output of each individual commands prettier (cause it's a mess as of now)
 public class LinkCommands {
-    private final List<String> candidates = Arrays.asList("discord","forum","website");
-
     private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
     private static final BaseComponent DONATE = ArcaneText.url("https://arcaneminecraft.com/donate");
     private static final BaseComponent FORUM = ArcaneText.url("https://arcaneminecraft.com/forum");
@@ -30,11 +26,8 @@ public class LinkCommands {
     public LinkCommands() {
     }
 
-    private BaseComponent singleLink(String what, BaseComponent link) {
-        BaseComponent ret = new TextComponent("Link to ");
-        ret.addExtra(what);
-        ret.addExtra(": ");
-        ret.addExtra(link);
+    private BaseComponent singleLink(Locale locale, String what, BaseComponent link) {
+        BaseComponent ret = ArcaneText.translatable(locale, "commands.links.single", what, link);
         ret.setColor(ArcaneColor.CONTENT);
         return ret;
     }
@@ -73,15 +66,7 @@ public class LinkCommands {
         }
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            if (args.length == 1) {
-                List<String> ret = new ArrayList<>();
-                for (String s : candidates)
-                    if (s.startsWith(args[0]))
-                        ret.add(s);
-                return ret;
-            }
-
-            return ImmutableSet.of();
+            return Collections.emptyList();
         }
     }
 
@@ -98,9 +83,12 @@ public class LinkCommands {
         @Override
         public void execute(CommandSender sender, String[] args) {
             if (sender instanceof ProxiedPlayer)
-                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, singleLink(what, url));
+                ((ProxiedPlayer) sender).sendMessage(
+                        ChatMessageType.SYSTEM,
+                        singleLink(((ProxiedPlayer) sender).getLocale(), what, url)
+                );
             else
-                sender.sendMessage(singleLink(what, url));
+                sender.sendMessage(singleLink(null, what, url));
         }
     }
 

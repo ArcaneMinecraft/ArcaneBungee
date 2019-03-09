@@ -109,7 +109,7 @@ public class ArcaneBungee extends Plugin {
             SeenCommands fs = new SeenCommands(this);
             getProxy().getPluginManager().registerCommand(this, fs.new Seen());
             getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
-            getProxy().getPluginManager().registerCommand(this, new FindPlayerCommand(this));
+            getProxy().getPluginManager().registerCommand(this, new FindPlayerCommand());
             getProxy().getPluginManager().registerCommand(this, new News(this));
         }
 
@@ -137,11 +137,11 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, sc);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat());
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
-        getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
-        getProxy().getPluginManager().registerCommand(this, new Me(this));
+        getProxy().getPluginManager().registerCommand(this, new ListCommand());
+        getProxy().getPluginManager().registerCommand(this, new MeCommand());
         getProxy().getPluginManager().registerCommand(this, new OptionCommand());
-        getProxy().getPluginManager().registerCommand(this, new Ping(this));
-        getProxy().getPluginManager().registerCommand(this, new Slap(this));
+        getProxy().getPluginManager().registerCommand(this, new PingCommand());
+        getProxy().getPluginManager().registerCommand(this, new SlapCommand());
 
         getProxy().getPluginManager().registerListener(this, new CommandEvent());
     }
@@ -172,16 +172,8 @@ public class ArcaneBungee extends Plugin {
     public void logCommand(CommandSender sender, String msg) {
     }
 
-    @Deprecated
-    public void logCommand(String name, String displayName, String uuid, String msg) {
-    }
-
     public PluginMessenger getPluginMessenger() {
         return pluginMessenger;
-    }
-
-    public DiscordConnection getDiscordConnection() {
-        return discordConnection;
     }
 
     public Configuration getConfig() {

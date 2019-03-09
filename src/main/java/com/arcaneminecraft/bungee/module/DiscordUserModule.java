@@ -1,7 +1,7 @@
 package com.arcaneminecraft.bungee.module;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.channel.DiscordBot;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -34,16 +34,16 @@ public class DiscordUserModule {
         discordToMinecraft.put(id, uuid);
     }
 
-    private DiscordConnection getDC() {
-        return ArcaneBungee.getInstance().getDiscordConnection();
+    private DiscordBot getDB() {
+        return DiscordBot.getInstance();
     }
 
     public String getNickname(long id) {
-        return getDC().getNickname(id);
+        return getDB().getNickname(id);
     }
 
     public String getUserTag(long id) {
-        return getDC().getUserTag(id);
+        return getDB().getUserTag(id);
     }
 
     public UUID getMinecraftUuid(long id) {
@@ -96,7 +96,7 @@ public class DiscordUserModule {
         if (id == null)
             return 0;
 
-        getDC().userUnlink(id);
+        getDB().userUnlink(id);
         getMPModule().getPlayerData(uuid).setDiscord(0);
         discordToMinecraft.remove(id);
         return id;
@@ -107,7 +107,7 @@ public class DiscordUserModule {
         if (uuid == null)
             return null;
 
-        getDC().userUnlink(id);
+        getDB().userUnlink(id);
         getMPModule().getPlayerData(uuid).setDiscord(0);
         minecraftToDiscord.remove(uuid);
         return uuid;

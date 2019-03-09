@@ -3,7 +3,7 @@ package com.arcaneminecraft.bungee.module;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.channel.DiscordBot;
 import net.dv8tion.jda.core.entities.Message;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -15,8 +15,8 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 public class MessengerModule {
 
-    private DiscordConnection getDC() {
-        return DiscordConnection.getInstance();
+    private DiscordBot getDB() {
+        return DiscordBot.getInstance();
     }
 
     private DiscordUserModule getDUModule() {
@@ -112,16 +112,16 @@ public class MessengerModule {
     }
 
     public void chatToDiscord(ProxiedPlayer p, String msg) {
-        getDC().chatToDiscord(escapeNames(p.getDisplayName()), p.getUniqueId(), msg);
+        getDB().chatToDiscord(escapeNames(p.getDisplayName()), p.getUniqueId(), msg);
     }
 
     public void sendMetaToDiscord(String msg) {
-        getDC().metaToDiscord(msg);
+        getDB().metaToDiscord(msg);
     }
 
     public void chatToMinecraft(Message m) {
         String name = getMPModule().getDisplayName(getDUModule().getMinecraftUuid(m.getAuthor().getIdLong()));
-        getDC().chatToMinecraft(name, m);
+        getDB().chatToMinecraft(name, m);
     }
 
     private String escapeNames(String name) {

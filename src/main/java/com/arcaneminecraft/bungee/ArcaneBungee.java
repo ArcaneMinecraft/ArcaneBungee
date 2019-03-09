@@ -1,6 +1,6 @@
 package com.arcaneminecraft.bungee;
 
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.channel.DiscordBot;
 import com.arcaneminecraft.bungee.channel.PluginMessenger;
 import com.arcaneminecraft.bungee.command.*;
 import com.arcaneminecraft.bungee.module.*;
@@ -30,7 +30,7 @@ public class ArcaneBungee extends Plugin {
     private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
     private SpyAlert spyAlert;
-    private DiscordConnection discordConnection;
+    private DiscordBot discordBot;
 
     /* Modules */
     private final ChatPrefixModule chatPrefixModule = new ChatPrefixModule();
@@ -85,7 +85,7 @@ public class ArcaneBungee extends Plugin {
 
         if (!getConfig().getString("discord.token", "0").equals("0")) {
             try {
-                this.discordConnection = new DiscordConnection(this);
+                this.discordBot = new DiscordBot(this);
             } catch (LoginException e) {
                 getLogger().log(Level.SEVERE, "Discord: Invalid Token. Please restart with valid token.", e);
             } catch (InterruptedException e) {
@@ -151,8 +151,8 @@ public class ArcaneBungee extends Plugin {
         config = null;
         chatPrefixModule.saveConfig();
         spyAlert.saveConfig();
-        if (discordConnection != null)
-            discordConnection.disable();
+        if (discordBot != null)
+            discordBot.disable();
         try {
             ConfigurationProvider.getProvider(YamlConfiguration.class).save(cacheData, cacheDataFile);
         } catch (IOException e) {

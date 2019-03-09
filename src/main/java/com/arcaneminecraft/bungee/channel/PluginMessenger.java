@@ -69,7 +69,7 @@ public class PluginMessenger implements Listener {
                     log.addExtra("<" + name + "> " + msg);
                     plugin.getProxy().getConsole().sendMessage(log);
 
-                    DiscordConnection d = plugin.getDiscordConnection();
+                    DiscordBot d = plugin.getDiscordConnection();
                     if (d != null)
                         d.chatToDiscord(displayName, UUID.fromString(uuid), msg);
 

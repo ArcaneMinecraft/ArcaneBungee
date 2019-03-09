@@ -2,9 +2,9 @@ package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
-import com.arcaneminecraft.bungee.module.data.NewsEntry;
+import com.arcaneminecraft.bungee.channel.DiscordBot;
 import com.arcaneminecraft.bungee.module.SettingModule;
+import com.arcaneminecraft.bungee.module.data.NewsEntry;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -106,9 +106,7 @@ public class JoinLeaveEvents implements Listener {
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, left);
         }
-        DiscordConnection d = plugin.getDiscordConnection();
-        if (d != null)
-            d.joinLeaveToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1);
+        DiscordBot.getInstance().joinLeaveToDiscord(left.toPlainText(), plugin.getProxy().getOnlineCount() - 1);
     }
 
     @EventHandler
@@ -220,9 +218,7 @@ public class JoinLeaveEvents implements Listener {
                 if (pl.equals(p)) continue;
                 pl.sendMessage(ChatMessageType.SYSTEM, joined);
             }
-            DiscordConnection d = plugin.getDiscordConnection();
-            if (d != null)
-                d.joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
+            DiscordBot.getInstance().joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
 
             connecting.remove(p);
         }

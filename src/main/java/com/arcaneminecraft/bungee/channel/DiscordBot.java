@@ -1,6 +1,5 @@
 package com.arcaneminecraft.bungee.channel;
 
-import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.channel.discord.DiscordListener;
 import net.dv8tion.jda.core.AccountType;
@@ -12,22 +11,19 @@ import net.dv8tion.jda.webhook.WebhookClient;
 import net.dv8tion.jda.webhook.WebhookClientBuilder;
 import net.dv8tion.jda.webhook.WebhookMessageBuilder;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import javax.security.auth.login.LoginException;
 import java.awt.*;
 import java.security.SecureRandom;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-public class DiscordConnection {
-    private static DiscordConnection instance;
+public class DiscordBot {
+    private static DiscordBot instance;
 
     private static final SecureRandom rnd = new SecureRandom();
     private static final String META_MSG_MARKER = "\u200B";
@@ -41,8 +37,8 @@ public class DiscordConnection {
     private final TextChannel mcChatChannel;
     private final Role playerRole;
 
-    public DiscordConnection(ArcaneBungee plugin) throws LoginException, InterruptedException {
-        DiscordConnection.instance = this;
+    public DiscordBot(ArcaneBungee plugin) throws LoginException, InterruptedException {
+        DiscordBot.instance = this;
 
         this.plugin = plugin;
         this.avatarSourceFormat = plugin.getConfig().getString("discord.avatar-source", "https://crafatar.com/avatars/%s?overlay");
@@ -57,7 +53,7 @@ public class DiscordConnection {
         mcChatChannel.sendMessage(":ok_hand: *Server is now online*").complete();
     }
 
-    public static DiscordConnection getInstance() {
+    public static DiscordBot getInstance() {
         return instance;
     }
 
@@ -79,7 +75,7 @@ public class DiscordConnection {
         webhookClient.close();
         jda.shutdown();
 
-        DiscordConnection.instance = null;
+        DiscordBot.instance = null;
     }
 
 

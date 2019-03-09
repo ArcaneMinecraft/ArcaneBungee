@@ -5,7 +5,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.channel.DiscordBot;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatMessageType;
@@ -20,7 +20,7 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 public class DiscordCommand extends Command implements TabExecutor {
     private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
 
-    private final DiscordConnection dc = DiscordConnection.getInstance();
+    private final DiscordBot dc = DiscordBot.getInstance();
     private final DiscordUserModule module = ArcaneBungee.getInstance().getDiscordUserModule();
 
 

@@ -2,7 +2,7 @@ package com.arcaneminecraft.bungee.channel.discord;
 
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.channel.DiscordBot;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
@@ -24,13 +24,13 @@ import java.util.UUID;
 public class DiscordListener extends ListenerAdapter {
     private static final String META_MSG_MARKER = "\u200B";
     private static final String PREFIX = "!";
-    private final DiscordConnection dc;
+    private final DiscordBot dc;
     private final ArcaneBungee plugin;
     private final WebhookClient webhookClient;
     private final TextChannel mcChatChannel;
 
 
-    public DiscordListener (DiscordConnection dc, WebhookClient webhookClient, TextChannel mcChatChannel) {
+    public DiscordListener (DiscordBot dc, WebhookClient webhookClient, TextChannel mcChatChannel) {
         this.dc = dc;
         this.plugin = dc.getPlugin();
         this.webhookClient = webhookClient;

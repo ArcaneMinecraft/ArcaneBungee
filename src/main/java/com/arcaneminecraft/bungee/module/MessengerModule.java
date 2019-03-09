@@ -13,6 +13,8 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+import java.util.UUID;
+
 public class MessengerModule {
 
     private DiscordBot getDB() {
@@ -111,8 +113,8 @@ public class MessengerModule {
 
     }
 
-    public void chatToDiscord(ProxiedPlayer p, String msg) {
-        getDB().chatToDiscord(escapeNames(p.getDisplayName()), p.getUniqueId(), msg);
+    public void chatToDiscord(String name, UUID uuid, String msg) {
+        getDB().chatToDiscord(escapeNames(name), uuid, msg);
     }
 
     public void sendMetaToDiscord(String msg) {

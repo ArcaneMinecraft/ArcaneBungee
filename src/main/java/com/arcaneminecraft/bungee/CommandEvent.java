@@ -14,6 +14,6 @@ public class CommandEvent implements Listener {
 
         // Log only player commands
         if (e.getSender() instanceof ProxiedPlayer)
-            ArcaneBungee.getInstance().getPluginMessenger().coreprotect((CommandSender) e.getSender(), e.getMessage());
+            ArcaneBungee.getInstance().getPluginMessenger().coreprotect((ProxiedPlayer) e.getSender(), e.getMessage());
     }
 }

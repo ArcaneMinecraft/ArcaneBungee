@@ -2,12 +2,9 @@ package com.arcaneminecraft.bungee;
 
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.event.PlayerDisconnectEvent;
-import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.plugin.Listener;
-import net.md_5.bungee.event.EventHandler;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface TabCompletePreset {
 
@@ -21,7 +18,7 @@ public interface TabCompletePreset {
     }
 
     static Iterable<String> allPlayers(String[] args) {
-        return argStartsWith(args, ArcaneBungee.getInstance().getSqlDatabase().getAllPlayerName());
+        return argStartsWith(args, ArcaneBungee.getInstance().getMinecraftPlayerModule().getAllNames());
     }
 
     static Iterable<String> argStartsWith(String[] args, Iterable<String> choices) {

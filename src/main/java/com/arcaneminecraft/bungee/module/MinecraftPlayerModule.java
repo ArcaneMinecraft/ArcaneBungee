@@ -49,7 +49,17 @@ public class MinecraftPlayerModule {
     }
 
     public UUID getUUID(String name) {
-        return allNameToUuid.get(name.toLowerCase());
+        UUID uuid = allNameToUuid.get(name.toLowerCase());
+
+        if (uuid == null) {
+            try {
+                UUID test = UUID.fromString(name);
+                if (allUuidToName.containsKey(test))
+                    uuid = test;
+            } catch (IllegalArgumentException ignore) {}
+        }
+
+        return uuid;
     }
 
     public Player getPlayerData(UUID uuid) {

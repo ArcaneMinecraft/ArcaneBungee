@@ -5,8 +5,6 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.module.ChatPrefixModule;
-import com.google.common.collect.ImmutableList;
-import javafx.scene.shape.Arc;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -16,17 +14,18 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 
-public class Badge extends Command implements TabExecutor {
+public class BadgeCommand extends Command implements TabExecutor {
     private static final String SUBC_RESET = "-reset";
     private static final String SUBC_HIDE = "-hide";
 
     private final ChatPrefixModule module = ArcaneBungee.getInstance().getChatPrefixModule();
 
-    public Badge() {
+    public BadgeCommand() {
         super(BungeeCommandUsage.BADGE.getName(), BungeeCommandUsage.BADGE.getPermission(), BungeeCommandUsage.BADGE.getAliases());
     }
 
@@ -42,6 +41,7 @@ public class Badge extends Command implements TabExecutor {
 
         // If no args, send list of options
         if (args.length == 0) {
+            // TODO: see ChatPrefixModule.badgeList()
             module.badgeList(p.getUniqueId(), false).thenAcceptAsync(list -> p.sendMessage(ChatMessageType.SYSTEM, list));
             return;
         }

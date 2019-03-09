@@ -27,13 +27,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 
-public class BadgeAdmin extends Command implements TabExecutor {
+public class BadgeAdminCommand extends Command implements TabExecutor {
     private static final Set<String> ADMIN_SUBCOMMANDS = ImmutableSet.of("unset", "unsettemp", "list", "reset", "set", "setpriority", "settemp");
 
     private final ChatPrefixModule module = ArcaneBungee.getInstance().getChatPrefixModule();
     private final MinecraftPlayerModule mp = ArcaneBungee.getInstance().getMinecraftPlayerModule();
 
-    public BadgeAdmin() {
+    public BadgeAdminCommand() {
         super(BungeeCommandUsage.BADGEADMIN.getName(), BungeeCommandUsage.BADGEADMIN.getPermission(), BungeeCommandUsage.BADGEADMIN.getAliases());
     }
 
@@ -147,6 +147,7 @@ public class BadgeAdmin extends Command implements TabExecutor {
                 else
                     sender.sendMessage(send);
             } else {
+                // TODO: see ChatPrefixModule.badgeList()
                 module.badgeList(uuid, true).thenAcceptAsync(send -> {
                     if (sender instanceof ProxiedPlayer)
                         ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);

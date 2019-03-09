@@ -1,8 +1,16 @@
 package com.arcaneminecraft.bungee.module;
 
+import com.arcaneminecraft.api.ArcaneColor;
+import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.channel.DiscordConnection;
 import net.dv8tion.jda.core.entities.Message;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 public class MessengerModule {
@@ -21,24 +29,82 @@ public class MessengerModule {
 
 
     /**
-     * Message Player.
+     * Directly message a player.
      * @param from Message sender. If empty, the message is from the Server.
      * @param to Message receiver. If empty, the message is for the Server.
-     * @param msg Message content.
-     * @return if message was successfully sent, or if both sender and receiver are null
+     * @param message Message content.
+     * @return if message was successfully sent to both parties.
      */
-    // TODO: Implement all message functions
-    public boolean messagePlayer(ProxiedPlayer from, ProxiedPlayer to, String msg) {
-        if (from == null && to == null)
+    public boolean sendP2pMessage(CommandSender from, CommandSender to, String message) {
+        if (from == null || to == null)
             return false;
 
+        BaseComponent msg = ArcaneText.url(message);
 
-
-        return true;
+        return sendP2pMessage(from, to, msg);
     }
 
-    public boolean messagePlayer(String from, String to, String msg) {
-        return false;
+    /**
+     * Directly message a player.
+     * @param from Message sender. If empty, the message is from the Server.
+     * @param to Message receiver. If empty, the message is for the Server.
+     * @param msg Message content. setColor() and setItalic() will be run on it.
+     * @return if message was successfully sent to both parties.
+     */
+    // TODO: Implement all message functions
+    public boolean sendP2pMessage(CommandSender from, CommandSender to, BaseComponent msg) {
+        if (from == null || to == null)
+            return false;
+
+        msg.setColor(ArcaneColor.CONTENT);
+        msg.setItalic(true);
+
+        TextComponent gt = new TextComponent("> ");
+        gt.setColor(ChatColor.DARK_GRAY);
+
+        TextComponent colon = new TextComponent(": ");
+        colon.setColor(ChatColor.DARK_GRAY);
+
+        BaseComponent sendFrom = new TextComponent();
+        BaseComponent toPerson = ArcaneText.playerComponentBungee(to);
+        if (!(to instanceof ProxiedPlayer))
+            toPerson.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/r "));
+        BaseComponent toText = ArcaneText.translatable(
+                to instanceof ProxiedPlayer ? ((ProxiedPlayer) from).getLocale() : null,
+                "commands.message.to",
+                toPerson
+        );
+        toText.setColor(ArcaneColor.HEADING);
+        sendFrom.addExtra(gt);
+        sendFrom.addExtra(toText);
+        sendFrom.addExtra(colon);
+        sendFrom.addExtra(msg);
+
+        TextComponent sendTo = new TextComponent();
+        BaseComponent fromPerson = ArcaneText.playerComponentBungee(from);
+        if (!(from instanceof ProxiedPlayer))
+            fromPerson.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/r "));
+        BaseComponent fromText = ArcaneText.translatable(
+                to instanceof ProxiedPlayer ? ((ProxiedPlayer) to).getLocale() : null,
+                "commands.message.from",
+                fromPerson
+        );
+        fromText.setColor(ArcaneColor.HEADING);
+        sendTo.addExtra(gt);
+        sendTo.addExtra(fromText);
+        sendTo.addExtra(colon);
+        sendTo.addExtra(msg);
+
+        if (from instanceof ProxiedPlayer)
+            ((ProxiedPlayer) from).sendMessage(ChatMessageType.SYSTEM, sendFrom);
+        else
+            from.sendMessage(sendFrom);
+        if (to instanceof ProxiedPlayer)
+            ((ProxiedPlayer) from).sendMessage(ChatMessageType.SYSTEM, sendTo);
+        else
+            to.sendMessage(sendTo);
+
+        return true;
     }
 
     public void sendToMinecraft(Message m) {

@@ -39,6 +39,7 @@ public class ArcaneBungee extends Plugin {
     private final NewsModule newsModule = new NewsModule();
     private final SettingModule settingModule = new SettingModule();
     private final PermissionsModule permissionsModule = new PermissionsModule();
+    private final MessengerModule messengerModule = new MessengerModule();
 
 
     private static final String CONFIG_FILENAME = "cachedata.yml";
@@ -118,8 +119,8 @@ public class ArcaneBungee extends Plugin {
         LinkCommands l = new LinkCommands();
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands(this);
-        getProxy().getPluginManager().registerCommand(this, new Badge());
-        getProxy().getPluginManager().registerCommand(this, new BadgeAdmin());
+        getProxy().getPluginManager().registerCommand(this, new BadgeCommand());
+        getProxy().getPluginManager().registerCommand(this, new BadgeAdminCommand());
         getProxy().getPluginManager().registerCommand(this, new DiscordCommand());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
@@ -250,5 +251,9 @@ public class ArcaneBungee extends Plugin {
 
     public PermissionsModule getPermissionsModule() {
         return permissionsModule;
+    }
+
+    public MessengerModule getMessengerModule() {
+        return messengerModule;
     }
 }

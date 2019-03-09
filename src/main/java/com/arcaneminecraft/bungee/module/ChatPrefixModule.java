@@ -190,6 +190,7 @@ public class ChatPrefixModule {
         return future;
     }
 
+    // TODO: Break this up into BadgeCommand and BadgeAdminCommand
     @Deprecated
     public CompletableFuture<BaseComponent> badgeList(UUID uuid, boolean admin) {
         CompletableFuture<BaseComponent> future = new CompletableFuture<>();

@@ -47,8 +47,8 @@ public class LinkCommands {
                 BaseComponent dash = new TextComponent("- ");
                 dash.setColor(ArcaneColor.CONTENT);
 
-                BaseComponent header = new TextComponent("--- Links ---");
-                header.setColor(ChatColor.DARK_GREEN);
+                BaseComponent header = ArcaneText.translatable(p.getLocale(), "commands.links.header");
+                header.setColor(ArcaneColor.LIST);
 
                 p.sendMessage(ChatMessageType.SYSTEM, header);
                 p.sendMessage(ChatMessageType.SYSTEM, dash, WEBSITE);

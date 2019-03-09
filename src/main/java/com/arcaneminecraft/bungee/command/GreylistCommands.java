@@ -127,7 +127,10 @@ public class GreylistCommands {
 
             module.greylist(uuid).thenAcceptAsync(success -> {
                 if (success) {
-                    TranslatableComponent send = new TranslatableComponent("%s is now greylisted!", name);
+                    TranslatableComponent send = new TranslatableComponent(
+                            ArcaneText.translatableString(null, "messages.meta.greylist"),
+                            name
+                    );
                     send.setColor(ArcaneColor.META);
 
                     ProxyServer.getInstance().getConsole().sendMessage(send);

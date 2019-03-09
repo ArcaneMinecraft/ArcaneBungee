@@ -16,7 +16,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 public class MessengerModule {
 
     private DiscordConnection getDC() {
-        return ArcaneBungee.getInstance().getDiscordConnection();
+        return DiscordConnection.getInstance();
     }
 
     private DiscordUserModule getDUModule() {

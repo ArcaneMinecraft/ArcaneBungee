@@ -20,7 +20,7 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 public class DiscordCommand extends Command implements TabExecutor {
     private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
 
-    private final DiscordConnection dc = ArcaneBungee.getInstance().getDiscordConnection();
+    private final DiscordConnection dc = DiscordConnection.getInstance();
     private final DiscordUserModule module = ArcaneBungee.getInstance().getDiscordUserModule();
 
 

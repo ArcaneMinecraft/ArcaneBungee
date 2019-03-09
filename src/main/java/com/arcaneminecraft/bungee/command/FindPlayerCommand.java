@@ -99,9 +99,9 @@ public class FindPlayerCommand extends Command implements TabExecutor {
 
 
             BaseComponent part = new TextComponent(args[0]);
-            part.setColor(ArcaneColor.LIST);
+            part.setColor(ArcaneColor.LIST_VARS);
             BaseComponent head = ArcaneText.translatable(locale, "commands.findplayer.header", part);
-            head.setColor(ChatColor.DARK_GREEN);
+            head.setColor(ArcaneColor.LIST);
 
             BaseComponent[] content = TextComponent.fromLegacyText(ArcaneColor.CONTENT + String.join(", ", pl));
 

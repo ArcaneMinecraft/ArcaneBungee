@@ -106,7 +106,7 @@ public class ArcaneBungee extends Plugin {
 
         // Commnads that directly depend on SQL
         if (sqlDatabase != null) {
-            SeenCommands fs = new SeenCommands(this);
+            SeenCommands fs = new SeenCommands();
             getProxy().getPluginManager().registerCommand(this, fs.new Seen());
             getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
             getProxy().getPluginManager().registerCommand(this, new FindPlayerCommand());

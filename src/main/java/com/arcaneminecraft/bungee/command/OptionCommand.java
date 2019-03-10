@@ -12,7 +12,6 @@ import com.arcaneminecraft.bungee.module.data.Option;
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -30,7 +29,6 @@ import java.util.function.Function;
 public class OptionCommand extends Command implements TabExecutor {
 
     private HashMap<String, Option> options = new HashMap<>();
-    private List<String> optionNames = new ArrayList<>();
 
     public OptionCommand() {
         super(BungeeCommandUsage.OPTION.getName(), BungeeCommandUsage.OPTION.getPermission(), BungeeCommandUsage.OPTION.getAliases());
@@ -42,7 +40,6 @@ public class OptionCommand extends Command implements TabExecutor {
         SpyAlert spyAlert = SpyAlert.getInstance();
 
         for (SettingModule.Option opt : SettingModule.Option.values()) {
-            optionNames.add(opt.name);
             options.put(opt.name.toLowerCase(), new Option(
                     opt.name,
                     setBoolean(opt, sModule::set),
@@ -53,17 +50,15 @@ public class OptionCommand extends Command implements TabExecutor {
             ));
         }
 
-        String optName;
-
-        optionNames.add(optName = "spyAllCommands");
-        options.put(optName.toLowerCase(), new Option(
-                optName,
+        options.put("spyallcommands", new Option(
+                "spyAllCommands",
                 setBoolean(spyAlert::setAllCommandReceiver),
                 getBoolean(spyAlert::getAllCommandReceiver),
                 SpyAlert.RECEIVE_COMMAND_ALL_PERMISSION,
                 values,
                 "This option resets to false upon server restart"
         ));
+
         options.put("timezone", new Option(
                 "timeZone",
                 setTimeZone(mpModule::setTimeZone),
@@ -100,12 +95,28 @@ public class OptionCommand extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args.length == 0)
-            return TabCompletePreset.argStartsWith(args, optionNames);
+        if (!(sender instanceof ProxiedPlayer))
+            return Collections.emptyList();
+
+        UUID uuid = ((ProxiedPlayer) sender).getUniqueId();
 
         if (args.length == 1) {
+            // Copied from TabCompletePreset.argStartsWith() and edited
+
+            List<String> ret = new ArrayList<>();
+            String argL = args[0].toLowerCase();
+
+            for (Map.Entry<String, Option> opt : options.entrySet()) {
+                if (opt.getValue().hasPermission(uuid) && opt.getKey().toLowerCase().startsWith(argL))
+                    ret.add(opt.getValue().getName());
+            }
+
+            return ret;
+        }
+
+        if (args.length == 2) {
             Option o = options.get(args[0]);
-            if (o != null)
+            if (o != null && o.hasPermission(uuid))
                 return TabCompletePreset.argStartsWith(args, o.getChoices());
         }
 
@@ -234,7 +245,7 @@ public class OptionCommand extends Command implements TabExecutor {
         if (o == null) {
             send = ArcaneText.translatable(p.getLocale(), "commands.option.invalid", opt);
             send.setColor(ArcaneColor.NEGATIVE);
-        } else if (o.hasPermission(p.getUniqueId())) {
+        } else if (!o.hasPermission(p.getUniqueId())) {
             send = ArcaneText.translatable(p.getLocale(), "commands.option.noPermission", o.getName());
             send.setColor(ArcaneColor.NEGATIVE);
         } else if (!o.set(p.getUniqueId(), value)) {
@@ -243,7 +254,7 @@ public class OptionCommand extends Command implements TabExecutor {
             send.setColor(ArcaneColor.NEGATIVE);
         } else {
             sendDescription(p, o.getDescription());
-            send = ArcaneText.translatable(p.getLocale(), "commands.option.set", o.getName(), value);
+            send = ArcaneText.translatable(p.getLocale(), "commands.option.set", o.getName(), colorizeChoice(o.get(p.getUniqueId())));
             send.setColor(ArcaneColor.CONTENT);
         }
         p.sendMessage(ChatMessageType.SYSTEM, send);
@@ -260,8 +271,25 @@ public class OptionCommand extends Command implements TabExecutor {
             send.setColor(ArcaneColor.NEGATIVE);
         } else {
             sendDescription(p, o.getDescription());
-            send = ArcaneText.translatable(p.getLocale(), "commands.option.get", o.getName(), o.get(p.getUniqueId()));
+            send = ArcaneText.translatable(p.getLocale(), "commands.option.get", o.getName(), colorizeChoice(o.get(p.getUniqueId())));
+            send.setColor(ArcaneColor.CONTENT);
         }
         p.sendMessage(ChatMessageType.SYSTEM, send);
+    }
+
+    private BaseComponent colorizeChoice(String text) {
+        BaseComponent ret = new TextComponent(text);
+        switch (text) {
+            case "true":
+                ret.setColor(ArcaneColor.POSITIVE);
+                break;
+            case "false":
+                ret.setColor(ArcaneColor.NEGATIVE);
+                break;
+            default:
+                ret.setColor(ArcaneColor.FOCUS);
+                break;
+        }
+        return ret;
     }
 }

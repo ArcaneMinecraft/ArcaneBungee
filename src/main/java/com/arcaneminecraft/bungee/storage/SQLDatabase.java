@@ -4,7 +4,6 @@ import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.NewsModule;
-import com.arcaneminecraft.bungee.module.data.NewsEntry;
 import com.arcaneminecraft.bungee.module.data.Player;
 import com.arcaneminecraft.bungee.storage.sql.ReportDatabase;
 import net.md_5.bungee.api.ProxyServer;
@@ -48,7 +47,8 @@ public class SQLDatabase {
     //private static final String REPORT_INSERT = "INSERT INTO ab_reports(id, uuid, body) VALUES(?, ?, ?)";
     private static final String REPORT_UPDATE_LAST_AND_PRIORITY_BY_ID = "UPDATE ab_reports SET last=?,priority=? WHERE id=?";
 
-    private static final String NEWS_SELECT_ALL_ID_AND_TIMESTAMP_AND_UUID_AND_CONTENT = "SELECT id,timestamp,uuid,content FROM ab_news ";
+    private static final String NEWS_SELECT_LATEST_TIMESTAMP_AND_UUID_AND_CONTENT = "SELECT timestamp,uuid,content FROM ab_news ORDER BY id DESC LIMIT 1";
+    //private static final String NEWS_SELECT_ALL_ID_AND_TIMESTAMP_AND_UUID_AND_CONTENT = "SELECT id,timestamp,uuid,content FROM ab_news";
     private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, uuid) VALUES(?, ?, ?)";
 
     private final ArcaneBungee plugin;
@@ -98,17 +98,17 @@ public class SQLDatabase {
                         dcModule.put(u, d);
                     }
                 }
-                try (PreparedStatement ps = c.prepareStatement(NEWS_SELECT_ALL_ID_AND_TIMESTAMP_AND_UUID_AND_CONTENT)) {
+                try (PreparedStatement ps = c.prepareStatement(NEWS_SELECT_LATEST_TIMESTAMP_AND_UUID_AND_CONTENT)) {
                     ResultSet rs = ps.executeQuery();
 
+                    rs.next();
                     String authorUUID = rs.getString("uuid");
 
-                    int i = rs.getInt("id");
                     Timestamp t = rs.getTimestamp("timestamp");
                     UUID author = authorUUID == null ? null : UUID.fromString(authorUUID);
                     String content = rs.getString("content");
 
-                    nModule.add(new NewsEntry(i, author, t, content));
+                    nModule.setLatest(new NewsModule.Entry(author, t, content));
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -183,12 +183,13 @@ public class SQLDatabase {
                 }
                 Timestamp firstseen = rs.getTimestamp("firstseen");
                 Timestamp lastseen = rs.getTimestamp("lastseen");
-                String timezone = rs.getString("timezone"); // physical server location
+                String tz = rs.getString("timezone"); // physical server location
+                TimeZone timeZone = tz == null ? null : TimeZone.getTimeZone(tz);
                 long discord = rs.getLong("discord");
                 int options = rs.getInt("options");
 
                 // Query returned data; give username from database
-                future.complete(new Player(p, name, firstseen, lastseen, TimeZone.getTimeZone(timezone), discord, options));
+                future.complete(new Player(p, name, firstseen, lastseen, timeZone, discord, options));
 
             } catch (SQLException ex) {
                 ex.printStackTrace();

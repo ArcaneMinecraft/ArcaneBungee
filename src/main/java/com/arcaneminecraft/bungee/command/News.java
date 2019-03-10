@@ -6,7 +6,6 @@ import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.module.NewsModule;
-import com.arcaneminecraft.bungee.module.data.NewsEntry;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -30,8 +29,6 @@ public class News extends Command implements TabExecutor {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.logCommand(sender, BungeeCommandUsage.NEWS.getCommand(), args);
-
         if (args.length == 0) {
             sendLatestNews(sender);
             return;
@@ -84,7 +81,7 @@ public class News extends Command implements TabExecutor {
         send.addExtra(": ");
         send.setColor(ArcaneColor.FOCUS);
 
-        NewsEntry ne = module.getLatest();
+        NewsModule.Entry ne = module.getLatest();
 
         send.addExtra(ne.getContent());
 

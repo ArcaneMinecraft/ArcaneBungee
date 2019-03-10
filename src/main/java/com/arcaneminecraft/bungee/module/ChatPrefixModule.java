@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ChatPrefixModule {
     /** Players with modified badge */
+    // TODO: Find out practicability of this
     private final Set<UUID> alteredPrefix;
 
     private static final int CUSTOM_PREFIX_PRIORITY = 1000000;

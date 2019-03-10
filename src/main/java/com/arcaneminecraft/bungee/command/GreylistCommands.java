@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.UUID;
 
-// TODO: Cleanup all the messages
 public class GreylistCommands {
     private final BaseComponent link;
     private final PermissionsModule module = ArcaneBungee.getInstance().getPermissionsModule();
@@ -56,7 +55,6 @@ public class GreylistCommands {
             BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.apply", link);
             send.setColor(ArcaneColor.CONTENT);
             p.sendMessage(ChatMessageType.SYSTEM, send);
-            // TODO: Write application in-game?
         }
 
         @Override

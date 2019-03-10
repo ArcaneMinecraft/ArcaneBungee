@@ -1,10 +1,7 @@
 package com.arcaneminecraft.bungee.module;
 
-import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.SpyAlert;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -18,12 +15,6 @@ import java.util.concurrent.ExecutionException;
  * Default is always 0. 1 if toggled.
  */
 public class SettingModule {
-    private static SettingModule instance;
-
-    public SettingModule() {
-        SettingModule.instance = this;
-    }
-
     private MinecraftPlayerModule getModule() {
         return ArcaneBungee.getInstance().getMinecraftPlayerModule();
     }

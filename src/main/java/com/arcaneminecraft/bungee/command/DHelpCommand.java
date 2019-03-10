@@ -20,7 +20,6 @@ public class DHelpCommand implements DiscordCommandExecutor {
 
     @Override
     public boolean executeDiscordCommand(Message m, String[] args) {
-        // TODO: Store this static value as class variable
         EmbedBuilder embed = new EmbedBuilder()
                 .setDescription("**Hello!** These are Arcane commands on Discord so far.  Message the staff if you need help.\n" +
                         "More commands are in the works. If there's any we must have right now, you may suggest them!\n\n" +

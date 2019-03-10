@@ -123,7 +123,7 @@ public class DiscordUserModule {
 
     private int generateToken() {
         int token = rnd.nextInt(999999);
-        if (mcToken.containsKey(token) || dcToken.containsKey(token))
+        if (mcToken.containsValue(token) || dcToken.containsValue(token))
             return generateToken();
         return token;
     }

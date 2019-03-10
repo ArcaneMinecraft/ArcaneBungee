@@ -5,7 +5,6 @@ import com.arcaneminecraft.bungee.channel.PluginMessenger;
 import com.arcaneminecraft.bungee.command.*;
 import com.arcaneminecraft.bungee.module.*;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
-import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -32,14 +31,13 @@ public class ArcaneBungee extends Plugin {
     private SpyAlert spyAlert;
     private DiscordBot discordBot;
 
-    /* Modules */
-    private final ChatPrefixModule chatPrefixModule = new ChatPrefixModule();
-    private final DiscordUserModule discordUserModule = new DiscordUserModule();
-    private final MinecraftPlayerModule minecraftPlayerModule = new MinecraftPlayerModule();
-    private final NewsModule newsModule = new NewsModule();
-    private final SettingModule settingModule = new SettingModule();
-    private final PermissionsModule permissionsModule = new PermissionsModule();
-    private final MessengerModule messengerModule = new MessengerModule();
+    private ChatPrefixModule chatPrefixModule;
+    private DiscordUserModule discordUserModule;
+    private MinecraftPlayerModule minecraftPlayerModule;
+    private NewsModule newsModule;
+    private SettingModule settingModule;
+    private PermissionsModule permissionsModule;
+    private MessengerModule messengerModule;
 
 
     private static final String CONFIG_FILENAME = "cachedata.yml";
@@ -58,15 +56,24 @@ public class ArcaneBungee extends Plugin {
 
         saveDefaultConfigs();
 
-        // Alert
+        // Modules
+        this.chatPrefixModule = new ChatPrefixModule();
+        this.discordUserModule = new DiscordUserModule();
+        this.minecraftPlayerModule = new MinecraftPlayerModule();
+        this.newsModule = new NewsModule();
+        this.settingModule = new SettingModule();
+        this.permissionsModule = new PermissionsModule();
+        this.messengerModule = new MessengerModule();
 
+
+        // Alert
         getProxy().registerChannel("arcaneserver:alert");
 
         this.spyAlert = new SpyAlert(this);
-        getProxy().getPluginManager().registerListener(this, this.spyAlert);
+        getProxy().getPluginManager().registerListener(this, spyAlert);
 
         this.pluginMessenger = new PluginMessenger(this, spyAlert);
-        getProxy().getPluginManager().registerListener(this, this.pluginMessenger);
+        getProxy().getPluginManager().registerListener(this, pluginMessenger);
 
         if (getConfig().getBoolean("mariadb.enabled")) {
             try {
@@ -100,7 +107,7 @@ public class ArcaneBungee extends Plugin {
         // Player list
         getProxy().getPluginManager().registerListener(this, new ServerListListener(this));
 
-        // Commnads that directly depend on SQL
+        // Commnads that depend on SQL
         if (sqlDatabase != null) {
             SeenCommands fs = new SeenCommands();
             getProxy().getPluginManager().registerCommand(this, fs.new Seen());
@@ -109,15 +116,20 @@ public class ArcaneBungee extends Plugin {
             getProxy().getPluginManager().registerCommand(this, new News(this));
         }
 
+        // Commannds that directly depend on Discord
+        if (discordBot != null) {
+            getProxy().getPluginManager().registerCommand(this, new DiscordCommand());
+            new DHelpCommand();
+        }
+
         // Rest of the commands
         GreylistCommands g = new GreylistCommands();
         TellCommands t = new TellCommands(this);
         LinkCommands l = new LinkCommands();
         ServerCommands s = new ServerCommands(this);
-        StaffChatCommands sc = new StaffChatCommands(this);
+        StaffChatCommands sc = new StaffChatCommands();
         getProxy().getPluginManager().registerCommand(this, new BadgeCommand());
         getProxy().getPluginManager().registerCommand(this, new BadgeAdminCommand());
-        getProxy().getPluginManager().registerCommand(this, new DiscordCommand());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
@@ -159,14 +171,6 @@ public class ArcaneBungee extends Plugin {
     @Deprecated
     public List<ProxiedPlayer> getAfkList() {
         return minecraftPlayerModule.getAFKList();
-    }
-
-    @Deprecated
-    public void logCommand(CommandSender sender, String cmd, String[] args) {
-    }
-
-    @Deprecated
-    public void logCommand(CommandSender sender, String msg) {
     }
 
     public PluginMessenger getPluginMessenger() {

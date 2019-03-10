@@ -40,9 +40,6 @@ public class DiscordListener extends ListenerAdapter {
         this.bot = bot;
         this.webhookClient = webhookClient;
         this.mcChatChannel = mcChatChannel;
-
-        // Register Discord-only commands
-        new DHelpCommand();
     }
 
     public void registerCommand(String name, DiscordCommandExecutor executor, String... aliases) {
@@ -66,7 +63,7 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberLeave(GuildMemberLeaveEvent e) {
-
+        duModule.unlink(e.getUser().getIdLong());
     }
 
     @Override

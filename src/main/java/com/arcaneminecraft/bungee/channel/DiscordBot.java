@@ -122,7 +122,7 @@ public class DiscordBot {
         // Send message
         webhookClient.send(new WebhookMessageBuilder()
                 .setUsername(user)
-                .setContent(escapeText(msg))
+                .setContent(msg)
                 .setAvatarUrl(String.format(avatarSourceFormat, uuid.toString()))
                 .build()
         );
@@ -137,112 +137,6 @@ public class DiscordBot {
 
         Game g = Game.of(Game.GameType.WATCHING,count + " player" + (count == 1 ? "" : "s"));
         jda.getPresence().setPresence(count == 0 ? OnlineStatus.IDLE : OnlineStatus.ONLINE, g);
-    }
-
-    public void chatToMinecraft(String mcName, Message msg) {
-        Member Member = msg.getMember();
-        String userTag = msg.isWebhookMessage() ? null : Member.getUser().getName() + "#" + Member.getUser().getDiscriminator();
-        String name = Member.getEffectiveName();
-        StringBuilder m = new StringBuilder(msg.getContentStripped());
-
-        // If it contains an embed
-        List<MessageEmbed> embeds = msg.getEmbeds();
-        if (!embeds.isEmpty()) {
-            for (MessageEmbed e : embeds) {
-                // Skip if embed was called in response to a message containing an URL.
-                if (e.getUrl() != null)
-                    continue;
-
-                MessageEmbed.AuthorInfo author = e.getAuthor();
-                String title = e.getTitle();
-                //MessageEmbed.Provider provider = e.getSiteProvider();
-                String description = e.getDescription();
-
-                List<MessageEmbed.Field> fields = e.getFields();
-
-                MessageEmbed.ImageInfo image = e.getImage();
-                MessageEmbed.VideoInfo videoInfo = e.getVideoInfo();
-
-                MessageEmbed.Footer footer = e.getFooter();
-
-                Color color = e.getColor();
-
-                int r = color.getRed();
-                int g = color.getGreen();
-                int b = color.getBlue();
-                int cc = 0;
-
-                if (r >= 0x55 && g >= 0x55 && b >= 0x55) {
-                    cc += 1 << 3;
-                    if (r >= 0xAA)
-                        cc += 1 << 2;
-                    if (g >= 0xAA)
-                        cc += 1 << 1;
-                    if (b >= 0xAA)
-                        cc += 1;
-                } else {
-                    if (r >= 0x55)
-                        cc += 1 << 2;
-                    if (g >= 0x55)
-                        cc += 1 << 1;
-                    if (b >= 0x55)
-                        cc += 1;
-                }
-
-                String c = "\n" + ChatColor.getByChar(Integer.toHexString(cc).charAt(0)) + ChatColor.BOLD + "| ";
-
-
-                m.append(c);
-
-                if (author != null)
-                    m.append(c).append(ChatColor.WHITE).append(author.getName());
-                if (title != null)
-                    m.append(c).append(ChatColor.WHITE).append(title);
-                if (description != null)
-                    m.append(c).append(ChatColor.GRAY).append(description);
-
-                for (MessageEmbed.Field f : fields) {
-                    if (f.getName() != null)
-                        m.append(c).append(ChatColor.WHITE).append(f.getName());
-                    if (f.getValue() != null)
-                        m.append(c).append(ChatColor.GRAY).append(f.getValue());
-                }
-
-                if (image != null) {
-                    m.append(c).append(ChatColor.GRAY).append(ChatColor.ITALIC).append("Image:")
-                            .append(ChatColor.BLUE).append(' ').append(image.getUrl());
-                }
-                if (videoInfo != null) {
-                    m.append(c).append(ChatColor.GRAY).append(ChatColor.ITALIC).append("Video:")
-                            .append(ChatColor.BLUE).append(' ').append(videoInfo.getUrl());
-                }
-                if (footer != null) {
-                    m.append(c).append(ChatColor.GRAY).append(footer.getText());
-                }
-
-                m.append(c);
-
-            }
-        }
-
-        // Show link to attachments in-game
-        List<Message.Attachment> attachments = msg.getAttachments();
-        if (!attachments.isEmpty()) {
-            for (Message.Attachment a : attachments) {
-                if (m.length() == 0)
-                    m.append(a.getUrl());
-                else
-                    m.append(" ").append(a.getUrl());
-            }
-        }
-
-        plugin.getPluginMessenger().chat("Discord", name, mcName, userTag, m.toString(), ChatColor.DARK_GREEN + "[Web]");
-        TextComponent log = new TextComponent("Discord: ");
-        BaseComponent tag = new TextComponent("[Web]");
-        tag.setColor(ChatColor.DARK_GREEN);
-        log.addExtra(tag);
-        log.addExtra(" <" + (mcName == null ? name : mcName) + "> " + m.toString());
-        plugin.getProxy().getConsole().sendMessage(log);
     }
 
 /*
@@ -335,14 +229,6 @@ public class DiscordBot {
         }
 
         guild.getController().removeSingleRoleFromMember(member, playerRole).complete();
-    }
-
-    private int generateToken() {
-        return rnd.nextInt(999999);
-    }
-
-    private String escapeText(String text) {
-        return text.replaceAll("([\\\\*_~])", "\\\\$1");
     }
 
     public Member getMember(String userTag) {

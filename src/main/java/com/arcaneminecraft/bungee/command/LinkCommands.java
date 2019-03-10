@@ -15,7 +15,6 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 import java.util.Collections;
 import java.util.Locale;
 
-// TODO: Make the output of each individual commands prettier (cause it's a mess as of now)
 public class LinkCommands {
     private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
     private static final BaseComponent DONATE = ArcaneText.url("https://arcaneminecraft.com/donate");

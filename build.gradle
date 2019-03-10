@@ -23,10 +23,11 @@ configurations {
 dependencies {
     compileOnly 'net.md-5:bungeecord-api:1.13-SNAPSHOT' // Bungeecord api
     compileOnly 'me.lucko.luckperms:luckperms-api:4.3'
-    compile 'com.vdurmont:emoji-java:4.0.0'
     compileOnly fileTree(dir: 'libs', include: '*.jar')
     compileOnly 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
     extraLibs 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
+    compileOnly 'com.vdurmont:emoji-java:4.0.0'
+    extraLibs 'com.vdurmont:emoji-java:4.0.0'
     //implementation 'net.dv8tion:JDA:3.8.0_427'
     extraLibs files('libs/JDA-3.8.0_423-withDependencies-no-opus.jar')
 }

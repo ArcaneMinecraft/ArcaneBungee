@@ -2,17 +2,24 @@ package com.arcaneminecraft.bungee.module;
 
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
+import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.channel.DiscordBot;
+import com.vdurmont.emoji.EmojiParser;
+import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+import java.awt.*;
+import java.util.List;
 import java.util.UUID;
 
 public class MessengerModule {
@@ -25,39 +32,13 @@ public class MessengerModule {
         return ArcaneBungee.getInstance().getDiscordUserModule();
     }
 
-    private MinecraftPlayerModule getMPModule() {
-        return ArcaneBungee.getInstance().getMinecraftPlayerModule();
-    }
-
-
-    /**
-     * Directly message a player.
-     * @param from Message sender. If empty, the message is from the Server.
-     * @param to Message receiver. If empty, the message is for the Server.
-     * @param message Message content.
-     * @return if message was successfully sent to both parties.
-     */
-    public boolean sendP2pMessage(CommandSender from, CommandSender to, String message) {
-        if (from == null || to == null)
-            return false;
-
-        BaseComponent msg = ArcaneText.url(message);
-
-        return sendP2pMessage(from, to, msg);
-    }
-
     /**
      * Directly message a player.
      * @param from Message sender. If empty, the message is from the Server.
      * @param to Message receiver. If empty, the message is for the Server.
      * @param msg Message content. setColor() and setItalic() will be run on it.
-     * @return if message was successfully sent to both parties.
      */
-    // TODO: Implement all message functions
-    public boolean sendP2pMessage(CommandSender from, CommandSender to, BaseComponent msg) {
-        if (from == null || to == null)
-            return false;
-
+    public void sendP2pMessage(CommandSender from, CommandSender to, BaseComponent msg) {
         msg.setColor(ArcaneColor.CONTENT);
         msg.setItalic(true);
 
@@ -106,23 +87,146 @@ public class MessengerModule {
         else
             to.sendMessage(sendTo);
 
-        return true;
     }
 
-    public void sendToMinecraft(Message m) {
+    public void staffChat(CommandSender sender, String msg) {
+        if (!sender.hasPermission(BungeeCommandUsage.STAFFCHAT.getPermission())) {
+            return;
+        }
+
+        BaseComponent send = new TextComponent("Staff // ");
+        send.setColor(ArcaneColor.HEADING);
+
+        BaseComponent name = ArcaneText.playerComponentBungee(sender);
+        name.setColor(ArcaneColor.FOCUS);
+        name.addExtra(": ");
+
+        send.addExtra(name);
+        send.addExtra(ArcaneText.url(ChatColor.translateAlternateColorCodes('&', msg)));
+
+        ProxyServer.getInstance().getConsole().sendMessage(send);
+        for (ProxiedPlayer recipient : ProxyServer.getInstance().getPlayers()) {
+            if (recipient.hasPermission(BungeeCommandUsage.STAFFCHAT.getPermission())) {
+                recipient.sendMessage(ChatMessageType.SYSTEM, send);
+            }
+        }
 
     }
 
     public void chatToDiscord(String name, UUID uuid, String msg) {
-        getDB().chatToDiscord(escapeNames(name), uuid, msg);
+        getDB().chatToDiscord(escapeNames(name), uuid, escapeFormatters(msg));
     }
 
     public void sendMetaToDiscord(String msg) {
         getDB().metaToDiscord(msg);
     }
 
-    public void chatToMinecraft(String name, Message m) {
-        getDB().chatToMinecraft(name, m);
+    public void chatToMinecraft(String mcName, Message msg) {
+        long id = msg.getAuthor().getIdLong();
+        Member member = msg.getMember();
+        String userTag = msg.isWebhookMessage() ? null : getDUModule().getUserTag(id);
+        String name = member.getEffectiveName();
+        StringBuilder m = new StringBuilder(escapeEmojis(msg.getContentDisplay()));
+
+        // If it contains an embed
+        List<MessageEmbed> embeds = msg.getEmbeds();
+        if (!embeds.isEmpty()) {
+            for (MessageEmbed e : embeds) {
+                // Skip if embed was called in response to a message containing an URL.
+                if (e.getUrl() != null)
+                    continue;
+
+                MessageEmbed.AuthorInfo author = e.getAuthor();
+                String title = e.getTitle();
+                //MessageEmbed.Provider provider = e.getSiteProvider();
+                String description = e.getDescription();
+
+                List<MessageEmbed.Field> fields = e.getFields();
+
+                MessageEmbed.ImageInfo image = e.getImage();
+                MessageEmbed.VideoInfo videoInfo = e.getVideoInfo();
+
+                MessageEmbed.Footer footer = e.getFooter();
+
+                Color color = e.getColor();
+
+                int r = color.getRed();
+                int g = color.getGreen();
+                int b = color.getBlue();
+                int cc = 0;
+
+                if (r >= 0x55 && g >= 0x55 && b >= 0x55) {
+                    cc += 1 << 3;
+                    if (r >= 0xAA)
+                        cc += 1 << 2;
+                    if (g >= 0xAA)
+                        cc += 1 << 1;
+                    if (b >= 0xAA)
+                        cc += 1;
+                } else {
+                    if (r >= 0x55)
+                        cc += 1 << 2;
+                    if (g >= 0x55)
+                        cc += 1 << 1;
+                    if (b >= 0x55)
+                        cc += 1;
+                }
+
+                String c = "\n" + ChatColor.getByChar(Integer.toHexString(cc).charAt(0)) + ChatColor.BOLD + "| ";
+
+
+                m.append(c);
+
+                if (author != null)
+                    m.append(c).append(ChatColor.WHITE).append(author.getName());
+                if (title != null)
+                    m.append(c).append(ChatColor.WHITE).append(title);
+                if (description != null)
+                    m.append(c).append(ChatColor.GRAY).append(description);
+
+                for (MessageEmbed.Field f : fields) {
+                    if (f.getName() != null)
+                        m.append(c).append(ChatColor.WHITE).append(f.getName());
+                    if (f.getValue() != null)
+                        m.append(c).append(ChatColor.GRAY).append(f.getValue());
+                }
+
+                if (image != null) {
+                    m.append(c).append(ChatColor.GRAY).append(ChatColor.ITALIC).append("Image:")
+                            .append(ChatColor.BLUE).append(' ').append(image.getUrl());
+                }
+                if (videoInfo != null) {
+                    m.append(c).append(ChatColor.GRAY).append(ChatColor.ITALIC).append("Video:")
+                            .append(ChatColor.BLUE).append(' ').append(videoInfo.getUrl());
+                }
+                if (footer != null) {
+                    m.append(c).append(ChatColor.GRAY).append(footer.getText());
+                }
+
+                m.append(c);
+
+            }
+        }
+
+        // Show link to attachments in-game
+        List<Message.Attachment> attachments = msg.getAttachments();
+        if (!attachments.isEmpty()) {
+            for (Message.Attachment a : attachments) {
+                if (m.length() == 0)
+                    m.append(a.getUrl());
+                else
+                    m.append(" ").append(a.getUrl());
+            }
+        }
+
+        ArcaneBungee.getInstance().getPluginMessenger().chat("Discord", name, mcName, userTag, m.toString(), ChatColor.DARK_GREEN + "[Web]");
+        TextComponent log = new TextComponent("Discord: ");
+        BaseComponent tag = new TextComponent("[Web]");
+        tag.setColor(ChatColor.DARK_GREEN);
+        log.addExtra(tag);
+
+        log.addExtra(" <" + (mcName == null ? name : mcName) + "> " + m.toString());
+        ProxyServer.getInstance().getConsole().sendMessage(log);
     }
 
     private String escapeNames(String name) {
@@ -142,7 +246,11 @@ public class MessengerModule {
         return name;
     }
 
-    private String escapeText(String text) {
+    private String escapeFormatters(String text) {
         return text.replaceAll("([\\\\*_~])", "\\\\$1");
+    }
+
+    private String escapeEmojis(String text) {
+        return EmojiParser.parseToAliases(text);
     }
 }

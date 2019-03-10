@@ -135,7 +135,6 @@ public class FindPlayerCommand extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        // TODO: Find how long this command takes to run.
         if (args.length == 1)
             return TabCompletePreset.allPlayers(args);
         return Collections.emptyList();

@@ -130,7 +130,7 @@ public class PluginMessenger implements Listener {
     /**
      * Transferred over from ArcaneServer's PluginMessenger.chat() method
      */
-    void chat(String origin, String name, String displayName, String uuid, String msg, String tag) {
+    public void chat(String origin, String name, String displayName, String uuid, String msg, String tag) {
         String channel = "Chat";
 
         ByteArrayOutputStream byteos = new ByteArrayOutputStream();
@@ -165,7 +165,7 @@ public class PluginMessenger implements Listener {
         coreprotect(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
     }
 
-    public void coreprotect(String name, String displayName, String uuid, String msg) {
+    private void coreprotect(String name, String displayName, String uuid, String msg) {
         ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
             try (Socket client = new Socket(ip, port)) {
                 DataOutputStream dos = new DataOutputStream(client.getOutputStream());

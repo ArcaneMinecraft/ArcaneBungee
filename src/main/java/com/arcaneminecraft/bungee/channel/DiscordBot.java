@@ -36,6 +36,7 @@ public class DiscordBot {
     private final WebhookClient webhookClient;
     private final TextChannel mcChatChannel;
     private final Role playerRole;
+    private final DiscordListener listener;
 
     public DiscordBot(ArcaneBungee plugin) throws LoginException, InterruptedException {
         DiscordBot.instance = this;
@@ -48,7 +49,9 @@ public class DiscordBot {
         this.mcChatChannel = this.guild.getTextChannelById(plugin.getConfig().getLong("discord.mc-chat.channel-id"));
         this.playerRole = this.guild.getRoleById(plugin.getConfig().getLong("discord.player-role-id"));
         this.webhookClient = new WebhookClientBuilder(plugin.getConfig().getString("discord.mc-chat.webhook-url")).build();
-        this.jda.addEventListener(new DiscordListener(this, webhookClient, mcChatChannel));
+
+        this.listener = new DiscordListener(this, webhookClient, mcChatChannel);
+        this.jda.addEventListener(getListener());
 
         mcChatChannel.sendMessage(":ok_hand: *Server is now online*").complete();
     }
@@ -340,5 +343,25 @@ public class DiscordBot {
 
     private String escapeText(String text) {
         return text.replaceAll("([\\\\*_~])", "\\\\$1");
+    }
+
+    public Member getMember(String userTag) {
+        String[] parts = userTag.split("#");
+        if (parts.length != 2)
+            return null;
+
+        for (Member m : guild.getMembersByName(parts[0], true)) {
+            if (m.getUser().getDiscriminator().equals(parts[1]))
+                return m;
+        }
+        return null;
+    }
+
+    public Member getMember(long id) {
+        return guild.getMemberById(id);
+    }
+
+    public DiscordListener getListener() {
+        return listener;
     }
 }

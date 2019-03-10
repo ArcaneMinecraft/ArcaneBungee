@@ -3,6 +3,7 @@ package com.arcaneminecraft.bungee.channel;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.SpyAlert;
 import com.arcaneminecraft.bungee.module.MessengerModule;
+import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.ChatColor;
@@ -28,6 +29,7 @@ public class PluginMessenger implements Listener {
     private final int port;
 
     private final MessengerModule module = ArcaneBungee.getInstance().getMessengerModule();
+    private MinecraftPlayerModule mpModule = ArcaneBungee.getInstance().getMinecraftPlayerModule();
 
     public PluginMessenger(ArcaneBungee plugin, SpyAlert spy) {
         this.plugin = plugin;
@@ -89,11 +91,11 @@ public class PluginMessenger implements Listener {
                         String uuid = is.readUTF();
                         boolean isAFK = is.readBoolean();
 
-                        ProxiedPlayer p = plugin.getProxy().getPlayer(UUID.fromString(uuid));
+                        ProxiedPlayer p = ProxyServer.getInstance().getPlayer(UUID.fromString(uuid));
                         if (isAFK)
-                            plugin.getAfkList().add(p);
+                            mpModule.setAFK(p);
                         else
-                            plugin.getAfkList().remove(p);
+                            mpModule.unsetAFK(p);
                     }
                     return;
                 }

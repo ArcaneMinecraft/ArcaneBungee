@@ -7,10 +7,7 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -19,6 +16,7 @@ public class MinecraftPlayerModule {
     private final HashMap<UUID, Player> onlinePlayerCache = new HashMap<>();
     private final HashMap<String, UUID> allNameToUuid = new HashMap<>();
     private final HashMap<UUID, String> allUuidToName = new HashMap<>();
+    private final ArrayList<ProxiedPlayer> afkList = new ArrayList<>();
 
     private DiscordUserModule getDUModule() {
         return ArcaneBungee.getInstance().getDiscordUserModule();
@@ -87,6 +85,18 @@ public class MinecraftPlayerModule {
     public void onLeave(ProxiedPlayer p) {
         Player player = onlinePlayerCache.remove(p.getUniqueId());
         SQLDatabase.getInstance().updatePlayer(player);
+    }
+
+    public void setAFK(ProxiedPlayer p) {
+        afkList.add(p);
+    }
+
+    public void unsetAFK(ProxiedPlayer p) {
+        afkList.remove(p);
+    }
+
+    public List<ProxiedPlayer> getAFKList() {
+        return afkList;
     }
 
     private CompletableFuture<?> get(UUID uuid, Supplier<?> online, Function<UUID, CompletableFuture<?>> offline) {

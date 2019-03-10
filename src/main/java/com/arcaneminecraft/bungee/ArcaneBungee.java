@@ -19,7 +19,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 public class ArcaneBungee extends Plugin {
@@ -44,9 +44,6 @@ public class ArcaneBungee extends Plugin {
 
     private static final String CONFIG_FILENAME = "cachedata.yml";
 
-    // TODO: Move this to Player module
-    private ArrayList<ProxiedPlayer> afkPlayers;
-
     private static ArcaneBungee instance;
 
     public static ArcaneBungee getInstance() {
@@ -58,7 +55,6 @@ public class ArcaneBungee extends Plugin {
         ArcaneBungee.instance = this;
         this.configFile = new File(getDataFolder(), "config.yml");
         this.cacheDataFile = new File(getDataFolder(), CONFIG_FILENAME);
-        this.afkPlayers = new ArrayList<>();
 
         saveDefaultConfigs();
 
@@ -160,8 +156,9 @@ public class ArcaneBungee extends Plugin {
         }
     }
 
-    public ArrayList<ProxiedPlayer> getAfkList() {
-        return afkPlayers;
+    @Deprecated
+    public List<ProxiedPlayer> getAfkList() {
+        return minecraftPlayerModule.getAFKList();
     }
 
     @Deprecated

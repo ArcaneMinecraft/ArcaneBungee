@@ -2,6 +2,7 @@ package com.arcaneminecraft.bungee.module;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.channel.DiscordBot;
+import net.dv8tion.jda.core.entities.Member;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -19,8 +20,8 @@ public class DiscordUserModule {
     private HashMap<Long, UUID> discordToMinecraft = new HashMap<>();
     private HashMap<UUID, Long> minecraftToDiscord = new HashMap<>();
 
-    private HashMap<Integer, UUID> mcToken = new HashMap<>();
-    private HashMap<Integer, Long> dcToken = new HashMap<>();
+    private HashMap<UUID, Integer> mcToken = new HashMap<>();
+    private HashMap<Long, Integer> dcToken = new HashMap<>();
 
     private MinecraftPlayerModule getMPModule() {
         return ArcaneBungee.getInstance().getMinecraftPlayerModule();
@@ -61,7 +62,7 @@ public class DiscordUserModule {
         if (minecraftToDiscord.containsKey(uuid))
             return -1;
         int token = generateToken();
-        mcToken.put(token, uuid);
+        mcToken.put(uuid, token);
         return token;
     }
 
@@ -69,24 +70,31 @@ public class DiscordUserModule {
         if (discordToMinecraft.containsKey(id))
             return -1;
         int token = generateToken();
-        dcToken.put(token, id);
+        dcToken.put(id, token);
         return token;
     }
 
-    public boolean confirmLink(UUID uuid, long checkId, int token) {
-        Long id = dcToken.remove(token);
-        if (id == null || id != checkId)
+    public boolean confirmLink(UUID uuid, long id, int token) {
+        if (uuid == null || id == 0)
+            return false;
+        Integer check = dcToken.remove(id);
+        if (check == null || check != token)
             return false;
 
+        mcToken.remove(uuid);
         put(uuid, id);
         return true;
     }
 
-    public boolean confirmLink(long id, UUID checkUUID, int token) {
-        UUID uuid = mcToken.remove(token);
-        if (uuid == null || uuid != checkUUID)
+    public boolean confirmLink(long id, UUID uuid, int token) {
+        if (uuid == null || id == 0)
             return false;
 
+        Integer check = mcToken.remove(uuid);
+        if (check == null || check != token)
+            return false;
+
+        dcToken.remove(id);
         put(uuid, id);
         return true;
     }
@@ -118,5 +126,13 @@ public class DiscordUserModule {
         if (mcToken.containsKey(token) || dcToken.containsKey(token))
             return generateToken();
         return token;
+    }
+
+    public Member getMember(String userTag) {
+        return getDB().getMember(userTag);
+    }
+
+    public Member getMember(long id) {
+        return getDB().getMember(id);
     }
 }

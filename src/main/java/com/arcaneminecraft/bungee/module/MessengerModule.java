@@ -121,8 +121,7 @@ public class MessengerModule {
         getDB().metaToDiscord(msg);
     }
 
-    public void chatToMinecraft(Message m) {
-        String name = getMPModule().getDisplayName(getDUModule().getMinecraftUuid(m.getAuthor().getIdLong()));
+    public void chatToMinecraft(String name, Message m) {
         getDB().chatToMinecraft(name, m);
     }
 

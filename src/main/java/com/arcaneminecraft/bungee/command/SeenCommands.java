@@ -170,7 +170,7 @@ public class SeenCommands {
             }
 
             // Compile
-            module.getLastSeen(uuid).thenAcceptAsync(time -> {
+            module.getFirstSeen(uuid).thenAcceptAsync(time -> {
                 BaseComponent dateAgo = ArcaneText.timeText(time, locale, timeZone, ArcaneColor.FOCUS);
                 BaseComponent send;
 

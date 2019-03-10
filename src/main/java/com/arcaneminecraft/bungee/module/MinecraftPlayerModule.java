@@ -22,6 +22,10 @@ public class MinecraftPlayerModule {
         return ArcaneBungee.getInstance().getDiscordUserModule();
     }
 
+    private SQLDatabase getSQLDatabase() {
+        return SQLDatabase.getInstance();
+    }
+
     public void put(UUID uuid, String name) {
         String oldName = allUuidToName.put(uuid, name);
         if (oldName != null)
@@ -67,7 +71,7 @@ public class MinecraftPlayerModule {
     public CompletableFuture<Player> onJoin(ProxiedPlayer p) {
         CompletableFuture<Player> future = new CompletableFuture<>();
 
-        SQLDatabase.getInstance().playerJoin(p).thenAccept(player -> {
+        getSQLDatabase().playerJoin(p).thenAccept(player -> {
             if (player == null) {
                 future.complete(null);
                 return;
@@ -84,7 +88,7 @@ public class MinecraftPlayerModule {
 
     public void onLeave(ProxiedPlayer p) {
         Player player = onlinePlayerCache.remove(p.getUniqueId());
-        SQLDatabase.getInstance().updatePlayer(player);
+        getSQLDatabase().updatePlayer(player);
     }
 
     public void setAFK(ProxiedPlayer p) {
@@ -99,31 +103,22 @@ public class MinecraftPlayerModule {
         return afkList;
     }
 
-    private CompletableFuture<?> get(UUID uuid, Supplier<?> online, Function<UUID, CompletableFuture<?>> offline) {
+    public CompletableFuture<Timestamp> getFirstSeen(UUID uuid) {
         Player data = getPlayerData(uuid);
         if (data != null) {
-            return CompletableFuture.completedFuture(online);
+            return CompletableFuture.completedFuture(getPlayerData(uuid).getFirstSeen());
         }
 
-        return offline.apply(uuid);
+        return getSQLDatabase().getFirstSeen(uuid);
     }
 
-    @SuppressWarnings("unchecked")
-    public CompletableFuture<Timestamp> getFirstSeen(UUID uuid) {
-        return (CompletableFuture<Timestamp>) get(
-                uuid,
-                getPlayerData(uuid)::getFirstSeen,
-                SQLDatabase.getInstance()::getFirstSeen
-        );
-    }
-
-    @SuppressWarnings("unchecked")
     public CompletableFuture<Timestamp> getLastSeen(UUID uuid) {
-        return (CompletableFuture<Timestamp>) get(
-                uuid,
-                getPlayerData(uuid)::getLastLeft,
-                SQLDatabase.getInstance()::getLastSeen
-        );
+        Player data = getPlayerData(uuid);
+        if (data != null) {
+            return CompletableFuture.completedFuture(getPlayerData(uuid).getLastLeft());
+        }
+
+        return getSQLDatabase().getLastSeen(uuid);
     }
 
     public void setTimeZone(UUID uuid, TimeZone timeZone) {
@@ -136,13 +131,13 @@ public class MinecraftPlayerModule {
         SQLDatabase.getInstance().setTimeZone(uuid, timeZone);
     }
 
-    @SuppressWarnings("unchecked")
     public CompletableFuture<TimeZone> getTimeZone(UUID uuid) {
-        return (CompletableFuture<TimeZone>) get(
-                uuid,
-                getPlayerData(uuid)::getTimezone,
-                SQLDatabase.getInstance()::getTimeZone
-        );
+        Player data = getPlayerData(uuid);
+        if (data != null) {
+            return CompletableFuture.completedFuture(getPlayerData(uuid).getTimezone());
+        }
+
+        return getSQLDatabase().getTimeZone(uuid);
     }
 
     public void setDiscord(UUID uuid, long id) {
@@ -156,13 +151,13 @@ public class MinecraftPlayerModule {
         SQLDatabase.getInstance().setDiscord(uuid, id);
     }
 
-    @SuppressWarnings("unchecked")
     public CompletableFuture<Long> getDiscord(UUID uuid) {
-        return (CompletableFuture<Long>) get(
-                uuid,
-                getPlayerData(uuid)::getDiscord,
-                SQLDatabase.getInstance()::getDiscord
-        );
+        Player data = getPlayerData(uuid);
+        if (data != null) {
+            return CompletableFuture.completedFuture(getPlayerData(uuid).getDiscord());
+        }
+
+        return getSQLDatabase().getDiscord(uuid);
     }
 
     public void setOptions(UUID uuid, int options) {
@@ -175,12 +170,12 @@ public class MinecraftPlayerModule {
         SQLDatabase.getInstance().setOption(uuid, options);
     }
 
-    @SuppressWarnings("unchecked")
     public CompletableFuture<Integer> getOptions(UUID uuid) {
-        return (CompletableFuture<Integer>) get(
-                uuid,
-                getPlayerData(uuid)::getOptions,
-                SQLDatabase.getInstance()::getOptions
-        );
+        Player data = getPlayerData(uuid);
+        if (data != null) {
+            return CompletableFuture.completedFuture(getPlayerData(uuid).getOptions());
+        }
+
+        return SQLDatabase.getInstance().getOptions(uuid);
     }
 }

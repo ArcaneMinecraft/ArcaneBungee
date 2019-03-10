@@ -12,6 +12,7 @@ import com.arcaneminecraft.bungee.module.data.Option;
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -180,7 +181,11 @@ public class OptionCommand extends Command implements TabExecutor {
     private Function<UUID, String> getTimeZone(Function<UUID, CompletableFuture<TimeZone>> getter) {
         return (uuid) -> {
             try {
-                return getter.apply(uuid).get().getID();
+                TimeZone tz = getter.apply(uuid).get();
+                if (tz != null)
+                    return tz.getID();
+                else
+                    return "(none)";
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
                 return "AN INTERNAL ERROR OCCURRED"; // hmm...
@@ -245,12 +250,12 @@ public class OptionCommand extends Command implements TabExecutor {
     }
 
     private void getOption(ProxiedPlayer p, String opt) {
-        Option o = options.get(opt);
+        Option o = options.get(opt.toLowerCase());
         BaseComponent send;
         if (o == null) {
             send = ArcaneText.translatable(p.getLocale(), "commands.option.invalid", opt);
             send.setColor(ArcaneColor.NEGATIVE);
-        } else if (o.hasPermission(p.getUniqueId())) {
+        } else if (!o.hasPermission(p.getUniqueId())) {
             send = ArcaneText.translatable(p.getLocale(), "commands.option.noPermission", o.getName());
             send.setColor(ArcaneColor.NEGATIVE);
         } else {

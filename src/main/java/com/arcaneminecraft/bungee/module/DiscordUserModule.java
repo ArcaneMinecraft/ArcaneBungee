@@ -89,7 +89,6 @@ public class DiscordUserModule {
     public boolean confirmLink(long id, UUID uuid, int token) {
         if (uuid == null || id == 0)
             return false;
-
         Integer check = mcToken.remove(uuid);
         if (check == null || check != token)
             return false;

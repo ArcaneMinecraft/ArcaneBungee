@@ -53,7 +53,7 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
                         return;
                     } else {
                         String commandString = getDiscordPrefix() + "link " + sender.getName() + " " + token;
-                        TextComponent command = new TextComponent();
+                        TextComponent command = new TextComponent(commandString);
                         command.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, commandString));
                         command.setColor(ArcaneColor.FOCUS);
 
@@ -65,11 +65,17 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
                     }
                 }
 
-                String name = args[1];
+                StringBuilder nameBuilder = new StringBuilder();
+                for (int i = 1; i < args.length - 1; i++) {
+                    if (i != 1)
+                        nameBuilder.append(' ');
+                    nameBuilder.append(args[i]);
+                }
+                String name = nameBuilder.toString();
                 boolean success;
                 Member m = module.getMember(name);
                 try {
-                    int token = Integer.parseInt(args[2]);
+                    int token = Integer.parseInt(args[args.length - 1]);
                     success = module.confirmLink(p.getUniqueId(), m.getUser().getIdLong(), token);
                 } catch (NumberFormatException e) {
                     BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.discord.link.nan");
@@ -164,7 +170,7 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
 
         if (args.length < 3) {
             // Get a link token
-            int token = module.linkToken(m.getIdLong());
+            int token = module.linkToken(m.getAuthor().getIdLong());
             if (token == -1) {
                 m.getChannel().sendMessage(
                         ":raised_hand: You're already linked to a Minecraft account named '"

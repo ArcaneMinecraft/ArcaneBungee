@@ -74,7 +74,9 @@ public class DiscordBot {
 
     public String getUserTag(long id) {
         User u = jda.getUserById(id);
-        return u.getName() + "#" + u.getDiscriminator();
+        if (u == null)
+            return null;
+        return "@" + u.getName() + "#" + u.getDiscriminator();
     }
 
     public void chatToDiscord(String user, UUID uuid, String msg) {
@@ -112,7 +114,8 @@ public class DiscordBot {
         if (parts.length != 2)
             return null;
 
-        for (Member m : guild.getMembersByName(parts[0], true)) {
+        String name = parts[0].startsWith("@") ? parts[0].substring(1) : parts[0];
+        for (Member m : guild.getMembersByName(name, true)) {
             if (m.getUser().getDiscriminator().equals(parts[1]))
                 return m;
         }

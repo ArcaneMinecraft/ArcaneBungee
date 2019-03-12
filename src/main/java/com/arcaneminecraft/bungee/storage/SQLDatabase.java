@@ -95,6 +95,7 @@ public class SQLDatabase {
                         long d = rs.getLong("discord");
 
                         mcModule.put(u, n);
+                        if (d != 0)
                         dcModule.put(u, d);
                     }
                 }

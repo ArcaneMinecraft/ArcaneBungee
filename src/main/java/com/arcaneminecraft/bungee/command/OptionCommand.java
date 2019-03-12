@@ -210,17 +210,17 @@ public class OptionCommand extends Command implements TabExecutor {
         BaseComponent list = new TextComponent();
         UUID uuid = p.getUniqueId();
 
-        ArrayList<Map.Entry<String, Option>> ordered = new ArrayList<>(options.entrySet());
-        ordered.sort(Comparator.comparing(Map.Entry::getKey));
+        ArrayList<Option> ordered = new ArrayList<>(options.values());
+        ordered.sort(Comparator.comparing(Option::getName));
 
-        for (Map.Entry<String, Option> o : ordered) {
-            if (o.getValue().hasPermission(uuid)) {
+        for (Option o : ordered) {
+            if (o.hasPermission(uuid)) {
                 if (ordered.indexOf(o) != 0)
                     list.addExtra(", ");
 
-                BaseComponent bp = new TextComponent(o.getKey());
-                bp.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/option " + o.getKey() + " "));
-                switch (o.getValue().get(uuid)) {
+                BaseComponent bp = new TextComponent(o.getName());
+                bp.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/option " + o.getName() + " "));
+                switch (o.get(uuid)) {
                     case "true":
                         bp.setColor(ArcaneColor.POSITIVE);
                         break;
@@ -261,7 +261,7 @@ public class OptionCommand extends Command implements TabExecutor {
             send.setColor(ArcaneColor.NEGATIVE);
         } else {
             sendDescription(p, o.getDescription());
-            send = ArcaneText.translatable(p.getLocale(), "commands.option.set", o.getName(), colorizeChoice(o.get(p.getUniqueId())));
+            send = ArcaneText.translatable(p.getLocale(), "commands.option.set", o.getName(), colorizeChoice(value));
             send.setColor(ArcaneColor.CONTENT);
         }
         p.sendMessage(ChatMessageType.SYSTEM, send);
@@ -288,9 +288,11 @@ public class OptionCommand extends Command implements TabExecutor {
         BaseComponent ret = new TextComponent(text);
         switch (text) {
             case "true":
+            case "on":
                 ret.setColor(ArcaneColor.POSITIVE);
                 break;
             case "false":
+            case "off":
                 ret.setColor(ArcaneColor.NEGATIVE);
                 break;
             default:

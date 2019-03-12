@@ -5,39 +5,47 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import java.sql.Timestamp;
 import java.util.TimeZone;
 
-public class Player {
+public class ArcanePlayer {
     private final ProxiedPlayer player;
+    private final int id;
     private final String oldName;
     private final Timestamp firstseen;
     private final Timestamp lastleft;
     private TimeZone timezone;
     private long discord;
+    private String reddit;
     private int options;
 
-    public Player(ProxiedPlayer p, String oldName, Timestamp firstseen, Timestamp lastleft, TimeZone timezone, long discord, int options) {
+    public ArcanePlayer(ProxiedPlayer p, int id, String oldName, Timestamp firstseen, Timestamp lastleft, TimeZone timezone, long discord, String reddit, int options) {
         this.player = p;
+        this.id = id;
         this.oldName = oldName;
         this.firstseen = firstseen;
         this.timezone = timezone;
         this.lastleft = lastleft;
         this.discord = discord;
+        this.reddit = reddit;
         this.options = options;
-/*
-*/
     }
 
-    public Player(ProxiedPlayer p) {
+    public ArcanePlayer(ProxiedPlayer p, int id) {
         this.player = p;
-        this.oldName = null;
+        this.id = id;
+        this.oldName = "";
         this.firstseen = new Timestamp(System.currentTimeMillis());
         this.lastleft = null;
         this.timezone = null;
         this.discord = 0;
+        this.reddit = null;
         this.options = 0;
     }
 
     public ProxiedPlayer getProxiedPlayer() {
-        return player;
+        return this.player;
+    }
+
+    public int getId() {
+        return this.id;
     }
 
     public String getOldName() {
@@ -45,11 +53,11 @@ public class Player {
     }
 
     public Timestamp getFirstSeen() {
-        return firstseen;
+        return this.firstseen;
     }
 
     public Timestamp getLastLeft() {
-        return lastleft;
+        return this.lastleft;
     }
 
     public TimeZone getTimezone() {
@@ -61,11 +69,19 @@ public class Player {
     }
 
     public long getDiscord() {
-        return discord;
+        return this.discord;
     }
 
     public void setDiscord(long discord) {
         this.discord = discord;
+    }
+
+    public String getReddit() {
+        return this.reddit;
+    }
+
+    public void setReddit(String reddit) {
+        this.reddit = reddit;
     }
 
     public int getOptions() {

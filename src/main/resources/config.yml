@@ -42,3 +42,27 @@ arcanelog:
 spy:
   # Seconds to wait before broadcasting since last mined block
   xray-wait-duration: 5
+  command:
+    ignore:
+      -a
+      -m
+      -msg
+      -t
+      -tell
+      -w
+      -r
+      -reply
+    suspicious:
+      -op
+      -opme
+      -deop
+      -pl
+      -plugins
+      -fly
+      -v
+      -sv
+      -vanish
+      -supervanish
+      -co
+      -core
+      -coreprotect

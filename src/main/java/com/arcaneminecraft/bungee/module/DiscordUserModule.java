@@ -104,7 +104,7 @@ public class DiscordUserModule {
             return 0;
 
         getDB().userUnlink(id);
-        getMPModule().getPlayerData(uuid).setDiscord(0);
+        getMPModule().setDiscord(uuid, 0);
         discordToMinecraft.remove(id);
         return id;
     }
@@ -115,7 +115,7 @@ public class DiscordUserModule {
             return null;
 
         getDB().userUnlink(id);
-        getMPModule().getPlayerData(uuid).setDiscord(0);
+        getMPModule().setDiscord(uuid, 0);
         minecraftToDiscord.remove(uuid);
         return uuid;
     }

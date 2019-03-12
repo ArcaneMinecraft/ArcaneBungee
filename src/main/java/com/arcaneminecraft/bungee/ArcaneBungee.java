@@ -158,7 +158,6 @@ public class ArcaneBungee extends Plugin {
     public void onDisable() {
         config = null;
         chatPrefixModule.saveConfig();
-        spyAlert.saveConfig();
         if (discordBot != null)
             discordBot.disable();
         try {

@@ -7,7 +7,7 @@ import com.arcaneminecraft.bungee.module.MessengerModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.NewsModule;
 import com.arcaneminecraft.bungee.module.SettingModule;
-import com.arcaneminecraft.bungee.module.data.Player;
+import com.arcaneminecraft.bungee.module.data.ArcanePlayer;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.ProxyServer;
@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 public class JoinLeaveEvents implements Listener {
     private final ArcaneBungee plugin;
@@ -170,7 +169,7 @@ public class JoinLeaveEvents implements Listener {
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
         ProxiedPlayer p = e.getPlayer();
-        CompletableFuture<Player> future = plugin.getMinecraftPlayerModule().onJoin(p);
+        CompletableFuture<ArcanePlayer> future = plugin.getMinecraftPlayerModule().onJoin(p);
         connecting.put(p, new Joining(p, future));
     }
 
@@ -202,9 +201,9 @@ public class JoinLeaveEvents implements Listener {
 
     private class Joining implements Runnable {
         private final ProxiedPlayer p;
-        private final CompletableFuture<Player> future;
+        private final CompletableFuture<ArcanePlayer> future;
 
-        Joining(ProxiedPlayer p, CompletableFuture<Player> future) {
+        Joining(ProxiedPlayer p, CompletableFuture<ArcanePlayer> future) {
             this.p = p;
             this.future = future;
         }
@@ -214,9 +213,9 @@ public class JoinLeaveEvents implements Listener {
             connecting.remove(p);
 
             // get player info form database
-            future.thenAccept(player -> {
-                Timestamp lastLeft = player.getLastLeft();
-                String oldName = player.getOldName();
+            future.thenAccept(arcanePlayer -> {
+                Timestamp lastLeft = arcanePlayer.getLastLeft();
+                String oldName = arcanePlayer.getOldName();
                 UUID uuid = p.getUniqueId();
 
                 if (sModule.getNow(SettingModule.Option.SHOW_WELCOME_MESSAGE, uuid)) {
@@ -228,14 +227,13 @@ public class JoinLeaveEvents implements Listener {
                 }
 
                 if (sModule.getNow(SettingModule.Option.SHOW_NEWS_ON_JOIN, uuid)) {
-                    sendNews(p, player.getTimezone());
+                    sendNews(p, arcanePlayer.getTimezone());
                 }
 
                 if (lastLeft != null && sModule.getNow(SettingModule.Option.SHOW_LAST_LOGIN_ON_JOIN, uuid)) {
-                    sendLastLoginMessage(p, lastLeft, player.getTimezone());
+                    sendLastLoginMessage(p, lastLeft, arcanePlayer.getTimezone());
                 }
 
-                // TODO: Why is it not going past somewhere below from here???
                 BaseComponent joined;
                 if (oldName == null) {
                     // Exception'd out
@@ -260,22 +258,15 @@ public class JoinLeaveEvents implements Listener {
                     }
                     joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
                 } else {
-                    Logger log = ArcaneBungee.getInstance().getLogger();
-                    Timestamp first = player.getFirstSeen();
+                    Timestamp first = arcanePlayer.getFirstSeen();
                     int diff = (int) (System.currentTimeMillis() - first.getTime()) / 1000;
                     if (diff < 604800) {
                         // Joined less than 7 days ago
-                        log.info("Declaring msg text");
-                        String s = ArcaneText.translatableString(null, "messages.meta.new");
-                        log.info("String s: " + s);
-                        BaseComponent t = ArcaneText.timeText(first, diff, true, null, null, ArcaneColor.META);
-                        log.info("Time text: " + t.toPlainText());
                         TranslatableComponent newPlayer = new TranslatableComponent(
-                                s,
+                                ArcaneText.translatableString(null, "messages.meta.new"),
                                 ArcaneText.playerComponentBungee(p),
-                                t
+                                ArcaneText.timeText(first, diff, true, null, null, ArcaneColor.META)
                         );
-                        log.info("The translatable says: " + newPlayer.toPlainText());
                         newPlayer.setColor(ArcaneColor.META);
 
                         ProxyServer.getInstance().getConsole().sendMessage(newPlayer);

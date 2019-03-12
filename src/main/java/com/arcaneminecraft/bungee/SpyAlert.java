@@ -2,6 +2,7 @@ package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.module.SettingModule;
+import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -26,42 +27,30 @@ public class SpyAlert implements Listener {
     private static final String ON_ALL_COMMAND_PERMISSION = "arcane.spy.on.command.all";
     public static final String RECEIVE_COMMAND_PERMISSION = "arcane.spy.receive.command";
     public static final String RECEIVE_COMMAND_ALL_PERMISSION = "arcane.spy.receive.command.all";
-    private static final String SUSPICIOUS_COMMAND_NODE = "spy.command.ignore";
+    private static final String SUSPICIOUS_COMMAND_NODE = "spy.command.suspicious";
     private static final String IGNORE_COMMAND_NODE = "spy.command.ignore";
 
     private static SpyAlert instance;
 
     private final int xRayWaitDuration;
     private final SettingModule sModule = ArcaneBungee.getInstance().getSettingModule();
-    private final Map<UUID, XRayCounter> diamondMineMap = new HashMap<>();
+    private final Map<UUID, XRayCounter> diamondMineMap = new LinkedHashMap<>();
     private final Set<UUID> receiveAllCommands = new HashSet<>();
 
-    /**
-     * Commands to ignore for everyone, e.g. /me which broadcasts to everyone
-     */
-    private final HashSet<String> cmdIgnore;
-
-    /**
-     * Suspicious commands to alert at all times
-     */
-    private final HashSet<String> cmdSuspicious;
+    /** Commands to ignore for everyone, e.g. /me which broadcasts to everyone */
+    private final Set<String> cmdIgnore;
+    /** Suspicious commands to alert at all times */
+    private final Set<String> cmdSuspicious;
 
     SpyAlert(ArcaneBungee plugin) {
         SpyAlert.instance = this;
         this.xRayWaitDuration = plugin.getConfig().getInt("spy.xray-wait-duration", 5);
-        this.cmdIgnore = new HashSet<>(plugin.getCacheData().getStringList(IGNORE_COMMAND_NODE));
-        this.cmdSuspicious = new HashSet<>(plugin.getCacheData().getStringList(SUSPICIOUS_COMMAND_NODE));
+        this.cmdIgnore = ImmutableSet.copyOf(plugin.getCacheData().getStringList(IGNORE_COMMAND_NODE));
+        this.cmdSuspicious = ImmutableSet.copyOf(plugin.getCacheData().getStringList(SUSPICIOUS_COMMAND_NODE));
     }
 
     public static SpyAlert getInstance() {
         return instance;
-    }
-
-    void saveConfig() {
-        List<String> ci = new ArrayList<>(cmdIgnore);
-        ArcaneBungee.getInstance().getCacheData().set(IGNORE_COMMAND_NODE, ci);
-        List<String> cs = new ArrayList<>(cmdSuspicious);
-        ArcaneBungee.getInstance().getCacheData().set(SUSPICIOUS_COMMAND_NODE, cs);
     }
 
     public void setAllCommandReceiver(UUID p, boolean put) {
@@ -151,7 +140,7 @@ public class SpyAlert implements Listener {
 
         CommandSender sender = (CommandSender) e.getSender();
         String cmd = e.getMessage().split(" ", 2)[0].substring(1);
-        // Don't notify about empty commands
+        // Don't notify about empty or ignored commands
         if (cmd.isEmpty() || cmdIgnore.contains(cmd))
             return;
 
@@ -173,16 +162,6 @@ public class SpyAlert implements Listener {
                 continue;
 
             UUID uuid = receiver.getUniqueId();
-
-            // Permission Juggle
-            /*
-             * If ignored command, false.
-             * If has receive all permission and toggle is on, true.
-             * If by new player and toggle is on, true.
-             * If suscious, then
-             *      if
-             *      if listening on trusted, false.
-             */
 
 
             if ((receiveAll && receiveAllCommands.contains(uuid)) || (onAllCommands && sModule.getNow(SettingModule.Option.SPY_NEW_PLAYER, uuid))

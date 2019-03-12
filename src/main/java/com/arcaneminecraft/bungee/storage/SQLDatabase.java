@@ -4,7 +4,7 @@ import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.NewsModule;
-import com.arcaneminecraft.bungee.module.data.Player;
+import com.arcaneminecraft.bungee.module.data.ArcanePlayer;
 import com.arcaneminecraft.bungee.storage.sql.ReportDatabase;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -31,17 +31,20 @@ public class SQLDatabase {
 
     private static final String PLAYER_INSERT = "INSERT INTO ab_players(uuid, username) VALUES(?, ?)";
     private static final String PLAYER_SELECT_BY_UUID = "SELECT * FROM ab_players WHERE uuid=? LIMIT 1";
+    private static final String PLAYER_SELECT_LATEST_ID = "SELECT id FROM ab_players ORDER BY id DESC LIMIT 1";
     //private static final String PLAYER_SELECT_BY_USERNAME = "SELECT * FROM ab_players WHERE UPPER(username)=? LIMIT 1";
     private static final String PLAYER_SELECT_ALL_USERNAME_AND_UUID_AND_DISCORD = "SELECT username,uuid,discord FROM ab_players";
     //private static final String PLAYER_SELECT_ALL_UUID_BY_USERNAME = "SELECT uuid FROM ab_players WHERE UPPER(username)=?";
     private static final String PLAYER_SELECT_TIMEZONE_BY_UUID = "SELECT timezone FROM ab_players WHERE uuid=?";
     private static final String PLAYER_SELECT_DISCORD_BY_UUID = "SELECT discord FROM ab_players WHERE uuid=?";
+    private static final String PLAYER_SELECT_REDDIT_BY_UUID = "SELECT reddit FROM ab_players WHERE uuid=?";
     private static final String PLAYER_SELECT_OPTIONS_BY_UUID = "SELECT options FROM ab_players WHERE uuid=?";
     private static final String PLAYER_UPDATE_TIMEZONE_BY_UUID = "UPDATE ab_players SET timezone=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD = "UPDATE ab_players SET lastseen=?,options=?,timezone=?,discord=?  WHERE uuid=?";
     private static final String PLAYER_UPDATE_DISCORD_BY_DISCORD = "UPDATE ab_players SET discord=? WHERE discord=?";
     private static final String PLAYER_UPDATE_DISCORD_BY_UUID = "UPDATE ab_players SET discord=? WHERE uuid=?";
+    private static final String PLAYER_UPDATE_REDDIT_BY_UUID = "UPDATE ab_players SET reddit=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_OPTIONS_BY_UUID = "UPDATE ab_players SET options=? WHERE uuid=?";
 
     //private static final String REPORT_INSERT = "INSERT INTO ab_reports(id, uuid, body) VALUES(?, ?, ?)";
@@ -141,8 +144,8 @@ public class SQLDatabase {
         return future;
     }
 
-    public CompletableFuture<Player> playerJoin(ProxiedPlayer p) {
-        CompletableFuture<Player> future = new CompletableFuture<>();
+    public CompletableFuture<ArcanePlayer> playerJoin(ProxiedPlayer p) {
+        CompletableFuture<ArcanePlayer> future = new CompletableFuture<>();
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
@@ -161,10 +164,14 @@ public class SQLDatabase {
                     try (PreparedStatement ps = c.prepareStatement(PLAYER_INSERT)) {
                         ps.setString(1, p.getUniqueId().toString());
                         ps.setString(2, p.getName());
-                        ps.executeUpdate();
+                        if (ps.executeUpdate() != 0) {
+                            try (PreparedStatement ps2 = c.prepareStatement(PLAYER_SELECT_LATEST_ID)) {
+                                ResultSet rs2 = ps2.executeQuery();
+                                int id = rs2.getInt("id");
+                                future.complete(new ArcanePlayer(p, id));
+                            }
+                        }
                     }
-
-                    future.complete(new Player(p));
                     return;
                 }
 
@@ -182,15 +189,17 @@ public class SQLDatabase {
                         }
                     });
                 }
+                int id = rs.getInt("id");
                 Timestamp firstseen = rs.getTimestamp("firstseen");
                 Timestamp lastseen = rs.getTimestamp("lastseen");
                 String tz = rs.getString("timezone"); // physical server location
                 TimeZone timeZone = tz == null ? null : TimeZone.getTimeZone(tz);
                 long discord = rs.getLong("discord");
+                String reddit = rs.getString("reddit");
                 int options = rs.getInt("options");
 
                 // Query returned data; give username from database
-                future.complete(new Player(p, name, firstseen, lastseen, timeZone, discord, options));
+                future.complete(new ArcanePlayer(p, id, name, firstseen, lastseen, timeZone, discord, reddit, options));
 
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -202,7 +211,7 @@ public class SQLDatabase {
         return future;
     }
 
-    public void updatePlayer(Player p) {
+    public void updatePlayer(ArcanePlayer p) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD)) {
@@ -356,6 +365,44 @@ public class SQLDatabase {
                         future.complete(rs.getLong("discord"));
                     else
                         future.complete(0L);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                future.complete(null);
+            }
+        });
+
+        return future;
+    }
+
+    public void setReddit(UUID uuid, String reddit) {
+        // Remove possibly duplicate Discord
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
+            try (Connection conn = ds.getConnection()) {
+                try (PreparedStatement ps = conn.prepareStatement(PLAYER_UPDATE_REDDIT_BY_UUID)) {
+                    ps.setString(1, reddit);
+                    ps.setString(2, uuid.toString());
+                    ps.executeUpdate();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
+    public CompletableFuture<String> getReddit(UUID uuid) {
+        CompletableFuture<String> future = new CompletableFuture<>();
+
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
+            try (Connection conn = ds.getConnection()) {
+                try (PreparedStatement ps = conn.prepareStatement(PLAYER_SELECT_REDDIT_BY_UUID)) {
+                    ps.setString(1, uuid.toString());
+                    ResultSet rs = ps.executeQuery();
+
+                    if (rs.next())
+                        future.complete(rs.getString("reddit"));
+                    else
+                        future.complete(null);
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();

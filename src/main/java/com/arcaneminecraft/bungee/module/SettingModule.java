@@ -22,7 +22,8 @@ public class SettingModule {
     public enum Option {
         SHOW_WELCOME_MESSAGE        (1, "showWelcomeMessage", true, "arcane.welcome.option"), // e.g. if option is not set (0), show welcome message. If set (1), do the opposite and don't show welcome message
         SHOW_DONOR_WELCOME_MESSAGE  (1 << 1, "showDonorWelcomeMessage", true, "arcane.welcome.donor"),
-        SHOW_LAST_LOGIN_MESSAGE     (1 << 2, "showLastLoginMessage", true, "arcane.welcome.lastlogin.option"),
+        SHOW_LAST_LOGIN_ON_JOIN     (1 << 2, "showLastLoginOnJoin", true, "arcane.welcome.option"),
+        SHOW_NEWS_ON_JOIN           (1 << 2, "showNewsOnJoin", true, "arcane.welcome.option"),
         SET_DISCORD_PUBLIC          (1 << 3, "setDiscordPublic", true),
         SET_REDDIT_PUBLIC           (1 << 4, "setRedditPublic", true),
         RECEIVE_DISCORD_MESSAGE_WHEN_INACTIVE(1 << 5, "receiveInactiveMessageOnDiscord", true),

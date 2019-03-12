@@ -3,14 +3,15 @@ package com.arcaneminecraft.bungee;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.channel.DiscordBot;
+import com.arcaneminecraft.bungee.module.MessengerModule;
+import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.NewsModule;
 import com.arcaneminecraft.bungee.module.SettingModule;
+import com.arcaneminecraft.bungee.module.data.Player;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.TranslatableComponent;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -19,75 +20,158 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
 import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.util.LinkedHashMap;
-import java.util.Random;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 public class JoinLeaveEvents implements Listener {
     private final ArcaneBungee plugin;
-    private final BaseComponent welcomeMessage;
+    private final BaseComponent welcomeHeader;
+    private final BaseComponent welcomeFooter;
     private final SettingModule sModule = ArcaneBungee.getInstance().getSettingModule();
+    private final MinecraftPlayerModule mpModule = ArcaneBungee.getInstance().getMinecraftPlayerModule();
+    private final NewsModule nModule = ArcaneBungee.getInstance().getNewsModule();
+    private MessengerModule mModule = ArcaneBungee.getInstance().getMessengerModule();
 
     private static final String TIMEZONE_LINK = "https://game.arcaneminecraft.com/timezone/";
-    private static final String[] DONOR = {
-        "Updating the plugin; donor welcome messages will return!"
-    };
     private final LinkedHashMap<ProxiedPlayer, Joining> connecting = new LinkedHashMap<>();
 
     JoinLeaveEvents(ArcaneBungee plugin) {
         this.plugin = plugin;
 
         // BEGIN Welcome Message construction
-        BaseComponent temp;
-        TextComponent line = new TextComponent(new String(new char[27]).replace("\0", " "));
+        TextComponent line = new TextComponent("                           ");
         line.setColor(ChatColor.GRAY);
         line.setStrikethrough(true);
-        this.welcomeMessage = new TextComponent("\n");
 
-        // First line
-        this.welcomeMessage.addExtra(line);
-        temp = new TextComponent(" Arcane Survival ");
+        // Header
+        BaseComponent temp = new TextComponent(" " + ArcaneText.translatableString(null, "server.name") + " ");
         temp.setColor(ArcaneColor.HEADING);
+        temp.setStrikethrough(false);
         temp.setBold(true);
-        this.welcomeMessage.addExtra(temp);
 
-        this.welcomeMessage.addExtra(line);
-        this.welcomeMessage.addExtra("\n\n");
+        this.welcomeHeader = new TextComponent("\n");
+        this.welcomeHeader.addExtra(line);
+        this.welcomeHeader.addExtra(temp);
+        this.welcomeHeader.addExtra(line);
 
 
-        // help line
-        this.welcomeMessage.addExtra("            You can type ");
-        temp = new TextComponent("/help");
-        temp.setColor(ArcaneColor.HEADING);
-        temp.setBold(true);
-        temp.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/help"));
-        this.welcomeMessage.addExtra(temp);
-        this.welcomeMessage.addExtra(" for a list of commands.\n");
-
-        // Website
-        this.welcomeMessage.addExtra("        Visit our website at ");
-        temp = ArcaneText.urlSingle("https://arcaneminecraft.com/");
-        temp.setColor(ArcaneColor.HEADING);
-        this.welcomeMessage.addExtra(temp);
-        this.welcomeMessage.addExtra("!\n\n");
-
-        temp = new TextComponent(new String(new char[80]).replace("\0", " "));
-        temp.copyFormatting(line);
-        this.welcomeMessage.addExtra(temp);
-        this.welcomeMessage.addExtra("\n");
+        // Footer
+        BaseComponent temp2 = new TextComponent("/links");
+        temp2.setColor(ChatColor.AQUA);
+        temp2.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/links"));
+        temp = new TextComponent(" Run '");
+        temp.addExtra(temp2);
+        temp.addExtra("' for more info ");
+        temp.setColor(ArcaneColor.FOCUS);
+        line = new TextComponent("                       ");
+        line.setColor(ChatColor.GRAY);
+        line.setStrikethrough(true);
+        this.welcomeFooter = new TextComponent();
+        this.welcomeFooter.addExtra(line);
+        this.welcomeFooter.addExtra(temp);
+        this.welcomeFooter.addExtra(line);
     }
 
-    private static String getRandomDonorMsg() {
-        Random rand = new Random();
-        return DONOR[rand.nextInt(DONOR.length)];
+    private void sendWelcomeMessage(ProxiedPlayer p, boolean newPlayer) {
+        BaseComponent player = ArcaneText.playerComponentBungee(p);
+        player.setColor(ArcaneColor.META);
+        BaseComponent server = ArcaneText.translatable(p.getLocale(), "server.name");
+        server.setColor(ArcaneColor.HEADING);
+
+        BaseComponent title;
+        BaseComponent subtitle;
+        if (newPlayer) {
+            title = ArcaneText.translatable(p.getLocale(), "messages.join.new.title", server, player);
+            BaseComponent apply = new TextComponent("/apply");
+            apply.setColor(ChatColor.DARK_AQUA);
+            apply.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/apply"));
+            subtitle = ArcaneText.translatable(p.getLocale(), "messages.join.new.subtitle", apply);
+        }
+        else {
+            title = ArcaneText.translatableListRandom(p.getLocale(), "messages.join.titles", server, player);
+            subtitle = ArcaneText.translatableListRandom(p.getLocale(), "messages.join.subtitles");
+        }
+        title.setColor(ArcaneColor.FOCUS);
+
+        subtitle.setColor(ArcaneColor.CONTENT);
+
+        BaseComponent send = new TextComponent(" ");
+        send.addExtra(title);
+        send.addExtra(" ");
+        send.addExtra(subtitle);
+
+        p.sendMessage(ChatMessageType.SYSTEM, welcomeHeader);
+        p.sendMessage(ChatMessageType.SYSTEM, send);
+        p.sendMessage(ChatMessageType.SYSTEM, welcomeFooter);
+    }
+
+    private void sendDonorMessage(ProxiedPlayer p) {
+        BaseComponent thanks = ArcaneText.translatableListRandom(p.getLocale(), "messages.join.donor.head");
+        thanks.setColor(ArcaneColor.DONOR);
+
+        BaseComponent rand = ArcaneText.translatableListRandom(p.getLocale(), "messages.join.donor.body");
+        rand.setColor(ArcaneColor.CONTENT);
+
+        BaseComponent send = new TextComponent(" ");
+        send.addExtra(thanks);
+        send.addExtra(" ");
+        send.addExtra(rand);
+        p.sendMessage(ChatMessageType.SYSTEM, send);
+    }
+
+    private void sendNews(ProxiedPlayer p, TimeZone zone) {
+        NewsModule.Entry newsEntry = nModule.getLatest();
+
+        BaseComponent news = ArcaneText.translatableListRandom(p.getLocale(), "messages.join.news");
+        news.setColor(ArcaneColor.HEADING);
+        news.setHoverEvent(new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT,
+                new ComponentBuilder("By ").append(mpModule.getDisplayName(newsEntry.getAuthor()))
+                        .append("\n ").append(ArcaneText.timeText(newsEntry.getTime(), p.getLocale(), zone, ArcaneColor.FOCUS))
+                        .create()
+        ));
+
+        BaseComponent send = new TextComponent();
+        send.addExtra(news);
+        send.addExtra(" ");
+        send.addExtra(newsEntry.getContent());
+        p.sendMessage(ChatMessageType.SYSTEM, send);
+    }
+
+    private void sendLastLoginMessage(ProxiedPlayer p, Timestamp last, TimeZone zone) {
+        BaseComponent time = ArcaneText.timeText(last, p.getLocale(), zone, ArcaneColor.FOCUS);
+        time.setColor(ArcaneColor.FOCUS);
+
+        BaseComponent msg = ArcaneText.translatableListRandom(p.getLocale(), "messages.join.lastlogin");
+        msg.setColor(ArcaneColor.HEADING);
+
+        BaseComponent send = new TextComponent();
+        send.addExtra(msg);
+        send.addExtra(" ");
+        send.addExtra(time);
+
+        if (zone == null) {
+            BaseComponent temp = new TextComponent(" > ");
+            temp.setColor(ChatColor.DARK_GRAY);
+            send.addExtra(temp);
+            temp = ArcaneText.urlSingle(TIMEZONE_LINK);
+            temp.setColor(ChatColor.DARK_AQUA);
+            msg = ArcaneText.translatable(p.getLocale(), "messages.join.tip.timezone", temp);
+            msg.setColor(ArcaneColor.CONTENT);
+            send.addExtra(msg);
+        }
+
+        p.sendMessage(ChatMessageType.SYSTEM, send);
     }
 
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
         ProxiedPlayer p = e.getPlayer();
-        connecting.put(p, new Joining(p));
+        CompletableFuture<Player> future = plugin.getMinecraftPlayerModule().onJoin(p);
+        connecting.put(p, new Joining(p, future));
     }
 
     @EventHandler
@@ -102,7 +186,7 @@ public class JoinLeaveEvents implements Listener {
         plugin.getMinecraftPlayerModule().onLeave(e.getPlayer());
 
         BaseComponent left = new TranslatableComponent("multiplayer.player.left", ArcaneText.playerComponentBungee(e.getPlayer()));
-        left.setColor(ChatColor.YELLOW);
+        left.setColor(ArcaneColor.META);
         for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
             p.sendMessage(ChatMessageType.SYSTEM, left);
         }
@@ -118,109 +202,111 @@ public class JoinLeaveEvents implements Listener {
 
     private class Joining implements Runnable {
         private final ProxiedPlayer p;
+        private final CompletableFuture<Player> future;
 
-        Joining(ProxiedPlayer p) {
+        Joining(ProxiedPlayer p, CompletableFuture<Player> future) {
             this.p = p;
+            this.future = future;
         }
 
         @Override
         public void run() {
+            connecting.remove(p);
+
             // get player info form database
-            plugin.getMinecraftPlayerModule().onJoin(p).thenAccept(player -> {
-                Timestamp time = player.getLastLeft();
+            future.thenAccept(player -> {
+                Timestamp lastLeft = player.getLastLeft();
                 String oldName = player.getOldName();
                 UUID uuid = p.getUniqueId();
 
                 if (sModule.getNow(SettingModule.Option.SHOW_WELCOME_MESSAGE, uuid)) {
-                    p.sendMessage(ChatMessageType.SYSTEM, welcomeMessage);
+                    sendWelcomeMessage(p, !p.hasPermission("arcane.build"));
                 }
 
                 if (p.hasPermission("arcane.welcome.donor") && sModule.getNow(SettingModule.Option.SHOW_DONOR_WELCOME_MESSAGE, uuid)) {
-                    BaseComponent send = new TextComponent(" ");
-                    send.setColor(ArcaneColor.CONTENT);
-                    BaseComponent urad = new TextComponent("You are a donor! ");
-                    urad.setColor(ArcaneColor.DONOR);
-                    send.addExtra(urad);
-
-                    for (BaseComponent bp : TextComponent.fromLegacyText(getRandomDonorMsg()))
-                        send.addExtra(bp);
-
-                    p.sendMessage(ChatMessageType.SYSTEM, send);
+                    sendDonorMessage(p);
                 }
 
-                if (time != null && sModule.getNow(SettingModule.Option.SHOW_LAST_LOGIN_MESSAGE, uuid)) {
-                    // Scheduled because p.getLocale() does not load immediately
-                    TimeZone timezone = player.getTimezone();
+                if (sModule.getNow(SettingModule.Option.SHOW_NEWS_ON_JOIN, uuid)) {
+                    sendNews(p, player.getTimezone());
+                }
 
-                    DateFormat df = p.getLocale() == null
-                            ? DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL)
-                            : DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, p.getLocale());
-                    df.setTimeZone(timezone); // TODO: Test if null timezone works
-                    BaseComponent send = new TextComponent(" Your last login was on ");
-                    send.setColor(ArcaneColor.HEADING);
-                    BaseComponent timeFormat = new TextComponent(df.format(time));
-                    timeFormat.setColor(ArcaneColor.FOCUS);
-                    send.addExtra(timeFormat);
-                    p.sendMessage(ChatMessageType.SYSTEM, send);
+                if (lastLeft != null && sModule.getNow(SettingModule.Option.SHOW_LAST_LOGIN_ON_JOIN, uuid)) {
+                    sendLastLoginMessage(p, lastLeft, player.getTimezone());
+                }
 
-                    if (timezone == null) {
-                        send = new TextComponent(" > Tip: Set to your local timezone! Visit ");
-                        send.addExtra(ArcaneText.urlSingle(TIMEZONE_LINK));
-                        send.addExtra(" for command info");
-                        send.setColor(ArcaneColor.CONTENT);
-                        p.sendMessage(ChatMessageType.SYSTEM, send);
+                // TODO: Why is it not going past somewhere below from here???
+                BaseComponent joined;
+                if (oldName == null) {
+                    // Exception'd out
+                    joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
+                } else if (oldName.equals("")) {
+                    // New player
+                    TranslatableComponent newPlayer = new TranslatableComponent(
+                            ArcaneText.translatableString(null, "messages.meta.first"),
+                            ArcaneText.playerComponentBungee(p),
+                            ArcaneText.translatableString(null, "server.name.short")
+                    );
+                    newPlayer.setColor(ArcaneColor.META);
+
+                    ProxyServer.getInstance().getConsole().sendMessage(newPlayer);
+                    mModule.sendMetaToDiscord(newPlayer.toPlainText());
+                    for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
+                        newPlayer.setTranslate(ArcaneText.translatableString(
+                                pl.getLocale(),
+                                "messages.meta.first"
+                        ));
+                        pl.sendMessage(ChatMessageType.SYSTEM, newPlayer);
+                    }
+                    joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
+                } else {
+                    Logger log = ArcaneBungee.getInstance().getLogger();
+                    Timestamp first = player.getFirstSeen();
+                    int diff = (int) (System.currentTimeMillis() - first.getTime()) / 1000;
+                    if (diff < 604800) {
+                        // Joined less than 7 days ago
+                        log.info("Declaring msg text");
+                        String s = ArcaneText.translatableString(null, "messages.meta.new");
+                        log.info("String s: " + s);
+                        BaseComponent t = ArcaneText.timeText(first, diff, true, null, null, ArcaneColor.META);
+                        log.info("Time text: " + t.toPlainText());
+                        TranslatableComponent newPlayer = new TranslatableComponent(
+                                s,
+                                ArcaneText.playerComponentBungee(p),
+                                t
+                        );
+                        log.info("The translatable says: " + newPlayer.toPlainText());
+                        newPlayer.setColor(ArcaneColor.META);
+
+                        ProxyServer.getInstance().getConsole().sendMessage(newPlayer);
+                        mModule.sendMetaToDiscord(newPlayer.toPlainText());
+                        for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
+                            newPlayer.setTranslate(ArcaneText.translatableString(
+                                    pl.getLocale(),
+                                    "messages.meta.new"
+                            ));
+                            pl.sendMessage(ChatMessageType.SYSTEM, newPlayer);
+                        }
+                    }
+
+                    if (oldName.equals(p.getName())) {
+                        // Player with same old name
+                        joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
+                    } else {
+                        // Player with new name
+                        joined = new TranslatableComponent("multiplayer.player.joined.renamed", ArcaneText.playerComponentBungee(p), oldName);
                     }
                 }
-                sendJoin(oldName);
 
-                BaseComponent latest = new TextComponent(" Latest news");
-                latest.setColor(ArcaneColor.HEADING);
-
-                BaseComponent send = new TextComponent(latest);
-                send.addExtra(": ");
-                send.setColor(ArcaneColor.FOCUS);
-
-                NewsModule.Entry news = plugin.getNewsModule().getLatest();
-
-                // TODO: Maybe update content i guess
-                send.addExtra(news.getContent());
-                send.addExtra("\n");
-                p.sendMessage(ChatMessageType.SYSTEM, send);
-            });
-        }
-
-        private void sendJoin(String oldName) {
-            BaseComponent joined;
-            if (oldName == null) {
-                // Exceptioned out
-                joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
-            } else if (oldName.equals("")) {
-                // New player
-                BaseComponent newPlayer = new TextComponent(ArcaneText.playerComponentBungee(p));
-                newPlayer.addExtra(" has joined " + ArcaneText.getThisNetworkNameShort() + " for the first time!");
-                newPlayer.setColor(ChatColor.YELLOW);
+                joined.setColor(ArcaneColor.META);
 
                 for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
-                    pl.sendMessage(ChatMessageType.SYSTEM, newPlayer);
+                    if (pl.equals(p)) continue;
+                    pl.sendMessage(ChatMessageType.SYSTEM, joined);
                 }
-                joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
-            } else if (oldName.equals(p.getName())) {
-                // Player with same old name
-                joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
-            } else {
-                // Player with new name
-                joined = new TranslatableComponent("multiplayer.player.joined.renamed", ArcaneText.playerComponentBungee(p), oldName);
-            }
 
-            joined.setColor(ChatColor.YELLOW);
-
-            for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
-                if (pl.equals(p)) continue;
-                pl.sendMessage(ChatMessageType.SYSTEM, joined);
-            }
-            DiscordBot.getInstance().joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
-
-            connecting.remove(p);
+                DiscordBot.getInstance().joinLeaveToDiscord(joined.toPlainText(), plugin.getProxy().getOnlineCount());
+            });
         }
 
         private void cancel() {

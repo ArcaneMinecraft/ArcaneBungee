@@ -154,6 +154,7 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
             if (uuid == null) {
                 String send = ":x: Your account was not linked yet.";
                 m.getChannel().sendMessage(send).complete();
+                return true;
             }
 
             unlinkSuccess(id, m.getChannel(), uuid);

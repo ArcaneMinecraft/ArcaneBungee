@@ -49,7 +49,7 @@ public class SQLDatabase {
 
     private static final String NEWS_SELECT_LATEST_TIMESTAMP_AND_UUID_AND_CONTENT = "SELECT timestamp,uuid,content FROM ab_news ORDER BY id DESC LIMIT 1";
     //private static final String NEWS_SELECT_ALL_ID_AND_TIMESTAMP_AND_UUID_AND_CONTENT = "SELECT id,timestamp,uuid,content FROM ab_news";
-    private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, uuid) VALUES(?, ?, ?)";
+    private static final String NEWS_INSERT_NEWS = "INSERT INTO ab_news(content, uuid) VALUES(?, ?)";
 
     private final ArcaneBungee plugin;
     private final MariaDbPoolDataSource ds;
@@ -207,7 +207,7 @@ public class SQLDatabase {
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
                     ps.setInt(2, p.getOptions());
-                    ps.setString(3, p.getTimezone().getID());
+                    ps.setString(3, p.getTimezone() == null ? null : p.getTimezone().getID());
                     ps.setLong(4, p.getDiscord());
                     ps.setString(5, p.getProxiedPlayer().getUniqueId().toString());
                     ps.executeUpdate();

@@ -4,6 +4,7 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public interface TabCompletePreset {
@@ -32,6 +33,8 @@ public interface TabCompletePreset {
         for (String n : choices)
             if (n.toLowerCase().startsWith(argL))
                 ret.add(n);
+
+        ret.sort(Comparator.naturalOrder());
 
         return ret;
     }

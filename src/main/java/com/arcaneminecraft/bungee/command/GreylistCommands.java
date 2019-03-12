@@ -5,6 +5,7 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
+import com.arcaneminecraft.bungee.module.MessengerModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.PermissionsModule;
 import net.md_5.bungee.api.ChatMessageType;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class GreylistCommands {
     private final BaseComponent link;
     private final PermissionsModule module = ArcaneBungee.getInstance().getPermissionsModule();
+    private final MessengerModule mModule = ArcaneBungee.getInstance().getMessengerModule();
     private final MinecraftPlayerModule mpModule = ArcaneBungee.getInstance().getMinecraftPlayerModule();
 
     public GreylistCommands() {
@@ -130,9 +132,9 @@ public class GreylistCommands {
                             name
                     );
                     send.setColor(ArcaneColor.META);
-
                     ProxyServer.getInstance().getConsole().sendMessage(send);
-
+                    mModule.sendMetaToDiscord(send.toPlainText());
+                    
                     for (ProxiedPlayer receiver : ProxyServer.getInstance().getPlayers()) {
                         send.setTranslate(
                                 ArcaneText.translatableString(receiver.getLocale(), "messages.meta.greylist")

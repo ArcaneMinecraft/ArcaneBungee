@@ -4,7 +4,6 @@ package com.arcaneminecraft.bungee.channel.discord;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.DiscordCommandExecutor;
 import com.arcaneminecraft.bungee.channel.DiscordBot;
-import com.arcaneminecraft.bungee.command.DHelpCommand;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MessengerModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;

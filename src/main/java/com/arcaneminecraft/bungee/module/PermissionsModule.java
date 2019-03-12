@@ -20,16 +20,14 @@ public class PermissionsModule {
     private boolean greylist(@Nonnull User user) {
         Track tr = getLpApi().getTrack(track);
         if (tr != null) {
-            return tr.promote(user, ContextSet.empty()).getStatus().wasSuccess();
+            PromotionResult res = tr.promote(user, ContextSet.empty());
+            boolean success = res.wasSuccess();
+            if (success) {
+                user.setPrimaryGroup(group);
+            }
+            return success;
         }
-        Group g = getLpApi().getGroup(group);
-        if (g == null) {
-            return false;
-        }
-        Node node = getLpApi().getNodeFactory().makeGroupNode(g).build();
-        Boolean isSuccess = user.setPermission(node).wasSuccess();
-
-        return true;
+        return false;
     }
 
     public CompletableFuture<UUID> getUUID(String string) {
@@ -37,16 +35,15 @@ public class PermissionsModule {
     }
 
     public CompletableFuture<Boolean> greylist(UUID uuid) {
-        User u = getLpApi().getUser(uuid);
-        if (u != null)
-            return CompletableFuture.completedFuture(greylist(u));
-
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         getLpApi().getUserManager().loadUser(uuid).thenAcceptAsync(user -> {
-            future.complete(greylist(user));
+            boolean success = greylist(user);
+            future.complete(success);
 
-            getLpApi().getUserManager().saveUser(user);
-            getLpApi().getMessagingService().ifPresent(ms -> ms.pushUserUpdate(user));
+            if (success) {
+                getLpApi().getUserManager().saveUser(user);
+                getLpApi().getMessagingService().ifPresent(ms -> ms.pushUserUpdate(user));
+            }
             getLpApi().getUserManager().cleanupUser(user);
         });
         return future;

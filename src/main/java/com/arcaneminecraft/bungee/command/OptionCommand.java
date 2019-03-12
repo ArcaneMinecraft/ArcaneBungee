@@ -111,11 +111,12 @@ public class OptionCommand extends Command implements TabExecutor {
                     ret.add(opt.getValue().getName());
             }
 
+            ret.sort(Comparator.naturalOrder());
             return ret;
         }
 
         if (args.length == 2) {
-            Option o = options.get(args[0]);
+            Option o = options.get(args[0].toLowerCase());
             if (o != null && o.hasPermission(uuid))
                 return TabCompletePreset.argStartsWith(args, o.getChoices());
         }
@@ -184,6 +185,7 @@ public class OptionCommand extends Command implements TabExecutor {
     private BiFunction<UUID, String, Boolean> setTimeZone(BiConsumer<UUID, TimeZone> setter) {
         return (uuid, value) -> {
             TimeZone timeZone = TimeZone.getTimeZone(value);
+            if (timeZone.getID().equals("GMT")) timeZone = null;
             setter.accept(uuid, timeZone);
             return true;
         };
@@ -208,9 +210,14 @@ public class OptionCommand extends Command implements TabExecutor {
         BaseComponent list = new TextComponent();
         UUID uuid = p.getUniqueId();
 
-        for (Map.Entry<String, Option> o : options.entrySet()) {
+        ArrayList<Map.Entry<String, Option>> ordered = new ArrayList<>(options.entrySet());
+        ordered.sort(Comparator.comparing(Map.Entry::getKey));
+
+        for (Map.Entry<String, Option> o : ordered) {
             if (o.getValue().hasPermission(uuid)) {
-                list.addExtra(" ");
+                if (ordered.indexOf(o) != 0)
+                    list.addExtra(", ");
+
                 BaseComponent bp = new TextComponent(o.getKey());
                 bp.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/option " + o.getKey() + " "));
                 switch (o.getValue().get(uuid)) {
@@ -229,7 +236,7 @@ public class OptionCommand extends Command implements TabExecutor {
         }
 
         BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.option.list", list);
-        send.setColor(ArcaneColor.CONTENT);
+        send.setColor(ArcaneColor.HEADING);
 
         p.sendMessage(ChatMessageType.SYSTEM, send);
     }
@@ -240,7 +247,7 @@ public class OptionCommand extends Command implements TabExecutor {
     }
 
     private void setOption(ProxiedPlayer p, String opt, String value) {
-        Option o = options.get(opt);
+        Option o = options.get(opt.toLowerCase());
         BaseComponent send;
         if (o == null) {
             send = ArcaneText.translatable(p.getLocale(), "commands.option.invalid", opt);

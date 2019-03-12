@@ -26,9 +26,6 @@ public class SettingModule {
         SHOW_NEWS_ON_JOIN           (1 << 2, "showNewsOnJoin", true, "arcane.welcome.option"),
         SET_DISCORD_PUBLIC          (1 << 3, "setDiscordPublic", true),
         SET_REDDIT_PUBLIC           (1 << 4, "setRedditPublic", true),
-        RECEIVE_DISCORD_MESSAGE_WHEN_INACTIVE(1 << 5, "receiveInactiveMessageOnDiscord", true, null,
-                "When someone is looking for you (by using, for example, /seen) and you have been inactive for a month, " +
-                        "you'll be notified on Discord only once if you have it linked to this MC account."),
 
         SPY_SIGNS       (1 << 26, "spySigns", false, SpyAlert.RECEIVE_SIGN_PERMISSION),
         SPY_XRAY        (1 << 27, "spyXray", true, SpyAlert.RECEIVE_XRAY_PERMISSION),

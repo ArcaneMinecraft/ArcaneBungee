@@ -259,13 +259,15 @@ public class JoinLeaveEvents implements Listener {
                     joined = new TranslatableComponent("multiplayer.player.joined", ArcaneText.playerComponentBungee(p));
                 } else {
                     Timestamp first = arcanePlayer.getFirstSeen();
-                    int diff = (int) (System.currentTimeMillis() - first.getTime()) / 1000;
+                    long diff = (System.currentTimeMillis() - first.getTime()) / 1000;
                     if (diff < 604800) {
+                        // Recently joined player
                         // Joined less than 7 days ago
                         TranslatableComponent newPlayer = new TranslatableComponent(
                                 ArcaneText.translatableString(null, "messages.meta.new"),
                                 ArcaneText.playerComponentBungee(p),
-                                ArcaneText.timeText(first, diff, true, null, null, ArcaneColor.META)
+                                // The time isn't long enough for the int to overflow
+                                ArcaneText.timeText(first, (int) diff, true, null, null, ArcaneColor.META)
                         );
                         newPlayer.setColor(ArcaneColor.META);
 

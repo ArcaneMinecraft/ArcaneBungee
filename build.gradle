@@ -28,8 +28,12 @@ dependencies {
     extraLibs 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
     compileOnly 'com.vdurmont:emoji-java:4.0.0'
     extraLibs 'com.vdurmont:emoji-java:4.0.0'
-    //implementation 'net.dv8tion:JDA:3.8.0_427'
-    extraLibs files('libs/JDA-3.8.0_423-withDependencies-no-opus.jar')
+    compile ('net.dv8tion:JDA:3.8.3_460') {
+        exclude module: 'opus-java'
+    }
+    extraLibs ('net.dv8tion:JDA:3.8.3_460') {
+        exclude module: 'opus-java'
+    }
 }
 
 jar {

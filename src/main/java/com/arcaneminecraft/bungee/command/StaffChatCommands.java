@@ -4,7 +4,8 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import net.md_5.bungee.api.ChatColor;
+import com.arcaneminecraft.bungee.TabCompletePreset;
+import com.arcaneminecraft.bungee.module.MessengerModule;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -22,12 +23,8 @@ import java.util.Collections;
 import java.util.HashSet;
 
 public class StaffChatCommands implements Listener {
-    private final ArcaneBungee plugin;
     private final HashSet<ProxiedPlayer> toggled = new HashSet<>();
-
-    public StaffChatCommands(ArcaneBungee plugin) {
-        this.plugin = plugin;
-    }
+    private final MessengerModule module = ArcaneBungee.getInstance().getMessengerModule();
 
     public class Chat extends Command implements TabExecutor {
         public Chat() {
@@ -45,12 +42,12 @@ public class StaffChatCommands implements Listener {
                     sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.STAFFCHAT.getUsage()));
                 return;
             }
-            broadcast(sender, String.join(" ", args));
+            module.staffChat(sender, String.join(" ", args));
         }
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return plugin.getTabCompletePreset().onlinePlayers(args);
+            return Collections.emptyList();
         }
     }
 
@@ -71,19 +68,17 @@ public class StaffChatCommands implements Listener {
 
             ProxiedPlayer p = (ProxiedPlayer) sender;
 
-            BaseComponent send = new TextComponent("Staff chat toggle is ");
-            send.setColor(ArcaneColor.CONTENT);
-
+            BaseComponent tog;
             if (toggled.add(p)){
-                BaseComponent on = new TranslatableComponent("options.on");
-                on.setColor(ArcaneColor.POSITIVE);
-                send.addExtra(on);
+                tog = new TranslatableComponent("options.on");
+                tog.setColor(ArcaneColor.POSITIVE);
             } else {
                 toggled.remove(p);
-                BaseComponent off = new TranslatableComponent("options.off");
-                off.setColor(ArcaneColor.NEGATIVE);
-                send.addExtra(off);
+                tog = new TranslatableComponent("options.off");
+                tog.setColor(ArcaneColor.NEGATIVE);
             }
+            BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.staffchat.toggle", tog);
+            send.setColor(ArcaneColor.CONTENT);
 
             p.sendMessage(ChatMessageType.SYSTEM, send);
         }
@@ -95,34 +90,13 @@ public class StaffChatCommands implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void checkToggle(ChatEvent e) {
+    public void staffChatGrabber(ChatEvent e) {
         // if is a command and staff chat is not toggled
-        //noinspection SuspiciousMethodCalls
+        //noinspection SuspiciousMethodCalls - e.getSender() can be a ProxiedPlayer
         if (e.isCommand() || !toggled.contains(e.getSender()))
             return;
 
-        broadcast((ProxiedPlayer) e.getSender(), e.getMessage());
         e.setCancelled(true);
-    }
-
-    private void broadcast(CommandSender sender, String msg) {
-        plugin.logCommand(sender, BungeeCommandUsage.STAFFCHAT.getCommand() + " " + msg);
-
-        BaseComponent send = new TextComponent("Staff // ");
-        send.setColor(ArcaneColor.HEADING);
-
-        BaseComponent name = ArcaneText.playerComponentBungee(sender);
-        name.setColor(ArcaneColor.FOCUS);
-        name.addExtra(": ");
-
-        send.addExtra(name);
-        send.addExtra(ArcaneText.url(ChatColor.translateAlternateColorCodes('&', msg)));
-
-        plugin.getProxy().getConsole().sendMessage(send);
-        for (ProxiedPlayer recipient : plugin.getProxy().getPlayers()) {
-            if (recipient.hasPermission(BungeeCommandUsage.STAFFCHAT.getPermission())) {
-                recipient.sendMessage(ChatMessageType.SYSTEM, send);
-            }
-        }
+        module.staffChat((ProxiedPlayer) e.getSender(), e.getMessage());
     }
 }

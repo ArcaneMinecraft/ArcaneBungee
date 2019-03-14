@@ -1,11 +1,10 @@
 package com.arcaneminecraft.bungee;
 
-import com.arcaneminecraft.bungee.channel.DiscordConnection;
+import com.arcaneminecraft.bungee.channel.DiscordBot;
 import com.arcaneminecraft.bungee.channel.PluginMessenger;
 import com.arcaneminecraft.bungee.command.*;
-import com.arcaneminecraft.bungee.storage.OptionsStorage;
+import com.arcaneminecraft.bungee.module.*;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
-import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -19,7 +18,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 public class ArcaneBungee extends Plugin {
@@ -29,28 +28,52 @@ public class ArcaneBungee extends Plugin {
     private Configuration cacheData = null;
     private SQLDatabase sqlDatabase = null;
     private PluginMessenger pluginMessenger;
-    private TabCompletePreset tabCompletePreset;
-    private BadgeCommands badgeCommands;
     private SpyAlert spyAlert;
-    private DiscordConnection discordConnection;
+    private DiscordBot discordBot;
+
+    private ChatPrefixModule chatPrefixModule;
+    private DiscordUserModule discordUserModule;
+    private MinecraftPlayerModule minecraftPlayerModule;
+    private NewsModule newsModule;
+    private SettingModule settingModule;
+    private PermissionsModule permissionsModule;
+    private MessengerModule messengerModule;
+
+
     private static final String CONFIG_FILENAME = "cachedata.yml";
-    private ArrayList<ProxiedPlayer> afkPlayers;
+
+    private static ArcaneBungee instance;
+
+    public static ArcaneBungee getInstance() {
+        return instance;
+    }
 
     @Override
     public void onEnable() {
+        ArcaneBungee.instance = this;
         this.configFile = new File(getDataFolder(), "config.yml");
         this.cacheDataFile = new File(getDataFolder(), CONFIG_FILENAME);
-        this.afkPlayers = new ArrayList<>();
 
         saveDefaultConfigs();
 
+        // Modules
+        this.chatPrefixModule = new ChatPrefixModule();
+        this.discordUserModule = new DiscordUserModule();
+        this.minecraftPlayerModule = new MinecraftPlayerModule();
+        this.newsModule = new NewsModule();
+        this.settingModule = new SettingModule();
+        this.permissionsModule = new PermissionsModule();
+        this.messengerModule = new MessengerModule();
+
+
+        // Alert
         getProxy().registerChannel("arcaneserver:alert");
 
         this.spyAlert = new SpyAlert(this);
-        getProxy().getPluginManager().registerListener(this, this.spyAlert);
+        getProxy().getPluginManager().registerListener(this, spyAlert);
 
         this.pluginMessenger = new PluginMessenger(this, spyAlert);
-        getProxy().getPluginManager().registerListener(this, this.pluginMessenger);
+        getProxy().getPluginManager().registerListener(this, pluginMessenger);
 
         if (getConfig().getBoolean("mariadb.enabled")) {
             try {
@@ -62,11 +85,10 @@ public class ArcaneBungee extends Plugin {
                 //shrug
             }
         }
-        new OptionsStorage(this);
 
         if (!getConfig().getString("discord.token", "0").equals("0")) {
             try {
-                this.discordConnection = new DiscordConnection(this);
+                this.discordBot = new DiscordBot(this);
             } catch (LoginException e) {
                 getLogger().log(Level.SEVERE, "Discord: Invalid Token. Please restart with valid token.", e);
             } catch (InterruptedException e) {
@@ -76,7 +98,6 @@ public class ArcaneBungee extends Plugin {
             getLogger().warning("Discord token is not specified. Restart with valid token if Discord is to be connected and used.");
         }
 
-        this.tabCompletePreset = new TabCompletePreset(this);
         getProxy().getPluginManager().registerListener(this, new JoinLeaveEvents(this));
 
         // MC Version Limiter
@@ -86,30 +107,34 @@ public class ArcaneBungee extends Plugin {
         // Player list
         getProxy().getPluginManager().registerListener(this, new ServerListListener(this));
 
-        // Commnads that directly depend on SQL
+        // Commnads that depend on SQL
         if (sqlDatabase != null) {
-            SeenCommands fs = new SeenCommands(this);
+            SeenCommands fs = new SeenCommands();
             getProxy().getPluginManager().registerCommand(this, fs.new Seen());
             getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
-            getProxy().getPluginManager().registerCommand(this, new FindPlayer(this));
+            getProxy().getPluginManager().registerCommand(this, new FindPlayerCommand());
             getProxy().getPluginManager().registerCommand(this, new News(this));
         }
 
+        // Commannds that directly depend on Discord
+        if (discordBot != null) {
+            getProxy().getPluginManager().registerCommand(this, new DiscordCommand());
+            new DHelpCommand();
+        }
+
         // Rest of the commands
-        this.badgeCommands = new BadgeCommands(this);
-        GreylistCommands g = new GreylistCommands(this);
+        GreylistCommands g = new GreylistCommands();
         TellCommands t = new TellCommands(this);
-        LinkCommands l = new LinkCommands(this);
+        LinkCommands l = new LinkCommands();
         ServerCommands s = new ServerCommands(this);
-        StaffChatCommands sc = new StaffChatCommands(this);
-        getProxy().getPluginManager().registerCommand(this, badgeCommands.new Badge());
-        getProxy().getPluginManager().registerCommand(this, badgeCommands.new BadgeAdmin());
+        StaffChatCommands sc = new StaffChatCommands();
+        getProxy().getPluginManager().registerCommand(this, new BadgeCommand());
+        getProxy().getPluginManager().registerCommand(this, new BadgeAdminCommand());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
         getProxy().getPluginManager().registerCommand(this, t.new Reply());
         getProxy().getPluginManager().registerCommand(this, l.new Links());
-        getProxy().getPluginManager().registerCommand(this, l.new Discord());
         getProxy().getPluginManager().registerCommand(this, l.new Donate());
         getProxy().getPluginManager().registerCommand(this, l.new Forum());
         getProxy().getPluginManager().registerCommand(this, l.new Rules());
@@ -120,20 +145,21 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, sc);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat());
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
-        getProxy().getPluginManager().registerCommand(this, new ListPlayers(this));
-        getProxy().getPluginManager().registerCommand(this, new Me(this));
-        getProxy().getPluginManager().registerCommand(this, new Options(this));
-        getProxy().getPluginManager().registerCommand(this, new Ping(this));
-        getProxy().getPluginManager().registerCommand(this, new Slap(this));
+        getProxy().getPluginManager().registerCommand(this, new ListCommand());
+        getProxy().getPluginManager().registerCommand(this, new MeCommand());
+        getProxy().getPluginManager().registerCommand(this, new OptionCommand());
+        getProxy().getPluginManager().registerCommand(this, new PingCommand());
+        getProxy().getPluginManager().registerCommand(this, new SlapCommand());
+
+        getProxy().getPluginManager().registerListener(this, new CommandEvent());
     }
 
     @Override
     public void onDisable() {
         config = null;
-        badgeCommands.saveConfig();
-        spyAlert.saveConfig();
-        if (discordConnection != null)
-            discordConnection.onDisable();
+        chatPrefixModule.saveConfig();
+        if (discordBot != null)
+            discordBot.disable();
         try {
             ConfigurationProvider.getProvider(YamlConfiguration.class).save(cacheData, cacheDataFile);
         } catch (IOException e) {
@@ -141,36 +167,13 @@ public class ArcaneBungee extends Plugin {
         }
     }
 
-    public ArrayList<ProxiedPlayer> getAfkList() {
-        return afkPlayers;
-    }
-
-    public SQLDatabase getSqlDatabase() {
-        return sqlDatabase;
-    }
-
-    public void logCommand(CommandSender sender, String cmd, String[] args) {
-        pluginMessenger.coreprotect(sender, cmd, args);
-    }
-
-    public void logCommand(CommandSender sender, String msg) {
-        pluginMessenger.coreprotect(sender, msg);
-    }
-
-    public void logCommand(String name, String displayName, String uuid, String msg) {
-        pluginMessenger.coreprotect(name, displayName, uuid, msg);
+    @Deprecated
+    public List<ProxiedPlayer> getAfkList() {
+        return minecraftPlayerModule.getAFKList();
     }
 
     public PluginMessenger getPluginMessenger() {
         return pluginMessenger;
-    }
-
-    public DiscordConnection getDiscordConnection() {
-        return discordConnection;
-    }
-
-    public TabCompletePreset getTabCompletePreset() {
-        return tabCompletePreset;
     }
 
     public Configuration getConfig() {
@@ -216,5 +219,33 @@ public class ArcaneBungee extends Plugin {
                 e.printStackTrace();
             }
         }
+    }
+
+    public ChatPrefixModule getChatPrefixModule() {
+        return chatPrefixModule;
+    }
+
+    public DiscordUserModule getDiscordUserModule() {
+        return discordUserModule;
+    }
+
+    public MinecraftPlayerModule getMinecraftPlayerModule() {
+        return minecraftPlayerModule;
+    }
+
+    public NewsModule getNewsModule() {
+        return newsModule;
+    }
+
+    public SettingModule getSettingModule() {
+        return settingModule;
+    }
+
+    public PermissionsModule getPermissionsModule() {
+        return permissionsModule;
+    }
+
+    public MessengerModule getMessengerModule() {
+        return messengerModule;
     }
 }

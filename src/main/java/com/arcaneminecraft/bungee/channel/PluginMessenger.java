@@ -1,12 +1,13 @@
 package com.arcaneminecraft.bungee.channel;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import com.arcaneminecraft.bungee.ReturnRunnable;
 import com.arcaneminecraft.bungee.SpyAlert;
+import com.arcaneminecraft.bungee.module.MessengerModule;
+import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -20,12 +21,15 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.util.UUID;
 
+// TODO: Look into moving parts of this into the API. Reason: Shared code between ArcaneServer
 public class PluginMessenger implements Listener {
     private final ArcaneBungee plugin;
     private final SpyAlert spy;
     private final String ip;
     private final int port;
 
+    private final MessengerModule module = ArcaneBungee.getInstance().getMessengerModule();
+    private MinecraftPlayerModule mpModule = ArcaneBungee.getInstance().getMinecraftPlayerModule();
 
     public PluginMessenger(ArcaneBungee plugin, SpyAlert spy) {
         this.plugin = plugin;
@@ -67,11 +71,9 @@ public class PluginMessenger implements Listener {
                         log.addExtra(" ");
                     }
                     log.addExtra("<" + name + "> " + msg);
-                    plugin.getProxy().getConsole().sendMessage(log);
+                    ProxyServer.getInstance().getConsole().sendMessage(log);
 
-                    DiscordConnection d = plugin.getDiscordConnection();
-                    if (d != null)
-                        d.chatToDiscord(displayName, uuid, msg);
+                    module.chatToDiscord(displayName, UUID.fromString(uuid), msg);
 
                     if (subChannel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);
@@ -83,17 +85,17 @@ public class PluginMessenger implements Listener {
                     in.readFully(msgBytes);
 
                     try (DataInputStream is = new DataInputStream(new ByteArrayInputStream(msgBytes))) {
-                        String server = is.readUTF();
-                        String name = is.readUTF();
-                        String displayName = is.readUTF();
+                        is.readUTF(); // Server
+                        is.readUTF(); // Name
+                        is.readUTF(); // DisplayName
                         String uuid = is.readUTF();
                         boolean isAFK = is.readBoolean();
 
-                        ProxiedPlayer p = plugin.getProxy().getPlayer(UUID.fromString(uuid));
+                        ProxiedPlayer p = ProxyServer.getInstance().getPlayer(UUID.fromString(uuid));
                         if (isAFK)
-                            plugin.getAfkList().add(p);
+                            mpModule.setAFK(p);
                         else
-                            plugin.getAfkList().remove(p);
+                            mpModule.unsetAFK(p);
                     }
                     return;
                 }
@@ -106,7 +108,7 @@ public class PluginMessenger implements Listener {
                 String type = in.readUTF();
                 in.readUTF(); // player
                 String uuid = in.readUTF();
-                String world = in.readUTF(); // world
+                String world = in.readUTF();
                 int[] loc = {in.readInt(), in.readInt(), in.readInt()}; // Location
 
                 if (type.equals("XRay")) {
@@ -128,7 +130,7 @@ public class PluginMessenger implements Listener {
     /**
      * Transferred over from ArcaneServer's PluginMessenger.chat() method
      */
-    void chat(@SuppressWarnings("SameParameterValue") String origin, String name, String displayName, String uuid, String msg, String tag) {
+    public void chat(String origin, String name, String displayName, String uuid, String msg, String tag) {
         String channel = "Chat";
 
         ByteArrayOutputStream byteos = new ByteArrayOutputStream();
@@ -154,55 +156,28 @@ public class PluginMessenger implements Listener {
         out.writeShort(byteArrayOutputStream.toByteArray().length);
         out.write(byteArrayOutputStream.toByteArray());
 
-        for (ServerInfo s : plugin.getProxy().getServers().values()) {
+        for (ServerInfo s : ProxyServer.getInstance().getServers().values()) {
             s.sendData("BungeeCord", out.toByteArray(), false);
         }
     }
 
-
-
-    public void coreprotect(CommandSender sender, String command, String[] args) {
-        if (!(sender instanceof ProxiedPlayer))
-            return;
-
-        String msg = command;
-        if (args.length != 0)
-            msg += " " + String.join(" ", args);
-
-        ProxiedPlayer p = (ProxiedPlayer) sender;
+    public void coreprotect(ProxiedPlayer p, String msg) {
         coreprotect(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
     }
 
-    public void coreprotect(CommandSender sender, String msg) {
-        if (!(sender instanceof ProxiedPlayer))
-            return;
-
-        ProxiedPlayer p = (ProxiedPlayer) sender;
-        coreprotect(p.getName(), p.getDisplayName(), p.getUniqueId().toString(), msg);
-    }
-
-    public void coreprotect(String name, String displayName, String uuid, String msg) {
-        toLog("LogCoreProtect", null, name, displayName, uuid, msg);
-    }
-
-    private void toLog(@SuppressWarnings("SameParameterValue") String subChannel, @SuppressWarnings("SameParameterValue") ReturnRunnable<String> run, String... args) {
-
-        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            String response = null;
-
+    private void coreprotect(String name, String displayName, String uuid, String msg) {
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
             try (Socket client = new Socket(ip, port)) {
                 DataOutputStream dos = new DataOutputStream(client.getOutputStream());
-                dos.writeUTF(subChannel);
+                dos.writeUTF("LogCoreProtect");
 
-                for (String s : args)
-                    dos.writeUTF(s);
+                dos.writeUTF(name);
+                dos.writeUTF(displayName);
+                dos.writeUTF(uuid);
+                dos.writeUTF(msg);
 
                 dos.flush();
 
-                if (run != null) {
-                    DataInputStream dis = new DataInputStream(client.getInputStream());
-                    response = dis.readUTF();
-                }
             } catch (ConnectException e) {
                 plugin.getLogger().warning("Cannot connect to the logging server on " + ip + ":" + port);
             } catch (IOException e) {
@@ -210,8 +185,6 @@ public class PluginMessenger implements Listener {
                 e.printStackTrace();
             }
 
-            if (run != null)
-                run.run(response);
         });
     }
 

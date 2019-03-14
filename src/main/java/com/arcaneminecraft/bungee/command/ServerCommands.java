@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -44,31 +45,29 @@ public class ServerCommands {
 
         AtomicBoolean waiting = new AtomicBoolean(true);
 
+        BaseComponent sName;
+        if (isEvent) {
+            sName = new TextComponent(name + " " + ArcaneText.translatableString(p.getLocale(), "commands.server.event"));
+        } else {
+            sName = new TextComponent(name);
+        }
+        sName.setColor(ArcaneColor.FOCUS);
+
         p.connect(server, (success, e) -> {
             waiting.set(false);
             if (success) {
-                BaseComponent send = new TextComponent("Connected to the ");
+                BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.server.connected", sName);
                 send.setColor(ArcaneColor.HEADING);
 
-                BaseComponent n = new TextComponent(name);
-                n.setColor(ArcaneColor.FOCUS);
-                send.addExtra(n);
-
-                send.addExtra(isEvent ? " event server" : " server");
                 p.sendMessage(ChatMessageType.SYSTEM, send);
             }
         }, ServerConnectEvent.Reason.COMMAND);
 
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             if (waiting.get()) {
-                BaseComponent send = new TextComponent("Connecting to the ");
+                BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.server.connecting", sName);
                 send.setColor(ArcaneColor.CONTENT);
 
-                BaseComponent n = new TextComponent(name);
-                n.setColor(ArcaneColor.FOCUS);
-                send.addExtra(n);
-
-                send.addExtra((isEvent ? " event" : "") + " server...");
                 p.sendMessage(ChatMessageType.SYSTEM, send);
             }
         }, 350, TimeUnit.MILLISECONDS);
@@ -80,7 +79,6 @@ public class ServerCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.logCommand(sender, BungeeCommandUsage.CREATIVE.getCommand(), args);
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
@@ -95,7 +93,6 @@ public class ServerCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.logCommand(sender, BungeeCommandUsage.SURVIVAL.getCommand(), args);
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
@@ -110,7 +107,6 @@ public class ServerCommands {
         }
         @Override
         public void execute(CommandSender sender, String[] args) {
-            plugin.logCommand(sender, BungeeCommandUsage.EVENT.getCommand(), args);
             if (!(sender instanceof ProxiedPlayer)) {
                 sender.sendMessage(ArcaneText.noConsoleMsg());
                 return;
@@ -132,23 +128,25 @@ public class ServerCommands {
                     int nReplied = replied.size();
 
                     if (nReplied == 0) {
-                        BaseComponent send = new TextComponent("There are no active events at this time");
+                        BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.server.event.none");
                         send.setColor(ArcaneColor.HEADING);
                         p.sendMessage(ChatMessageType.SYSTEM, send);
                         return;
                     }
 
-                    BaseComponent send = new TextComponent("There " + (nReplied == 1 ? "is " : "are ") + nReplied + " active event" + (nReplied == 1 ? "" : "s") + ":");
-                    send.setColor(ArcaneColor.HEADING);
+                    BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.server.event.list");
+                    send.setColor(ArcaneColor.LIST);
                     p.sendMessage(ChatMessageType.SYSTEM, send);
 
                     for (Map.Entry<String, Long> e : replied.entrySet()) {
                         BaseComponent serv = new TextComponent(" - ");
                         serv.setColor(ArcaneColor.CONTENT);
+
                         BaseComponent name = new TextComponent(e.getKey());
                         name.setColor(ArcaneColor.FOCUS);
-                        serv.addExtra(name);
-                        serv.addExtra(" - ping: " + e.getValue() + "ms");
+
+                        serv.addExtra(ArcaneText.translatable(p.getLocale(), "commands.server.event.entry", name, e.getValue() + "ms"));
+
                         serv.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/event " + e.getKey()));
 
                         p.sendMessage(ChatMessageType.SYSTEM, serv);
@@ -173,7 +171,7 @@ public class ServerCommands {
 
                 plugin.getProxy().getScheduler().schedule(plugin, () -> {
                     if (waiting.get()) {
-                        BaseComponent send = new TextComponent("Querying all the event servers...");
+                        BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.server.event.querying");
                         send.setColor(ArcaneColor.CONTENT);
                         p.sendMessage(ChatMessageType.SYSTEM, send);
                     }
@@ -191,7 +189,7 @@ public class ServerCommands {
                 }
             }
 
-            BaseComponent send = new TextComponent("Event server '" + args[0] + "' cannot be found");
+            BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.server.event.invalid", args[0]);
             send.setColor(ChatColor.RED);
 
             p.sendMessage(ChatMessageType.SYSTEM, send);
@@ -206,7 +204,7 @@ public class ServerCommands {
                         continue;
                     l.add(entry.getKey().substring(6));
                 }
-                return plugin.getTabCompletePreset().argStartsWith(args, l);
+                return TabCompletePreset.argStartsWith(args, l);
             }
             return Collections.emptyList();
         }

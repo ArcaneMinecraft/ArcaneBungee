@@ -1,8 +1,12 @@
 package com.arcaneminecraft.bungee;
 
 import com.arcaneminecraft.api.ArcaneText;
+import com.arcaneminecraft.bungee.module.SettingModule;
+import com.google.common.collect.ImmutableSet;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
@@ -15,143 +19,62 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class SpyAlert implements Listener {
-    private static final String XRAY_PERMISSION = "arcane.spy.receive.xray";
-    private static final String SIGN_PERMISSION = "arcane.spy.receive.sign";
+    public static final String RECEIVE_XRAY_PERMISSION = "arcane.spy.receive.xray";
+    public static final String RECEIVE_SIGN_PERMISSION = "arcane.spy.receive.sign";
     private static final String ON_COMMAND_PERMISSION = "arcane.spy.on.command";
-    private static final String ON_COMMAND_ALL_PERMISSION = "arcane.spy.on.command.all";
-    private static final String RECEIVE_COMMAND_PERMISSION = "arcane.spy.receive.command";
-    private static final String RECEIVE_COMMAND_ALL_PERMISSION = "arcane.spy.receive.command.all";
-    private static final String SUSPICIOUS_COMMAND_PATH = "spy.command.suspicious";
-    private static final String IGNORE_COMMAND_PATH = "spy.command.ignore";
+    private static final String ON_SIGN_PERMISSION = "arcane.spy.on.sign";
+    private static final String ON_XRAY_PERMISSION = "arcane.spy.on.xray";
+    private static final String ON_ALL_COMMAND_PERMISSION = "arcane.spy.on.command.all";
+    public static final String RECEIVE_COMMAND_PERMISSION = "arcane.spy.receive.command";
+    public static final String RECEIVE_COMMAND_ALL_PERMISSION = "arcane.spy.receive.command.all";
+    private static final String SUSPICIOUS_COMMAND_NODE = "spy.command.suspicious";
+    private static final String IGNORE_COMMAND_NODE = "spy.command.ignore";
 
     private static SpyAlert instance;
-    private final ArcaneBungee plugin;
+
     private final int xRayWaitDuration;
-    private final Map<UUID, XRayCounter> diamondMineMap;
-    private final HashMap<ProxiedPlayer, CommandListenLevel> commandListenMod;
-    private final HashSet<ProxiedPlayer> ignoreXRay;
-    private final HashSet<ProxiedPlayer> ignoreSign;
-    /**
-     * Commands to ignore for everyone, e.g. everyone receives result of this command
-     */
-    private final HashSet<String> cmdIgnore;
-    /**
-     * Suspicious commands to alert at all times
-     */
-    private final HashSet<String> cmdSuspicious;
+    private final SettingModule sModule = ArcaneBungee.getInstance().getSettingModule();
+    private final Map<UUID, XRayCounter> diamondMineMap = new LinkedHashMap<>();
+    private final Set<UUID> receiveAllCommands = new HashSet<>();
 
-    private enum CommandListenLevel {
-        NONE("false"),
-        SOME("some"),
-        ALL("true"),
-        EVERYTHING("all");
-        private final String input;
-
-        CommandListenLevel(String input) {
-            this.input = input;
-        }
-    }
+    /** Commands to ignore for everyone, e.g. /me which broadcasts to everyone */
+    private final Set<String> cmdIgnore;
+    /** Suspicious commands to alert at all times */
+    private final Set<String> cmdSuspicious;
 
     SpyAlert(ArcaneBungee plugin) {
         SpyAlert.instance = this;
-        this.plugin = plugin;
         this.xRayWaitDuration = plugin.getConfig().getInt("spy.xray-wait-duration", 5);
-        this.diamondMineMap = new HashMap<>();
-        this.commandListenMod = new HashMap<>();
-        this.ignoreXRay = new HashSet<>();
-        this.ignoreSign = new HashSet<>();
-        this.cmdIgnore = new HashSet<>(plugin.getCacheData().getStringList(IGNORE_COMMAND_PATH));
-        this.cmdSuspicious = new HashSet<>(plugin.getCacheData().getStringList(SUSPICIOUS_COMMAND_PATH));
+        this.cmdIgnore = ImmutableSet.copyOf(plugin.getCacheData().getStringList(IGNORE_COMMAND_NODE));
+        this.cmdSuspicious = ImmutableSet.copyOf(plugin.getCacheData().getStringList(SUSPICIOUS_COMMAND_NODE));
     }
 
-    void saveConfig() {
-        List<String> ci = new ArrayList<>(cmdIgnore);
-        plugin.getCacheData().set(IGNORE_COMMAND_PATH, ci);
-        List<String> cs = new ArrayList<>(cmdSuspicious);
-        plugin.getCacheData().set(SUSPICIOUS_COMMAND_PATH, cs);
+    public static SpyAlert getInstance() {
+        return instance;
     }
 
-    public static String getReceiveXRay(ProxiedPlayer p) {
-        if (p == null)
-            return "true";
-        return String.valueOf(!instance.ignoreXRay.contains(p));
-    }
-
-    public static void setReceiveXRay(ProxiedPlayer p, String bool) {
-        if (bool.equalsIgnoreCase("true"))
-            instance.ignoreXRay.remove(p);
+    public void setAllCommandReceiver(UUID p, boolean put) {
+        if (put)
+            receiveAllCommands.add(p);
         else
-            instance.ignoreXRay.add(p);
+            receiveAllCommands.remove(p);
     }
 
-    public static String getReceiveSign(ProxiedPlayer p) {
-        if (p == null)
-            return "true";
-        return String.valueOf(!instance.ignoreSign.contains(p));
+    public boolean getAllCommandReceiver(UUID p) {
+        return receiveAllCommands.contains(p);
     }
 
-    public static void setReceiveSign(ProxiedPlayer p, String bool) {
-        if (bool.equalsIgnoreCase("true"))
-            instance.ignoreSign.remove(p);
-        else
-            instance.ignoreSign.add(p);
-    }
 
-    public static String getReceiveCommandLevel(ProxiedPlayer p) {
-        if (p == null)
-            return CommandListenLevel.ALL.input;
-        return instance.getPlayerListenLevel(p, true).input;
-    }
+    private BaseComponent adminMessage(CommandSender actor, Object action) {
+        BaseComponent ret = new TranslatableComponent("chat.type.admin",
+                actor instanceof ProxiedPlayer
+                        ? ArcaneText.playerComponentBungee(actor, "Server: " + ((ProxiedPlayer) actor).getServer().getInfo().getName())
+                        : ArcaneText.playerComponentBungee(actor)
+                , action);
+        ret.setColor(ChatColor.GRAY);
+        ret.setItalic(true);
 
-    public static void setReceiveCommandLevel(ProxiedPlayer p, String level) {
-        for (CommandListenLevel l : CommandListenLevel.values()) {
-            if (l.input.equalsIgnoreCase(level)) {
-                instance.setPlayerListenLevel(p, l);
-                return;
-            }
-        }
-    }
-
-    private CommandListenLevel getPlayerListenLevel(ProxiedPlayer p) {
-        return getPlayerListenLevel(p, false);
-    }
-
-    private CommandListenLevel getPlayerListenLevel(ProxiedPlayer p, boolean forOptionDisplay) {
-        CommandListenLevel level = commandListenMod.get(p);
-
-        if (p.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION)) {
-            if (level == null)
-                return CommandListenLevel.ALL;
-            return level;
-        }
-
-        if (p.hasPermission(RECEIVE_COMMAND_PERMISSION)) {
-            if (level == null || level != CommandListenLevel.NONE) {
-                if (forOptionDisplay)
-                    return CommandListenLevel.ALL;
-                return CommandListenLevel.SOME;
-            }
-
-            return level;
-        }
-
-        return CommandListenLevel.NONE;
-    }
-
-    private void setPlayerListenLevel(ProxiedPlayer p, CommandListenLevel level) {
-        if (p.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION)) {
-            if (level == CommandListenLevel.ALL)
-                commandListenMod.remove(p);
-            else
-                commandListenMod.put(p, level);
-        }
-
-        if (p.hasPermission(RECEIVE_COMMAND_PERMISSION)) {
-            if (level == CommandListenLevel.SOME || level == CommandListenLevel.ALL)
-                commandListenMod.remove(p);
-            else if (level != CommandListenLevel.EVERYTHING)
-                commandListenMod.put(p, level);
-        }
+        return ret;
     }
 
     private BaseComponent diamondAlertMsg(ProxiedPlayer p, int count, String block, int[] loc, String world) {
@@ -160,12 +83,7 @@ public class SpyAlert implements Listener {
                 new ComponentBuilder("Near " + loc[0] + " " + loc[1] + " " + loc[2] + " in " + world).create()));
         t.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tp " + loc[0] + " " + loc[1] + " " + loc[2]));
 
-        BaseComponent ret = new TranslatableComponent("chat.type.admin",
-                ArcaneText.playerComponentBungee(p, "Server: " + p.getServer().getInfo().getName()), t);
-        ret.setColor(ChatColor.GRAY);
-        ret.setItalic(true);
-
-        return ret;
+        return adminMessage(p, t);
     }
 
     private BaseComponent signAlertMsg(ProxiedPlayer p, String[] lines, int[] loc, String world) {
@@ -187,28 +105,22 @@ public class SpyAlert implements Listener {
         t.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tp " + loc[0] + " " + loc[1] + " " + loc[2]));
         t.addExtra(s);
 
-        BaseComponent ret = new TranslatableComponent("chat.type.admin",
-                ArcaneText.playerComponentBungee(p, "Server: " + p.getServer().getInfo().getName()), t);
-        ret.setColor(ChatColor.GRAY);
-        ret.setItalic(true);
-
-        return ret;
+        return adminMessage(p, t);
     }
 
-    private BaseComponent commandAlertMsg(ProxiedPlayer p, String command) {
-        BaseComponent ret = new TranslatableComponent("chat.type.admin",
-                ArcaneText.playerComponentBungee(p, "Server: " + p.getServer().getInfo().getName()),
-                "ran " + command);
-        ret.setColor(ChatColor.GRAY);
-        ret.setItalic(true);
-        return ret;
+    private BaseComponent commandAlertMsg(CommandSender p, String command) {
+        return adminMessage(p, "ran " + command);
     }
 
     public void signAlert(UUID uuid, String[] lines, int[] loc, String world) {
-        BaseComponent msg = signAlertMsg(plugin.getProxy().getPlayer(uuid), lines, loc, world);
-        for (ProxiedPlayer rec : plugin.getProxy().getPlayers()) {
-            if (rec.hasPermission(SIGN_PERMISSION) && !ignoreSign.contains(rec)) {
-                rec.sendMessage(ChatMessageType.SYSTEM, msg);
+        ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuid);
+        BaseComponent msg = signAlertMsg(p, lines, loc, world);
+        for (ProxiedPlayer receiver : ProxyServer.getInstance().getPlayers()) {
+            if (receiver.hasPermission(RECEIVE_SIGN_PERMISSION)
+                    && sModule.getNow(SettingModule.Option.SPY_SIGNS, receiver.getUniqueId())
+                    && (p.hasPermission(ON_SIGN_PERMISSION) || sModule.getNow(SettingModule.Option.SPY_ON_TRUSTED, receiver.getUniqueId()))
+            ) {
+                receiver.sendMessage(ChatMessageType.SYSTEM, msg);
             }
         }
     }
@@ -216,65 +128,46 @@ public class SpyAlert implements Listener {
     public void xRayAlert(UUID uuid, String block, int[] loc, String world) {
         XRayCounter c;
         if ((c = diamondMineMap.get(uuid)) == null)
-            diamondMineMap.put(uuid, new XRayCounter(plugin.getProxy().getPlayer(uuid), block, loc, world));
+            diamondMineMap.put(uuid, new XRayCounter(ProxyServer.getInstance().getPlayer(uuid), block, loc, world));
         else
             c.increment(block, loc, world);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void commandAlert(ChatEvent e) {
-        if (!e.isCommand() || !(e.getSender() instanceof ProxiedPlayer))
+    public void onCommand(ChatEvent e) {
+        if (!e.isCommand() || !(e.getSender() instanceof CommandSender))
             return;
 
+        CommandSender sender = (CommandSender) e.getSender();
         String cmd = e.getMessage().split(" ", 2)[0].substring(1);
-        // Don't notify about empty commands
-        if (cmd.isEmpty())
+        // Don't notify about empty or ignored commands
+        if (cmd.isEmpty() || cmdIgnore.contains(cmd))
             return;
 
-        /* Handy chart:
-         *    sender  |  listener
-         *            | All | Some
-         * -----------+-----+------
-         *        All |  x  |  x
-         *       Some |  x  |  x
-         *     ignore |     |
-         *       None |     |
-         */
+        boolean isSuspicious = cmdSuspicious.contains(cmd), onCommandPermission, onAllCommands;
 
-        boolean someRec;
-        boolean allRec;
-
-        ProxiedPlayer p = (ProxiedPlayer) e.getSender();
-        if (cmdSuspicious.contains(cmd) || p.hasPermission(ON_COMMAND_ALL_PERMISSION)) {
-            // Listened by all & Suspicious commands are listened by all
-            allRec = someRec = true;
-        } else if (!cmdIgnore.contains(cmd) || p.hasPermission(ON_COMMAND_PERMISSION)) {
-            // Not suspicious nor ignored is heard by select few
-            allRec = true;
-            someRec = false;
+        if (sender instanceof ProxiedPlayer) {
+            ProxiedPlayer p = (ProxiedPlayer) e.getSender();
+            onCommandPermission = p.hasPermission(ON_COMMAND_PERMISSION);
+            onAllCommands = p.hasPermission(ON_ALL_COMMAND_PERMISSION);
         } else {
-            // Default don't send
-            allRec = someRec = false;
+            onCommandPermission = onAllCommands = false;
         }
 
-        BaseComponent msg = commandAlertMsg(p, e.getMessage());
+        BaseComponent msg = commandAlertMsg(sender, e.getMessage());
 
-        loop:
-        for (ProxiedPlayer rec : plugin.getProxy().getPlayers()) {
-            switch (getPlayerListenLevel(rec)) {
-                case NONE:
-                    continue loop;
-                case EVERYTHING:
-                    rec.sendMessage(ChatMessageType.SYSTEM, msg);
-                    continue loop;
-                case ALL:
-                    if (allRec)
-                        rec.sendMessage(ChatMessageType.SYSTEM, msg);
-                    continue loop;
-                case SOME:
-                    if (someRec)
-                        rec.sendMessage(ChatMessageType.SYSTEM, msg);
-            }
+        for (ProxiedPlayer receiver : ProxyServer.getInstance().getPlayers()) {
+            boolean receiveAll = receiver.hasPermission(RECEIVE_COMMAND_ALL_PERMISSION);
+            if (!receiver.hasPermission(RECEIVE_COMMAND_PERMISSION) && !receiveAll)
+                continue;
+
+            UUID uuid = receiver.getUniqueId();
+
+
+            if ((receiveAll && receiveAllCommands.contains(uuid)) || (onAllCommands && sModule.getNow(SettingModule.Option.SPY_NEW_PLAYER, uuid))
+                    || (isSuspicious && (onCommandPermission || sModule.getNow(SettingModule.Option.SPY_ON_TRUSTED, uuid)))
+            )
+                receiver.sendMessage(ChatMessageType.SYSTEM, msg);
         }
     }
 
@@ -285,6 +178,7 @@ public class SpyAlert implements Listener {
         private int count;
         private int[] lastLocation;
         private ScheduledTask task;
+        private final ArcaneBungee plugin = ArcaneBungee.getInstance();
 
         private XRayCounter(ProxiedPlayer p, String block, int[] loc, String world) {
             this.p = p;
@@ -292,7 +186,7 @@ public class SpyAlert implements Listener {
             this.world = world;
             this.count = 1;
             this.lastLocation = loc;
-            this.task = plugin.getProxy().getScheduler().schedule(plugin, this, xRayWaitDuration, TimeUnit.SECONDS);
+            this.task = ProxyServer.getInstance().getScheduler().schedule(plugin, this, xRayWaitDuration, TimeUnit.SECONDS);
         }
 
         void increment(String block, int[] loc, String world) {
@@ -300,7 +194,7 @@ public class SpyAlert implements Listener {
             if (this.block.equals(block) && this.world.equals(world)) {
                 lastLocation = loc;
                 count++;
-                task = plugin.getProxy().getScheduler().schedule(plugin, this, xRayWaitDuration, TimeUnit.SECONDS);
+                task = ProxyServer.getInstance().getScheduler().schedule(plugin, this, xRayWaitDuration, TimeUnit.SECONDS);
             } else {
                 this.run();
                 diamondMineMap.put(p.getUniqueId(), new XRayCounter(this.p, block, loc, world));
@@ -311,9 +205,13 @@ public class SpyAlert implements Listener {
         public void run() {
             BaseComponent msg = diamondAlertMsg(p, count, block, lastLocation, world);
             plugin.getProxy().getConsole().sendMessage(msg);
-            for (ProxiedPlayer rec : plugin.getProxy().getPlayers()) {
-                if (rec.hasPermission(XRAY_PERMISSION) && !ignoreXRay.contains(rec)) {
-                    rec.sendMessage(ChatMessageType.SYSTEM, msg);
+
+            for (ProxiedPlayer receiver : plugin.getProxy().getPlayers()) {
+                if (receiver.hasPermission(RECEIVE_XRAY_PERMISSION)
+                        && sModule.getNow(SettingModule.Option.SPY_XRAY, receiver.getUniqueId())
+                        && (p.hasPermission(ON_XRAY_PERMISSION) || sModule.getNow(SettingModule.Option.SPY_ON_TRUSTED, receiver.getUniqueId()))
+                ) {
+                    receiver.sendMessage(ChatMessageType.SYSTEM, msg);
                 }
             }
             diamondMineMap.remove(p.getUniqueId());

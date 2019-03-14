@@ -4,6 +4,7 @@ import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
+import com.arcaneminecraft.bungee.TabCompletePreset;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
@@ -13,25 +14,19 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class FindPlayer extends Command implements TabExecutor {
-    private final ArcaneBungee plugin;
+public class FindPlayerCommand extends Command implements TabExecutor {
+    private final ArcaneBungee plugin = ArcaneBungee.getInstance();
 
-    public FindPlayer(ArcaneBungee plugin) {
+    public FindPlayerCommand() {
         super(BungeeCommandUsage.FINDPLAYER.getName(), BungeeCommandUsage.FINDPLAYER.getPermission(), BungeeCommandUsage.FINDPLAYER.getAliases());
-        this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.logCommand(sender, BungeeCommandUsage.FINDPLAYER.getCommand(), args);
-
         if (args.length == 0) {
             if (sender instanceof ProxiedPlayer)
                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, ArcaneText.usage(BungeeCommandUsage.FINDPLAYER.getUsage()));
@@ -41,13 +36,14 @@ public class FindPlayer extends Command implements TabExecutor {
         }
 
         AtomicBoolean done = new AtomicBoolean(false);
+        Locale locale = sender instanceof ProxiedPlayer ? ((ProxiedPlayer) sender).getLocale() : null;
 
         String searchLower = args[0].toLowerCase();
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             List<String> pl = new ArrayList<>();
 
             // Match all players
-            for (String name : plugin.getSqlDatabase().getAllPlayerName()) {
+            for (String name : plugin.getMinecraftPlayerModule().getAllNames()) {
                 int start;
                 int end;
                 int searchLength = args[0].length();
@@ -82,7 +78,7 @@ public class FindPlayer extends Command implements TabExecutor {
 
             if (pl.isEmpty()) {
                 done.set(true);
-                BaseComponent send = new TextComponent("Player matching '" + args[0] + "' cannot be found");
+                BaseComponent send = ArcaneText.translatable(locale, "commands.findplayer.none", args[0]);
                 send.setColor(ArcaneColor.NEGATIVE);
                 if (sender instanceof ProxiedPlayer)
                     ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
@@ -92,23 +88,20 @@ public class FindPlayer extends Command implements TabExecutor {
             }
 
             pl.sort(Comparator.comparing(ChatColor::stripColor));
-
             done.set(true);
 
-            if (pl.size() > 1000 && sender instanceof ProxiedPlayer) {
-                BaseComponent send = new TextComponent("Too many players matched '" + args[0] + "' - please refine the match term");
+            if (pl.size() > 500 && sender instanceof ProxiedPlayer) {
+                BaseComponent send = ArcaneText.translatable(locale, "commands.findplayer.tooMany", args[0]);
                 send.setColor(ArcaneColor.NEGATIVE);
                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                 return;
             }
 
 
-            BaseComponent head = new TextComponent("--- Players matching '");
             BaseComponent part = new TextComponent(args[0]);
-            part.setColor(ChatColor.GREEN);
-            head.addExtra(part);
-            head.addExtra("' ---");
-            head.setColor(ChatColor.DARK_GREEN);
+            part.setColor(ArcaneColor.LIST_VARS);
+            BaseComponent head = ArcaneText.translatable(locale, "commands.findplayer.header", part);
+            head.setColor(ArcaneColor.LIST);
 
             BaseComponent[] content = TextComponent.fromLegacyText(ArcaneColor.CONTENT + String.join(", ", pl));
 
@@ -142,9 +135,8 @@ public class FindPlayer extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        // TODO: Find how long this command takes to run.
         if (args.length == 1)
-            return plugin.getTabCompletePreset().allPlayers(args);
+            return TabCompletePreset.allPlayers(args);
         return Collections.emptyList();
     }
 }

@@ -26,8 +26,14 @@ dependencies {
     compileOnly fileTree(dir: 'libs', include: '*.jar')
     compileOnly 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
     extraLibs 'org.mariadb.jdbc:mariadb-java-client:2.2.5'
-    implementation 'net.dv8tion:JDA:3.8.0_427'
-    extraLibs 'net.dv8tion:JDA:3.8.0_427'
+    compileOnly 'com.vdurmont:emoji-java:4.0.0'
+    extraLibs 'com.vdurmont:emoji-java:4.0.0'
+    compile ('net.dv8tion:JDA:3.8.3_460') {
+        exclude module: 'opus-java'
+    }
+    extraLibs ('net.dv8tion:JDA:3.8.3_460') {
+        exclude module: 'opus-java'
+    }
 }
 
 jar {

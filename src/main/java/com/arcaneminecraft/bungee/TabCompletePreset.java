@@ -1,39 +1,28 @@
 package com.arcaneminecraft.bungee;
 
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.event.PlayerDisconnectEvent;
-import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.plugin.Listener;
-import net.md_5.bungee.event.EventHandler;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
-public class TabCompletePreset implements Listener {
-    private final ArcaneBungee plugin;
-    private final List<String> onlinePlayerList;
+public interface TabCompletePreset {
 
-    TabCompletePreset(ArcaneBungee plugin) {
-        this.plugin = plugin;
-        this.onlinePlayerList = new ArrayList<>();
-
-        for (ProxiedPlayer p : plugin.getProxy().getPlayers()) {
-            this.onlinePlayerList.add(p.getName());
+    static Iterable<String> onlinePlayers(String[] args) {
+        ArrayList<String> a = new ArrayList<>();
+        for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+            a.add(p.getName());
         }
+
+        return argStartsWith(args, a);
     }
 
-
-
-    public Iterable<String> onlinePlayers(String[] args) {
-        return argStartsWith(args, onlinePlayerList);
+    static Iterable<String> allPlayers(String[] args) {
+        return argStartsWith(args, ArcaneBungee.getInstance().getMinecraftPlayerModule().getAllNames());
     }
 
-    public Iterable<String> allPlayers(String[] args) {
-        return argStartsWith(args, plugin.getSqlDatabase().getAllPlayerName());
-    }
-
-
-
-    public Iterable<String> argStartsWith(String[] args, Iterable<String> choices) {
+    static Iterable<String> argStartsWith(String[] args, Iterable<String> choices) {
         String arg = args[args.length - 1];
         if (arg.equals(""))
             return choices;
@@ -45,16 +34,8 @@ public class TabCompletePreset implements Listener {
             if (n.toLowerCase().startsWith(argL))
                 ret.add(n);
 
+        ret.sort(Comparator.naturalOrder());
+
         return ret;
-    }
-
-    @EventHandler
-    public void joinEvent(PostLoginEvent e) {
-        onlinePlayerList.add(e.getPlayer().getName());
-    }
-
-    @EventHandler
-    public void leaveEvent(PlayerDisconnectEvent e) {
-        onlinePlayerList.remove(e.getPlayer().getName());
     }
 }

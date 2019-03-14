@@ -52,6 +52,8 @@ spy:
       -w
       -r
       -reply
+      -l
+      -local
     suspicious:
       -op
       -opme

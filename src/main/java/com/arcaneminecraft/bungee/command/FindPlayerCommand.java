@@ -118,11 +118,10 @@ public class FindPlayerCommand extends Command implements TabExecutor {
             if (done.get())
                 return;
 
-            BaseComponent send = new TextComponent("Searching for players matching '");
             BaseComponent part = new TextComponent(args[0]);
             part.setColor(ArcaneColor.FOCUS);
-            send.addExtra(part);
-            send.addExtra("' - please wait...");
+
+            BaseComponent send = ArcaneText.translatable(locale, "commands.findplayer.wait", part);
             send.setColor(ArcaneColor.CONTENT);
 
             if (sender instanceof ProxiedPlayer)

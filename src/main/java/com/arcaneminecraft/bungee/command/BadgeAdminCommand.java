@@ -3,6 +3,7 @@ package com.arcaneminecraft.bungee.command;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
+import com.arcaneminecraft.api.TimeShorthandUtils;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.module.ChatPrefixModule;
@@ -344,6 +345,9 @@ public class BadgeAdminCommand extends Command implements TabExecutor {
             return TabCompletePreset.argStartsWith(args, ADMIN_SUBCOMMANDS);
         if (args.length == 2)
             return TabCompletePreset.allPlayers(args);
+        if (args.length == 3)
+            return TimeShorthandUtils.tabComplete(args[2]);
+
         return Collections.emptyList();
     }
 }

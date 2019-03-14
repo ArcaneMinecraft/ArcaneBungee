@@ -83,7 +83,7 @@ public class MessengerModule {
         else
             from.sendMessage(sendFrom);
         if (to instanceof ProxiedPlayer)
-            ((ProxiedPlayer) from).sendMessage(ChatMessageType.SYSTEM, sendTo);
+            ((ProxiedPlayer) to).sendMessage(ChatMessageType.SYSTEM, sendTo);
         else
             to.sendMessage(sendTo);
 

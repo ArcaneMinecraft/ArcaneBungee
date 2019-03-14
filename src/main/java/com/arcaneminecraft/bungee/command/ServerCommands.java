@@ -47,9 +47,9 @@ public class ServerCommands {
 
         BaseComponent sName;
         if (isEvent) {
-            sName = new TextComponent(name);
+            sName = new TextComponent(name + " " + ArcaneText.translatableString(p.getLocale(), "commands.server.event"));
         } else {
-            sName = new TextComponent(name + ArcaneText.translatableString(p.getLocale(), "commands.server.event"));
+            sName = new TextComponent(name);
         }
         sName.setColor(ArcaneColor.FOCUS);
 

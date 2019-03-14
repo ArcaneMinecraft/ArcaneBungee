@@ -85,8 +85,6 @@ public class ListCommand extends Command implements TabExecutor, DiscordCommandE
     public boolean executeDiscordCommand(Message m, String[] args) {
         boolean uuid = args.length == 2 && args[1].equalsIgnoreCase("uuids");
 
-        final String onlineFormat = "There are **%d**/%d players online";
-
         List<ProxiedPlayer> afk = mpModule.getAFKList();
         StringBuilder online;
         Iterator<ProxiedPlayer> i = ProxyServer.getInstance().getPlayers().iterator();
@@ -108,6 +106,13 @@ public class ListCommand extends Command implements TabExecutor, DiscordCommandE
 
 
         int onlineCount = ProxyServer.getInstance().getOnlineCount();
+        final String onlineFormat = "There "
+                + (onlineCount == 1 ? "is" : "are")
+                + " **%d**/%d player"
+                + (onlineCount == 1 ? "" : "s")
+                + " online";
+
+
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Online Players")
                 .setDescription("Usage: " + getDiscordPrefix() + args[0] + " [uuids]")

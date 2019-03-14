@@ -142,13 +142,13 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
 
     @Override
     public String getDiscordUsage() {
-        return "/link [<in-game name> <token>]\n/unlink";
+        return "link [<in-game name> <token>]\n" + getDiscordPrefix() + "unlink";
     }
 
     @Override
     public String getDiscordDescription() {
-        return "/link: Links your Minecraft account with your Discord account.\n" +
-                "/unlink: Unlinks your Discord account from your MC account.";
+        return getDiscordPrefix() + "link: Links your Minecraft account with your Discord account.\n" +
+                getDiscordPrefix() + "unlink: Unlinks your Discord account from your MC account.";
     }
 
     @Override

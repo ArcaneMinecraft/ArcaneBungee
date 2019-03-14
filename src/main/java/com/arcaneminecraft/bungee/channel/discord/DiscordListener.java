@@ -86,8 +86,12 @@ public class DiscordListener extends ListenerAdapter {
                 // Send message saying to register discord to mc account
                 user.openPrivateChannel().queue(channel ->
                         channel
-                                .sendMessage("Your message in \\#" + mcChatChannel.getName()
-                                        + " was deleted because your account is not linked. Please link your account first using `/discord link` in-game.")
+                                .sendMessage(":x: Your message in \\#"
+                                        + mcChatChannel.getName()
+                                        + " was deleted because your account is not linked. Run `"
+                                        + getPrefix()
+                                        + "link"
+                                        + "` to get started!")
                                 .complete());
                 return;
             }

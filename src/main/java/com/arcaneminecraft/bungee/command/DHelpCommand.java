@@ -38,7 +38,7 @@ public class DHelpCommand implements DiscordCommandExecutor {
 
             embed.addField(name,
                     (usage == null ? "" : "__Usage:__ " + prefix + usage)
-                    + (desc == null ? "" : desc),true);
+                    + (desc == null ? "" : "\n" + desc),true);
         }
 
         m.getChannel().sendMessage(embed.build()).complete();

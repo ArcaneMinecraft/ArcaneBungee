@@ -14,6 +14,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -116,10 +117,11 @@ public class ProfileCommand extends Command implements TabExecutor {
         boolean bypass = sender.hasPermission(BYPASS_PUBLIC_TOGGLE);
         // Attach Discord
         boolean publicDiscord = sModule.getNow(SettingModule.Option.SET_DISCORD_PUBLIC, option);
-        ProxyServer.getInstance().getLogger().info("Discord: " + pl.getDiscord());
         if ((publicDiscord || bypass) && pl.getDiscord() != 0L) {
-            BaseComponent discord = new TextComponent(duModule.getUserTag(pl.getDiscord()));
+            String nametag = duModule.getUserTag(pl.getDiscord());
+            BaseComponent discord = new TextComponent(nametag);
             discord.setColor(ArcaneColor.FOCUS);
+            discord.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, nametag));
             if (!publicDiscord)
                 discord.setStrikethrough(true);
 
@@ -129,7 +131,7 @@ public class ProfileCommand extends Command implements TabExecutor {
         }
 
         // Attach Reddit
-        boolean publicReddit = sModule.getNow(SettingModule.Option.SET_DISCORD_PUBLIC, option);
+        boolean publicReddit = sModule.getNow(SettingModule.Option.SET_REDDIT_PUBLIC, option);
         if ((publicReddit || bypass) && pl.getReddit() != null) {
             BaseComponent reddit = ArcaneText.urlSingleSpecial(pl.getReddit(), "https://reddit.com" + pl.getReddit());
             reddit.setColor(ArcaneColor.LINK_FOCUS);

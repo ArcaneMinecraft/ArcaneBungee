@@ -239,7 +239,7 @@ public class SQLDatabase {
                     ps.setInt(2, p.getOptions());
                     ps.setString(3, p.getTimezone() == null ? null : p.getTimezone().getID());
                     ps.setLong(4, p.getDiscord());
-                    ps.setString(5, p.getReddit().substring(3));
+                    ps.setString(5, p.getReddit() == null ? null : p.getReddit().substring(3));
                     ps.setString(6, p.getUniqueID().toString());
                     ps.executeUpdate();
                 }

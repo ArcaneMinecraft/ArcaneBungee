@@ -8,6 +8,7 @@ import com.arcaneminecraft.bungee.DiscordCommandExecutor;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
@@ -22,11 +23,10 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.util.Collections;
 import java.util.UUID;
 
 public class DiscordCommand extends Command implements TabExecutor, DiscordCommandExecutor {
-    private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
+    private static final String DISCORD_LINK_PERMISSION = "arcane.command.discord.link";
 
     private final DiscordUserModule module = ArcaneBungee.getInstance().getDiscordUserModule();
     private final MinecraftPlayerModule mpModule = ArcaneBungee.getInstance().getMinecraftPlayerModule();
@@ -39,7 +39,7 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (sender instanceof ProxiedPlayer && args.length != 0) {
+        if (sender instanceof ProxiedPlayer && args.length != 0 && sender.hasPermission(DISCORD_LINK_PERMISSION)) {
             ProxiedPlayer p = (ProxiedPlayer) sender;
             if (args[0].equalsIgnoreCase("link")) {
                 if (args.length < 3) {
@@ -108,12 +108,14 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
         }
 
         if (sender instanceof ProxiedPlayer) {
-            sendInviteLink(sender);
-            BaseComponent send = new TextComponent(" Other usage: /discord [link|unlink]");
-            send.setColor(ArcaneColor.CONTENT);
-            ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+            ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, LinkCommands.singleLink(((ProxiedPlayer) sender).getLocale(), "Discord", LinkCommands.DISCORD));
+            if (sender.hasPermission(DISCORD_LINK_PERMISSION)) {
+                BaseComponent send = new TextComponent(" Other usage: /discord <link [username token]|unlink>");
+                send.setColor(ArcaneColor.CONTENT);
+                ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
+            }
         } else {
-            sendInviteLink(sender);
+            sender.sendMessage(LinkCommands.singleLink(null, "Discord", LinkCommands.DISCORD));
         }
     }
 
@@ -121,23 +123,7 @@ public class DiscordCommand extends Command implements TabExecutor, DiscordComma
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
         if (args.length == 1)
             return TabCompletePreset.argStartsWith(args, ImmutableSet.of("link","unlink"));
-        return Collections.emptyList();
-    }
-
-    private void sendInviteLink(CommandSender sender) {
-        BaseComponent send = ArcaneText.translatable(
-                sender instanceof ProxiedPlayer ? ((ProxiedPlayer) sender).getLocale() : null,
-                "commands.links.single",
-                "Discord",
-                DISCORD
-        );
-        send.addExtra(DISCORD);
-        send.setColor(ArcaneColor.CONTENT);
-
-        if (sender instanceof ProxiedPlayer)
-            ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
-        else
-            sender.sendMessage(send);
+        return ImmutableList.of();
     }
 
     @Override

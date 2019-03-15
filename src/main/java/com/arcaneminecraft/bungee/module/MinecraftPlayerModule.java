@@ -1,6 +1,5 @@
 package com.arcaneminecraft.bungee.module;
 
-import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.module.data.ArcanePlayer;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
 import net.md_5.bungee.api.ProxyServer;
@@ -15,10 +14,6 @@ public class MinecraftPlayerModule {
     private final HashMap<String, UUID> allNameToUuid = new HashMap<>();
     private final HashMap<UUID, String> allUuidToName = new HashMap<>();
     private final ArrayList<ProxiedPlayer> afkList = new ArrayList<>();
-
-    private DiscordUserModule getDUModule() {
-        return ArcaneBungee.getInstance().getDiscordUserModule();
-    }
 
     private SQLDatabase getSQLDatabase() {
         return SQLDatabase.getInstance();
@@ -156,14 +151,34 @@ public class MinecraftPlayerModule {
         return getSQLDatabase().getDiscord(uuid);
     }
 
-    public void setReddit(UUID uuid, String reddit) {
+    public boolean setReddit(UUID uuid, String reddit) {
+        if (reddit == null || reddit.isEmpty()) {
+            ArcanePlayer data = getPlayerData(uuid);
+            if (data != null) {
+                data.setReddit(null);
+                return true;
+            }
+
+            SQLDatabase.getInstance().setReddit(uuid, null);
+            return true;
+        }
+
+        if (reddit.startsWith("/u/"))
+            reddit = reddit.substring(3);
+        else if (reddit.startsWith("u/"))
+            reddit = reddit.substring(2);
+
+        if (reddit.length() > 20 || !reddit.matches("[A-Za-z\\d_\\-]{3,}"))
+            return false;
+
         ArcanePlayer data = getPlayerData(uuid);
         if (data != null) {
             data.setReddit(reddit);
-            return;
+            return true;
         }
 
         SQLDatabase.getInstance().setReddit(uuid, reddit);
+        return true;
     }
 
     public CompletableFuture<String> getReddit(UUID uuid) {

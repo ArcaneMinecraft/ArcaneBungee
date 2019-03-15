@@ -11,6 +11,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 import java.sql.*;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -41,7 +42,7 @@ public class SQLDatabase {
     private static final String PLAYER_SELECT_OPTIONS_BY_UUID = "SELECT options FROM ab_players WHERE uuid=?";
     private static final String PLAYER_UPDATE_TIMEZONE_BY_UUID = "UPDATE ab_players SET timezone=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_USERNAME = "UPDATE ab_players SET username=? WHERE uuid=?";
-    private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD = "UPDATE ab_players SET lastseen=?,options=?,timezone=?,discord=?  WHERE uuid=?";
+    private static final String PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD_AND_REDDIT = "UPDATE ab_players SET lastseen=?,options=?,timezone=?,discord=?,reddit=?  WHERE uuid=?";
     private static final String PLAYER_UPDATE_DISCORD_BY_DISCORD = "UPDATE ab_players SET discord=? WHERE discord=?";
     private static final String PLAYER_UPDATE_DISCORD_BY_UUID = "UPDATE ab_players SET discord=? WHERE uuid=?";
     private static final String PLAYER_UPDATE_REDDIT_BY_UUID = "UPDATE ab_players SET reddit=? WHERE uuid=?";
@@ -145,6 +146,49 @@ public class SQLDatabase {
     }
 
     public CompletableFuture<ArcanePlayer> playerJoin(ProxiedPlayer p) {
+        CompletableFuture<ArcanePlayer> future = fetchPlayerData(p.getUniqueId());
+
+        return future.thenApplyAsync(player -> {
+            if (future.isCompletedExceptionally()) {
+                return null;
+            }
+
+            if (player == null) {
+                try (Connection c = ds.getConnection()) {
+                    try (PreparedStatement ps = c.prepareStatement(PLAYER_INSERT)) {
+                        ps.setString(1, p.getUniqueId().toString());
+                        ps.setString(2, p.getName());
+                        if (ps.executeUpdate() != 0) {
+                            try (PreparedStatement ps2 = c.prepareStatement(PLAYER_SELECT_LATEST_ID)) {
+                                ResultSet rs2 = ps2.executeQuery();
+                                int id = rs2.getInt("id");
+                                return new ArcanePlayer(p.getUniqueId(), id);
+                            }
+                        }
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            if (player != null && !player.getOldName().equals(p.getName())) {
+                // Username changed
+                try (Connection c = ds.getConnection()) {
+                    try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_USERNAME)) {
+                        ps.setString(1, p.getName());
+                        ps.setString(2, p.getUniqueId().toString());
+                        ps.executeUpdate();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            return player;
+        });
+    }
+
+
+    public CompletableFuture<ArcanePlayer> fetchPlayerData(UUID uuid) {
         CompletableFuture<ArcanePlayer> future = new CompletableFuture<>();
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
@@ -153,42 +197,18 @@ public class SQLDatabase {
 
                 // Get player info: player name
                 try (PreparedStatement ps = c.prepareStatement(PLAYER_SELECT_BY_UUID)) {
-                    ps.setString(1, p.getUniqueId().toString());
+                    ps.setString(1, uuid.toString());
                     rs = ps.executeQuery();
                 }
 
                 // Check if query returned any data.
                 if (!rs.next()) {
-                    // There is no data = new player
-
-                    try (PreparedStatement ps = c.prepareStatement(PLAYER_INSERT)) {
-                        ps.setString(1, p.getUniqueId().toString());
-                        ps.setString(2, p.getName());
-                        if (ps.executeUpdate() != 0) {
-                            try (PreparedStatement ps2 = c.prepareStatement(PLAYER_SELECT_LATEST_ID)) {
-                                ResultSet rs2 = ps2.executeQuery();
-                                int id = rs2.getInt("id");
-                                future.complete(new ArcanePlayer(p, id));
-                            }
-                        }
-                    }
+                    // There is no data = did not login yet
+                    future.complete(null);
                     return;
                 }
 
                 String name = rs.getString("username");
-
-                if (!p.getName().equals(name)) {
-                    // Username changed
-                    ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
-                        try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_USERNAME)) {
-                            ps.setString(1, p.getName());
-                            ps.setString(2, p.getUniqueId().toString());
-                            ps.executeUpdate();
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
-                    });
-                }
                 int id = rs.getInt("id");
                 Timestamp firstseen = rs.getTimestamp("firstseen");
                 Timestamp lastseen = rs.getTimestamp("lastseen");
@@ -199,27 +219,28 @@ public class SQLDatabase {
                 int options = rs.getInt("options");
 
                 // Query returned data; give username from database
-                future.complete(new ArcanePlayer(p, id, name, firstseen, lastseen, timeZone, discord, reddit, options));
+                future.complete(new ArcanePlayer(uuid, id, name, firstseen, lastseen, timeZone, discord, reddit, options));
 
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                // Fetch failed: null
-                future.complete(null);
+                // Fetch failed
+                future.completeExceptionally(ex);
             }
         });
 
-        return future;
+        return future.exceptionally(ex -> null);
     }
 
     public void updatePlayer(ArcanePlayer p) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection c = ds.getConnection()) {
-                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD)) {
+                try (PreparedStatement ps = c.prepareStatement(PLAYER_UPDATE_LAST_SEEN_AND_OPTIONS_AND_TIMEZONE_AND_DISCORD_AND_REDDIT)) {
                     ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
                     ps.setInt(2, p.getOptions());
                     ps.setString(3, p.getTimezone() == null ? null : p.getTimezone().getID());
                     ps.setLong(4, p.getDiscord());
-                    ps.setString(5, p.getProxiedPlayer().getUniqueId().toString());
+                    ps.setString(5, p.getReddit().substring(3));
+                    ps.setString(6, p.getUniqueID().toString());
                     ps.executeUpdate();
                 }
             } catch (SQLException ex) {
@@ -233,7 +254,11 @@ public class SQLDatabase {
 
         getPlayerResultSet(uuid).thenAcceptAsync(rs -> {
             try {
-                future.complete(rs.getTimestamp("firstseen"));
+                if (rs.next()) {
+                    future.complete(rs.getTimestamp("firstseen"));
+                } else {
+                    future.complete(null);
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
                 future.complete(null);
@@ -248,7 +273,11 @@ public class SQLDatabase {
 
         getPlayerResultSet(uuid).thenAcceptAsync(rs -> {
             try {
-                future.complete(rs.getTimestamp("lastSeen"));
+                if (rs.next()) {
+                    future.complete(rs.getTimestamp("lastSeen"));
+                } else {
+                    future.complete(null);
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
                 future.complete(null);

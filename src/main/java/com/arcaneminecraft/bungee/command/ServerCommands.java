@@ -5,7 +5,6 @@ import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -190,7 +189,7 @@ public class ServerCommands {
             }
 
             BaseComponent send = ArcaneText.translatable(p.getLocale(), "commands.server.event.invalid", args[0]);
-            send.setColor(ChatColor.RED);
+            send.setColor(ArcaneColor.NEGATIVE);
 
             p.sendMessage(ChatMessageType.SYSTEM, send);
         }

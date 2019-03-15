@@ -10,7 +10,6 @@ import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.SettingModule;
 import com.arcaneminecraft.bungee.module.data.ArcanePlayer;
 import com.arcaneminecraft.bungee.storage.SQLDatabase;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -133,7 +132,7 @@ public class ProfileCommand extends Command implements TabExecutor {
         boolean publicReddit = sModule.getNow(SettingModule.Option.SET_DISCORD_PUBLIC, option);
         if ((publicReddit || bypass) && pl.getReddit() != null) {
             BaseComponent reddit = ArcaneText.urlSingleSpecial(pl.getReddit(), "https://reddit.com" + pl.getReddit());
-            reddit.setColor(ChatColor.AQUA);
+            reddit.setColor(ArcaneColor.LINK_FOCUS);
             if (!publicReddit)
                 reddit.setStrikethrough(true);
 

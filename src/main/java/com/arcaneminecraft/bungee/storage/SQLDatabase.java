@@ -161,8 +161,12 @@ public class SQLDatabase {
                         if (ps.executeUpdate() != 0) {
                             try (PreparedStatement ps2 = c.prepareStatement(PLAYER_SELECT_LATEST_ID)) {
                                 ResultSet rs2 = ps2.executeQuery();
-                                int id = rs2.getInt("id");
-                                return new ArcanePlayer(p.getUniqueId(), id);
+                                if (rs2.next()) {
+                                    int id = rs2.getInt("id");
+                                    return new ArcanePlayer(p.getUniqueId(), id);
+                                } else {
+                                    return new ArcanePlayer(p.getUniqueId(), -1);
+                                }
                             }
                         }
                     }

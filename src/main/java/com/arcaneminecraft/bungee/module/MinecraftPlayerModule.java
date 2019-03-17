@@ -62,21 +62,16 @@ public class MinecraftPlayerModule {
     }
 
     public CompletableFuture<ArcanePlayer> onJoin(ProxiedPlayer p) {
-        CompletableFuture<ArcanePlayer> future = new CompletableFuture<>();
-
-        getSQLDatabase().playerJoin(p).thenAccept(arcanePlayer -> {
+        return getSQLDatabase().playerJoin(p).thenApply(arcanePlayer -> {
             if (arcanePlayer == null) {
-                future.complete(null);
-                return;
+                return null;
             }
             onlinePlayerCache.put(p.getUniqueId(), arcanePlayer);
             if (!p.getName().equals(arcanePlayer.getOldName()))
                 put(p.getUniqueId(), p.getName());
 
-            future.complete(arcanePlayer);
+            return arcanePlayer;
         });
-
-        return future;
     }
 
     public void onLeave(ProxiedPlayer p) {

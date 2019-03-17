@@ -169,8 +169,7 @@ public class JoinLeaveEvents implements Listener {
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
         ProxiedPlayer p = e.getPlayer();
-        CompletableFuture<ArcanePlayer> future = plugin.getMinecraftPlayerModule().onJoin(p);
-        connecting.put(p, new Joining(p, future));
+        connecting.put(p, new Joining(p));
     }
 
     @EventHandler
@@ -201,11 +200,9 @@ public class JoinLeaveEvents implements Listener {
 
     private class Joining implements Runnable {
         private final ProxiedPlayer p;
-        private final CompletableFuture<ArcanePlayer> future;
 
-        Joining(ProxiedPlayer p, CompletableFuture<ArcanePlayer> future) {
+        Joining(ProxiedPlayer p) {
             this.p = p;
-            this.future = future;
         }
 
         @Override
@@ -213,7 +210,7 @@ public class JoinLeaveEvents implements Listener {
             connecting.remove(p);
 
             // get player info form database
-            future.thenAccept(arcanePlayer -> {
+            plugin.getMinecraftPlayerModule().onJoin(p).thenAccept(arcanePlayer -> {
                 Timestamp lastLeft = arcanePlayer.getLastLeft();
                 String oldName = arcanePlayer.getOldName();
                 UUID uuid = p.getUniqueId();

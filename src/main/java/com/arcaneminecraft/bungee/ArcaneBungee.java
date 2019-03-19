@@ -144,6 +144,7 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, sc);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat());
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
+        getProxy().getPluginManager().registerCommand(this, new ArcaneSurvivalCommand());
         getProxy().getPluginManager().registerCommand(this, new BadgeCommand());
         getProxy().getPluginManager().registerCommand(this, new BadgeAdminCommand());
         getProxy().getPluginManager().registerCommand(this, new ListCommand());

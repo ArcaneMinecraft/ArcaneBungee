@@ -126,7 +126,9 @@ public class MessengerModule {
         Member member = msg.getMember();
         String userTag = msg.isWebhookMessage() ? null : getDUModule().getUserTag(id);
         String name = member.getEffectiveName();
-        StringBuilder m = new StringBuilder(escapeEmojis(msg.getContentDisplay()));
+        StringBuilder m = new StringBuilder(escapeEmojis(msg.getContentDisplay())
+                .replace("\n", "\n ")
+        );
 
         // If it contains an embed
         List<MessageEmbed> embeds = msg.getEmbeds();

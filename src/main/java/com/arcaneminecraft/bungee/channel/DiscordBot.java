@@ -80,13 +80,15 @@ public class DiscordBot {
     }
 
     public void chatToDiscord(String user, UUID uuid, String msg) {
-        // Send message
-        webhookClient.send(new WebhookMessageBuilder()
+        WebhookMessageBuilder b = new WebhookMessageBuilder()
                 .setUsername(user)
-                .setContent(msg)
-                .setAvatarUrl(String.format(avatarSourceFormat, uuid.toString()))
-                .build()
-        );
+                .setContent(msg);
+
+        if (uuid != null)
+                b.setAvatarUrl(String.format(avatarSourceFormat, uuid.toString()));
+
+        // Send message
+        webhookClient.send(b.build());
     }
 
     public void metaToDiscord(String msg) {

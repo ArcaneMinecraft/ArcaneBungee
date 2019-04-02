@@ -73,7 +73,18 @@ public class PluginMessenger implements Listener {
                     log.addExtra("<" + name + "> " + msg);
                     ProxyServer.getInstance().getConsole().sendMessage(log);
 
-                    module.chatToDiscord(displayName, UUID.fromString(uuid), msg);
+                    UUID u;
+                    if (uuid.isEmpty()) {
+                        u = null;
+                    } else {
+                        try {
+                            u = UUID.fromString(uuid);
+                        } catch (IllegalArgumentException ex) {
+                            u = null;
+                        }
+                    }
+
+                    module.chatToDiscord(displayName, u, msg);
 
                     if (subChannel.equals("ChatAndLog"))
                         coreprotect(name, displayName, uuid, msg);

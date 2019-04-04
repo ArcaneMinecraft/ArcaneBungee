@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutionException;
  *
  * Default is always 0. 1 if toggled.
  */
+
+// TODO: This can be made static
 public class SettingModule {
     private MinecraftPlayerModule getModule() {
         return ArcaneBungee.getInstance().getMinecraftPlayerModule();
@@ -74,6 +76,10 @@ public class SettingModule {
             e.printStackTrace();
             return option.onZero;
         }
+    }
+
+    public boolean getNow(Option option, int i) {
+        return option.onZero == ((i & option.position) == 0);
     }
 
     public void set(Option option, UUID u, boolean set) {

@@ -80,13 +80,15 @@ public class DiscordBot {
     }
 
     public void chatToDiscord(String user, UUID uuid, String msg) {
-        // Send message
-        webhookClient.send(new WebhookMessageBuilder()
+        WebhookMessageBuilder b = new WebhookMessageBuilder()
                 .setUsername(user)
-                .setContent(msg)
-                .setAvatarUrl(String.format(avatarSourceFormat, uuid.toString()))
-                .build()
-        );
+                .setContent(msg);
+
+        if (uuid != null)
+                b.setAvatarUrl(String.format(avatarSourceFormat, uuid.toString()));
+
+        // Send message
+        webhookClient.send(b.build());
     }
 
     public void metaToDiscord(String msg) {
@@ -100,8 +102,17 @@ public class DiscordBot {
         jda.getPresence().setPresence(count == 0 ? OnlineStatus.IDLE : OnlineStatus.ONLINE, g);
     }
 
+    public void userLink(long id) {
+        Member member = getMember(id);
+        if (member == null) {
+            return;
+        }
+
+        guild.getController().addSingleRoleToMember(member, playerRole).complete();
+    }
+
     public void userUnlink(long id) {
-        Member member = guild.getMemberById(id);
+        Member member = getMember(id);
         if (member == null) {
             return;
         }

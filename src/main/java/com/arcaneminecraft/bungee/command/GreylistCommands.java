@@ -77,16 +77,18 @@ public class GreylistCommands {
                 sender.sendMessage(ArcaneText.usage(BungeeCommandUsage.GREYLIST.getUsage()));
             } else {
                 for (String pl : args) {
-                    UUID uuid = ProxyServer.getInstance().getPlayer(pl).getUniqueId();
+                    ProxiedPlayer pp = ProxyServer.getInstance().getPlayer(pl);
+
+                    UUID uuid = pp == null ? null : pp.getUniqueId();
                     if (uuid != null) {
                         greylist(sender, pl, uuid);
-                        return;
+                        continue;
                     }
 
                     uuid = mpModule.getUUID(pl);
                     if (uuid != null) {
                         greylist(sender, pl, uuid);
-                        return;
+                        continue;
                     }
 
                     module.getUUID(pl).thenAcceptAsync(uuidd -> greylist(sender, pl, uuidd));
@@ -96,9 +98,7 @@ public class GreylistCommands {
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            if (args.length == 1)
-                return TabCompletePreset.allPlayers(args);
-            return Collections.emptyList();
+            return TabCompletePreset.allPlayers(args);
         }
 
         private void greylist(CommandSender sender, String input, UUID uuid) {

@@ -83,6 +83,8 @@ public class DiscordUserModule {
 
         mcToken.remove(uuid);
         put(uuid, id);
+        getDB().userLink(id);
+        getMPModule().setDiscord(uuid, id);
         return true;
     }
 
@@ -95,6 +97,8 @@ public class DiscordUserModule {
 
         dcToken.remove(id);
         put(uuid, id);
+        getDB().userLink(id);
+        getMPModule().setDiscord(uuid, id);
         return true;
     }
 

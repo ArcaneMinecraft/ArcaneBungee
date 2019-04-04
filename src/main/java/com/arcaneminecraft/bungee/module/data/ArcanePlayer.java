@@ -1,12 +1,11 @@
 package com.arcaneminecraft.bungee.module.data;
 
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-
 import java.sql.Timestamp;
 import java.util.TimeZone;
+import java.util.UUID;
 
 public class ArcanePlayer {
-    private final ProxiedPlayer player;
+    private final UUID uuid;
     private final int id;
     private final String oldName;
     private final Timestamp firstseen;
@@ -16,8 +15,8 @@ public class ArcanePlayer {
     private String reddit;
     private int options;
 
-    public ArcanePlayer(ProxiedPlayer p, int id, String oldName, Timestamp firstseen, Timestamp lastleft, TimeZone timezone, long discord, String reddit, int options) {
-        this.player = p;
+    public ArcanePlayer(UUID uuid, int id, String oldName, Timestamp firstseen, Timestamp lastleft, TimeZone timezone, long discord, String reddit, int options) {
+        this.uuid = uuid;
         this.id = id;
         this.oldName = oldName;
         this.firstseen = firstseen;
@@ -28,8 +27,8 @@ public class ArcanePlayer {
         this.options = options;
     }
 
-    public ArcanePlayer(ProxiedPlayer p, int id) {
-        this.player = p;
+    public ArcanePlayer(UUID uuid, int id) {
+        this.uuid = uuid;
         this.id = id;
         this.oldName = "";
         this.firstseen = new Timestamp(System.currentTimeMillis());
@@ -40,24 +39,24 @@ public class ArcanePlayer {
         this.options = 0;
     }
 
-    public ProxiedPlayer getProxiedPlayer() {
-        return this.player;
+    public UUID getUniqueID() {
+        return uuid;
     }
 
     public int getId() {
-        return this.id;
+        return id;
     }
 
     public String getOldName() {
-        return this.oldName;
+        return oldName;
     }
 
     public Timestamp getFirstSeen() {
-        return this.firstseen;
+        return firstseen;
     }
 
     public Timestamp getLastLeft() {
-        return this.lastleft;
+        return lastleft;
     }
 
     public TimeZone getTimezone() {
@@ -69,7 +68,7 @@ public class ArcanePlayer {
     }
 
     public long getDiscord() {
-        return this.discord;
+        return discord;
     }
 
     public void setDiscord(long discord) {
@@ -77,7 +76,9 @@ public class ArcanePlayer {
     }
 
     public String getReddit() {
-        return this.reddit;
+        if (reddit == null)
+            return null;
+        return "/u/" + reddit;
     }
 
     public void setReddit(String reddit) {

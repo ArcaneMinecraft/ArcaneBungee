@@ -1,18 +1,18 @@
 package com.arcaneminecraft.bungee.command;
 
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import com.arcaneminecraft.bungee.TabCompletePreset;
 import com.arcaneminecraft.bungee.module.DiscordUserModule;
 import com.arcaneminecraft.bungee.module.MessengerModule;
 import com.arcaneminecraft.bungee.module.MinecraftPlayerModule;
 import com.arcaneminecraft.bungee.module.SettingModule;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
@@ -108,7 +108,7 @@ public class TellCommands {
                 sender instanceof ProxiedPlayer ? ((ProxiedPlayer) sender).getLocale() : null,
                 "commands.reply.nobody"
         );
-        send.setColor(ChatColor.RED);
+        send.setColor(ArcaneColor.NEGATIVE);
 
         if (sender instanceof ProxiedPlayer)
             ((ProxiedPlayer)sender).sendMessage(ChatMessageType.SYSTEM, send);

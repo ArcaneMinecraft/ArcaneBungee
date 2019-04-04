@@ -59,7 +59,7 @@ public class JoinLeaveEvents implements Listener {
 
         // Footer
         BaseComponent temp2 = new TextComponent("/links");
-        temp2.setColor(ChatColor.AQUA);
+        temp2.setColor(ArcaneColor.LINK_FOCUS);
         temp2.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/links"));
         temp = new TextComponent(" Run '");
         temp.addExtra(temp2);
@@ -85,7 +85,7 @@ public class JoinLeaveEvents implements Listener {
         if (newPlayer) {
             title = ArcaneText.translatable(p.getLocale(), "messages.join.new.title", server, player);
             BaseComponent apply = new TextComponent("/apply");
-            apply.setColor(ChatColor.DARK_AQUA);
+            apply.setColor(ArcaneColor.LINK_CONTENT);
             apply.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/apply"));
             subtitle = ArcaneText.translatable(p.getLocale(), "messages.join.new.subtitle", apply);
         }
@@ -157,7 +157,7 @@ public class JoinLeaveEvents implements Listener {
             temp.setColor(ChatColor.DARK_GRAY);
             send.addExtra(temp);
             temp = ArcaneText.urlSingle(TIMEZONE_LINK);
-            temp.setColor(ChatColor.DARK_AQUA);
+            temp.setColor(ArcaneColor.LINK_CONTENT);
             msg = ArcaneText.translatable(p.getLocale(), "messages.join.tip.timezone", temp);
             msg.setColor(ArcaneColor.CONTENT);
             send.addExtra(msg);
@@ -169,8 +169,7 @@ public class JoinLeaveEvents implements Listener {
     @EventHandler
     public void onLoginJoin(PostLoginEvent e) {
         ProxiedPlayer p = e.getPlayer();
-        CompletableFuture<ArcanePlayer> future = plugin.getMinecraftPlayerModule().onJoin(p);
-        connecting.put(p, new Joining(p, future));
+        connecting.put(p, new Joining(p));
     }
 
     @EventHandler
@@ -201,11 +200,9 @@ public class JoinLeaveEvents implements Listener {
 
     private class Joining implements Runnable {
         private final ProxiedPlayer p;
-        private final CompletableFuture<ArcanePlayer> future;
 
-        Joining(ProxiedPlayer p, CompletableFuture<ArcanePlayer> future) {
+        Joining(ProxiedPlayer p) {
             this.p = p;
-            this.future = future;
         }
 
         @Override
@@ -213,7 +210,7 @@ public class JoinLeaveEvents implements Listener {
             connecting.remove(p);
 
             // get player info form database
-            future.thenAccept(arcanePlayer -> {
+            plugin.getMinecraftPlayerModule().onJoin(p).thenAccept(arcanePlayer -> {
                 Timestamp lastLeft = arcanePlayer.getLastLeft();
                 String oldName = arcanePlayer.getOldName();
                 UUID uuid = p.getUniqueId();

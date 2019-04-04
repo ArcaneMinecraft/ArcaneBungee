@@ -1,9 +1,9 @@
 package com.arcaneminecraft.bungee;
 
+import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.bungee.module.SettingModule;
 import com.google.common.collect.ImmutableSet;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -71,7 +71,7 @@ public class SpyAlert implements Listener {
                         ? ArcaneText.playerComponentBungee(actor, "Server: " + ((ProxiedPlayer) actor).getServer().getInfo().getName())
                         : ArcaneText.playerComponentBungee(actor)
                 , action);
-        ret.setColor(ChatColor.GRAY);
+        ret.setColor(ArcaneColor.CONTENT);
         ret.setItalic(true);
 
         return ret;

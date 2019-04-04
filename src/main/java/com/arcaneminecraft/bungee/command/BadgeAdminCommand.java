@@ -171,7 +171,7 @@ public class BadgeAdminCommand extends Command implements TabExecutor {
                 priority = Integer.parseInt(args[2]);
             } catch (NumberFormatException e) {
                 BaseComponent send = new TranslatableComponent("parsing.int.invalid", args[2]);
-                send.setColor(ChatColor.RED);
+                send.setColor(ArcaneColor.NEGATIVE);
                 send(sender, send);
                 return;
             }
@@ -217,7 +217,7 @@ public class BadgeAdminCommand extends Command implements TabExecutor {
                         duration = Integer.parseInt(durationString);
                     } catch (NumberFormatException e1) {
                         BaseComponent send = new TranslatableComponent("'%s' is not a valid number", durationString); // TODO: Update Translatable node
-                        send.setColor(ChatColor.RED);
+                        send.setColor(ArcaneColor.NEGATIVE);
                         if (sender instanceof ProxiedPlayer)
                             ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                         else
@@ -244,7 +244,7 @@ public class BadgeAdminCommand extends Command implements TabExecutor {
                             break;
                         default:
                             BaseComponent send = new TranslatableComponent("'%s' is not a valid parameter", unitString); // TODO: Update Translatable node
-                            send.setColor(ChatColor.RED);
+                            send.setColor(ArcaneColor.NEGATIVE);
                             if (sender instanceof ProxiedPlayer)
                                 ((ProxiedPlayer) sender).sendMessage(ChatMessageType.SYSTEM, send);
                             else

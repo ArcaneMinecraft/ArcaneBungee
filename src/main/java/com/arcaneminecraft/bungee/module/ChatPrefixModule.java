@@ -266,7 +266,7 @@ public class ChatPrefixModule {
 
             if (current == null) {
                 tc = new TextComponent("(none)");
-                tc.setColor(ChatColor.GRAY);
+                tc.setColor(ArcaneColor.LINK_CONTENT);
             } else {
                 tc = new TextComponent(TextComponent.fromLegacyText(
                         ChatColor.translateAlternateColorCodes('&', current)

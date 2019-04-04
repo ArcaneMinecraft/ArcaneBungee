@@ -3,7 +3,6 @@ package com.arcaneminecraft.bungee.command;
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.api.ArcaneText;
 import com.arcaneminecraft.api.BungeeCommandUsage;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -15,17 +14,18 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 import java.util.Collections;
 import java.util.Locale;
 
-public class LinkCommands {
-    private static final BaseComponent DISCORD = ArcaneText.url("https://arcaneminecraft.com/discord");
-    private static final BaseComponent DONATE = ArcaneText.url("https://arcaneminecraft.com/donate");
-    private static final BaseComponent FORUM = ArcaneText.url("https://arcaneminecraft.com/forum");
-    private static final BaseComponent RULES = ArcaneText.url("https://arcaneminecraft.com/rules");
-    private static final BaseComponent WEBSITE = ArcaneText.url("https://arcaneminecraft.com/");
+public class  LinkCommands {
+    static final BaseComponent DISCORD = ArcaneText.urlSingle("https://discord.gg/64WQHhM");
+    private static final BaseComponent DONATE = ArcaneText.urlSingle("https://arcaneminecraft.com/donate");
+    private static final BaseComponent FORUM = ArcaneText.urlSingle("https://arcaneminecraft.com/forum");
+    static final BaseComponent REDDIT = ArcaneText.urlSingleSpecial("/r/ArcaneSurvival", "https://reddit.com/r/ArcaneSurvival");
+    private static final BaseComponent RULES = ArcaneText.urlSingle("https://arcaneminecraft.com/rules");
+    private static final BaseComponent WEBSITE = ArcaneText.urlSingle("https://arcaneminecraft.com/");
 
     public LinkCommands() {
     }
 
-    private BaseComponent singleLink(Locale locale, String what, BaseComponent link) {
+    public static BaseComponent singleLink(Locale locale, String what, BaseComponent link) {
         BaseComponent ret = ArcaneText.translatable(locale, "commands.links.single", what, link);
         ret.setColor(ArcaneColor.CONTENT);
         return ret;
@@ -51,16 +51,18 @@ public class LinkCommands {
 
                 p.sendMessage(ChatMessageType.SYSTEM, header);
                 p.sendMessage(ChatMessageType.SYSTEM, dash, WEBSITE);
-                p.sendMessage(ChatMessageType.SYSTEM, dash, DISCORD);
-                p.sendMessage(ChatMessageType.SYSTEM, dash, DONATE);
-                p.sendMessage(ChatMessageType.SYSTEM, dash, FORUM);
                 p.sendMessage(ChatMessageType.SYSTEM, dash, RULES);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, DONATE);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, DISCORD);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, REDDIT);
+                p.sendMessage(ChatMessageType.SYSTEM, dash, FORUM);
             } else {
                 sender.sendMessage(WEBSITE);
-                sender.sendMessage(DISCORD);
-                sender.sendMessage(DONATE);
-                sender.sendMessage(FORUM);
                 sender.sendMessage(RULES);
+                sender.sendMessage(DONATE);
+                sender.sendMessage(DISCORD);
+                sender.sendMessage(REDDIT);
+                sender.sendMessage(FORUM);
             }
         }
         @Override

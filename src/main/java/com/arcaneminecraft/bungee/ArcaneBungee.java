@@ -113,6 +113,7 @@ public class ArcaneBungee extends Plugin {
             getProxy().getPluginManager().registerCommand(this, fs.new Seen());
             getProxy().getPluginManager().registerCommand(this, fs.new FirstSeen());
             getProxy().getPluginManager().registerCommand(this, new FindPlayerCommand());
+            getProxy().getPluginManager().registerCommand(this, new RedditCommand());
             getProxy().getPluginManager().registerCommand(this, new News(this));
         }
 
@@ -128,8 +129,6 @@ public class ArcaneBungee extends Plugin {
         LinkCommands l = new LinkCommands();
         ServerCommands s = new ServerCommands(this);
         StaffChatCommands sc = new StaffChatCommands();
-        getProxy().getPluginManager().registerCommand(this, new BadgeCommand());
-        getProxy().getPluginManager().registerCommand(this, new BadgeAdminCommand());
         getProxy().getPluginManager().registerCommand(this, g.new Apply());
         getProxy().getPluginManager().registerCommand(this, g.new Greylist());
         getProxy().getPluginManager().registerCommand(this, t.new Message());
@@ -145,12 +144,15 @@ public class ArcaneBungee extends Plugin {
         getProxy().getPluginManager().registerListener(this, sc);
         getProxy().getPluginManager().registerCommand(this, sc.new Chat());
         getProxy().getPluginManager().registerCommand(this, sc.new Toggle());
+        getProxy().getPluginManager().registerCommand(this, new ArcaneSurvivalCommand());
+        getProxy().getPluginManager().registerCommand(this, new BadgeCommand());
+        getProxy().getPluginManager().registerCommand(this, new BadgeAdminCommand());
         getProxy().getPluginManager().registerCommand(this, new ListCommand());
         getProxy().getPluginManager().registerCommand(this, new MeCommand());
         getProxy().getPluginManager().registerCommand(this, new OptionCommand());
         getProxy().getPluginManager().registerCommand(this, new PingCommand());
+        getProxy().getPluginManager().registerCommand(this, new ProfileCommand());
         getProxy().getPluginManager().registerCommand(this, new SlapCommand());
-
         getProxy().getPluginManager().registerListener(this, new CommandEvent());
     }
 

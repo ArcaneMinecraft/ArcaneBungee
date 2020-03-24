@@ -2,12 +2,14 @@ package com.arcaneminecraft.bungee.module;
 
 import com.arcaneminecraft.api.ArcaneColor;
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.Contexts;
-import me.lucko.luckperms.api.LuckPermsApi;
-import me.lucko.luckperms.api.Node;
-import me.lucko.luckperms.api.User;
-import me.lucko.luckperms.api.caching.MetaData;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
+import net.luckperms.api.node.types.MetaNode;
+import net.luckperms.api.node.types.PrefixNode;
+import net.luckperms.api.query.QueryOptions;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -50,17 +52,17 @@ public class ChatPrefixModule {
         return alteredPrefix;
     }
 
-    private LuckPermsApi getLpApi() {
-        return LuckPerms.getApi();
+    private LuckPerms getLpApi() {
+        return LuckPermsProvider.get();
     }
 
     private CompletableFuture<User> getUser(UUID uuid) {
         CompletableFuture<User> future = new CompletableFuture<>();
-        User u = getLpApi().getUser(uuid);
+        User u = getLpApi().getUserManager().getUser(uuid);
         if (u == null) {
             getLpApi().getUserManager().loadUser(uuid).thenAcceptAsync((user) -> {
                 future.complete(user);
-                getLpApi().cleanupUser(user);
+                getLpApi().getUserManager().cleanupUser(user);
             });
         } else {
             future.complete(u);
@@ -76,7 +78,7 @@ public class ChatPrefixModule {
     // Return true if changed
     private void setPriority(User user, int priority) {
         // Check
-        String oldPriority = user.getCachedData().getMetaData(Contexts.global()).getMeta().get(PREFIX_PRIORITY_STRING);
+        String oldPriority = user.getCachedData().getMetaData(QueryOptions.nonContextual()).getMetaValue(PREFIX_PRIORITY_STRING);
 
         // If already the same
         if (String.valueOf(priority).equals(oldPriority))
@@ -85,24 +87,24 @@ public class ChatPrefixModule {
         clearPriority(user);
 
         // Set if not already this value
-        Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, String.valueOf(priority)).build();
-        user.setPermission(node);
-        alteredPrefix.add(user.getUuid());
+        MetaNode node = MetaNode.builder(PREFIX_PRIORITY_STRING, String.valueOf(priority)).build();
+        user.data().add(node);
+        alteredPrefix.add(user.getUniqueId());
     }
 
     // Return true if changed
     private boolean clearPriority(User user) {
         // Check
-        String oldPriority = user.getCachedData().getMetaData(Contexts.global()).getMeta().get(PREFIX_PRIORITY_STRING);
+        String oldPriority = user.getCachedData().getMetaData(QueryOptions.nonContextual()).getMetaValue(PREFIX_PRIORITY_STRING);
 
         // If already cleared
         if (oldPriority == null)
             return false;
 
-        // Remove priority node
-        Node node = getLpApi().getNodeFactory().makeMetaNode(PREFIX_PRIORITY_STRING, oldPriority).build();
-        user.unsetPermission(node);
-        alteredPrefix.remove(user.getUuid());
+        // Remove priority noded
+        Node node = MetaNode.builder(PREFIX_PRIORITY_STRING, oldPriority).build();
+        user.data().add(node);
+        alteredPrefix.remove(user.getUniqueId());
 
         return true;
     }
@@ -111,12 +113,12 @@ public class ChatPrefixModule {
         if (user == null)
             return null;
 
-        MetaData md = user.getCachedData().getMetaData(Contexts.global());
+        CachedMetaData md = user.getCachedData().getMetaData(QueryOptions.nonContextual());
         try {
-            int index = Integer.valueOf(md.getMeta().get(PREFIX_PRIORITY_STRING));
+            int index = Integer.valueOf(Objects.requireNonNull(md.getMetaValue(PREFIX_PRIORITY_STRING)));
             if (index != -1)
                 return md.getPrefixes().get(index);
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException | NullPointerException ignored) {
             return md.getPrefix();
         }
 
@@ -124,7 +126,7 @@ public class ChatPrefixModule {
     }
 
     private Integer prefixToPriority(User user, String prefix) {
-        for (Map.Entry<Integer, String> e : user.getCachedData().getMetaData(Contexts.global()).getPrefixes().entrySet()) {
+        for (Map.Entry<Integer, String> e : user.getCachedData().getMetaData(QueryOptions.nonContextual()).getPrefixes().entrySet()) {
             if (prefix.equalsIgnoreCase(e.getValue()))
                 return e.getKey();
         }
@@ -132,25 +134,25 @@ public class ChatPrefixModule {
     }
 
     private boolean clearCustomPrefix(User user) {
-        MetaData md = user.getCachedData().getMetaData(Contexts.global());
+        CachedMetaData md = user.getCachedData().getMetaData(QueryOptions.nonContextual());
         // Clear pre-existing custom prefix
         String prefix = md.getPrefixes().get(CUSTOM_PREFIX_PRIORITY);
         if (prefix == null) {
             return false;
         }
 
-        Node node = getLpApi().getNodeFactory().makePrefixNode(CUSTOM_PREFIX_PRIORITY, prefix).build();
-        user.unsetPermission(node);
+        Node node = PrefixNode.builder(prefix, CUSTOM_PREFIX_PRIORITY).build();
+        user.data().remove(node);
 
         // Clear priority if it was set to custom tag
-        if (String.valueOf(CUSTOM_PREFIX_PRIORITY).equals(md.getMeta().get(PREFIX_PRIORITY_STRING)))
+        if (String.valueOf(CUSTOM_PREFIX_PRIORITY).equals(md.getMetaValue(PREFIX_PRIORITY_STRING)))
             clearPriority(user);
 
         return true;
     }
 
     private boolean clearTempPrefix(User user) {
-        MetaData md = user.getCachedData().getMetaData(Contexts.global());
+        CachedMetaData md = user.getCachedData().getMetaData(QueryOptions.nonContextual());
         // Clear pre-existing custom prefix
         String prefix = md.getPrefixes().get(TEMP_PREFIX_PRIORITY);
 
@@ -158,8 +160,12 @@ public class ChatPrefixModule {
             return false;
         }
 
+        // TODO: Find out how to get Temporary prefix nodes
+/*
         // Temporary nodes will fail. Find the correct node with temporary duration and then end it.
-        for (Node n : user.getTemporaryPermissionNodes()) { // Not sure if this is big enough to hold the thread...
+        for (Map.Entry<Node> n : user.getCachedData().getMetaData(QueryOptions.nonContextual())) { // Not sure if this is big enough to hold the thread...
+            if (n.getExpiry() == null && n.) // if it does not expire
+                continue;
             if (!n.isPrefix())
                 continue;
             try {
@@ -169,9 +175,10 @@ public class ChatPrefixModule {
                 return true;
             } catch (IllegalStateException ignore) {} // basically continue;
         }
+*/
 
         // Probably will be false always. Added just in case
-        if (String.valueOf(TEMP_PREFIX_PRIORITY).equals(md.getMeta().get(PREFIX_PRIORITY_STRING))) {
+        if (String.valueOf(TEMP_PREFIX_PRIORITY).equals(md.getMetaValue(PREFIX_PRIORITY_STRING))) {
             clearPriority(user);
             return true;
         }
@@ -183,7 +190,7 @@ public class ChatPrefixModule {
         CompletableFuture<SortedMap<Integer, String>> future = new CompletableFuture<>();
 
         getUser(uuid).thenAccept(user -> {
-            MetaData md = user.getCachedData().getMetaData(Contexts.global());
+            CachedMetaData md = user.getCachedData().getMetaData(QueryOptions.nonContextual());
             SortedMap<Integer, String> l = md.getPrefixes();
             future.complete(l);
         });
@@ -197,11 +204,11 @@ public class ChatPrefixModule {
         CompletableFuture<BaseComponent> future = new CompletableFuture<>();
 
         getUser(uuid).thenAccept(user -> {
-            MetaData md = user.getCachedData().getMetaData(Contexts.global());
+            CachedMetaData md = user.getCachedData().getMetaData(QueryOptions.nonContextual());
             SortedMap<Integer, String> l = md.getPrefixes();
 
             if (l.isEmpty()) {
-                BaseComponent ret = new TextComponent((admin ? user.getName() + " does": "You do" ) + " not have any badges");
+                BaseComponent ret = new TextComponent((admin ? user.getFriendlyName() + " does": "You do" ) + " not have any badges");
                 ret.setColor(ArcaneColor.CONTENT);
                 future.complete(ret);
                 return;
@@ -209,7 +216,7 @@ public class ChatPrefixModule {
 
             // Check for current PrefixPriority meta
             Integer prefixPriority;
-            String prefixPriorityString = md.getMeta().get(PREFIX_PRIORITY_STRING);
+            String prefixPriorityString = md.getMetaValue(PREFIX_PRIORITY_STRING);
             if (prefixPriorityString == null) {
                 prefixPriority = null;
             } else {
@@ -220,13 +227,13 @@ public class ChatPrefixModule {
                 }
             }
 
-            BaseComponent ret = new TextComponent(admin ? user.getName() + "'s badges: " : "Your badges: ");
+            BaseComponent ret = new TextComponent(admin ? user.getFriendlyName() + "'s badges: " : "Your badges: ");
             ret.setColor(ArcaneColor.CONTENT);
 
             TextComponent tc = new TextComponent("(hide)");
             tc.setItalic(true);
 
-            String pre = admin ? "/badgeadmin setpriority " + user.getName() + " " : "/badge ";
+            String pre = admin ? "/badgeadmin setpriority " + user.getFriendlyName() + " " : "/badge ";
 
             tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, pre + "-hide"));
             ret.addExtra(tc);
@@ -240,7 +247,7 @@ public class ChatPrefixModule {
                     ChatColor.translateAlternateColorCodes('&', first)
             ));
             tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                    admin ? "/badgeadmin reset " + user.getName() : "/badge -reset"));
+                    admin ? "/badgeadmin reset " + user.getFriendlyName() : "/badge -reset"));
             ret.addExtra(tc);
 
             while (i.hasNext()) {
@@ -285,7 +292,7 @@ public class ChatPrefixModule {
 
         getUser(uuid).thenAccept(user -> {
             // Check if prefix by priority exists
-            MetaData md = user.getCachedData().getMetaData(Contexts.global());
+            CachedMetaData md = user.getCachedData().getMetaData(QueryOptions.nonContextual());
             String ret = priority == -1 ? "" : md.getPrefixes().get(priority);
             if (ret != null) {
                 // Must remove old before setting new.
@@ -310,7 +317,7 @@ public class ChatPrefixModule {
 
             if (priority != null) {
                 // given prefix is in user's collection
-                MetaData md = user.getCachedData().getMetaData(Contexts.global());
+                CachedMetaData md = user.getCachedData().getMetaData(QueryOptions.nonContextual());
 
                 if (Objects.equals(md.getPrefix(), md.getPrefixes().get(priority))) {
                     // Given prefix is the highest (reset)
@@ -325,8 +332,8 @@ public class ChatPrefixModule {
 
             } else if (customPrefix){
                 // custom is allowed
-                Node node = getLpApi().getNodeFactory().makePrefixNode(CUSTOM_PREFIX_PRIORITY, prefix).build();
-                user.setPermission(node);
+                Node node = PrefixNode.builder(prefix, CUSTOM_PREFIX_PRIORITY).build();
+                user.data().add(node);
                 alteredPrefix.add(uuid);
                 // Prefix doesn't exist for user and custom was set
                 future.complete(false);
@@ -349,8 +356,8 @@ public class ChatPrefixModule {
             clearTempPrefix(user);
             clearPriority(user);
 
-            Node node = getLpApi().getNodeFactory().makePrefixNode(TEMP_PREFIX_PRIORITY, prefix).setExpiry(duration, unit).build();
-            user.setPermission(node);
+            Node node = PrefixNode.builder(prefix, TEMP_PREFIX_PRIORITY).expiry(duration, unit).build();
+            user.data().add(node);
             alteredPrefix.add(uuid);
 
             future.complete(null);

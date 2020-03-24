@@ -1,9 +1,12 @@
 package com.arcaneminecraft.bungee.module;
 
 import com.arcaneminecraft.bungee.ArcaneBungee;
-import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.*;
-import me.lucko.luckperms.api.context.ContextSet;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.query.QueryOptions;
+import net.luckperms.api.track.PromotionResult;
+import net.luckperms.api.track.Track;
 
 import javax.annotation.Nonnull;
 import java.util.UUID;
@@ -13,15 +16,15 @@ public class PermissionsModule {
     private final String group = ArcaneBungee.getInstance().getConfig().getString("greylist.group", "trusted");
     private final String track = ArcaneBungee.getInstance().getConfig().getString("greylist.track", "greylist");
 
-    private LuckPermsApi getLpApi() {
-        return LuckPerms.getApi();
+    private LuckPerms getLpApi() {
+        return LuckPermsProvider.get();
     }
 
     private boolean greylist(@Nonnull User user) {
-        Track tr = getLpApi().getTrack(track);
+        Track tr = getLpApi().getTrackManager().getTrack(track);
         if (tr != null) {
-            PromotionResult res = tr.promote(user, ContextSet.empty());
-            boolean success = res.wasSuccess();
+            PromotionResult res = tr.promote(user, QueryOptions.nonContextual().context());
+            boolean success = res.wasSuccessful();
             if (success) {
                 user.setPrimaryGroup(group);
             }
@@ -31,7 +34,7 @@ public class PermissionsModule {
     }
 
     public CompletableFuture<UUID> getUUID(String string) {
-        return getLpApi().getUserManager().lookupUuid(string);
+        return getLpApi().getUserManager().lookupUniqueId(string);
     }
 
     public CompletableFuture<Boolean> greylist(UUID uuid) {

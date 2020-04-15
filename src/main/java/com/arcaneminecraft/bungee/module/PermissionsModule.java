@@ -3,9 +3,10 @@ package com.arcaneminecraft.bungee.module;
 import com.arcaneminecraft.bungee.ArcaneBungee;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
-import net.luckperms.api.query.QueryOptions;
-import net.luckperms.api.track.PromotionResult;
+import net.luckperms.api.node.Node;
+import net.luckperms.api.node.types.InheritanceNode;
 import net.luckperms.api.track.Track;
 
 import javax.annotation.Nonnull;
@@ -22,6 +23,17 @@ public class PermissionsModule {
 
     private boolean greylist(@Nonnull User user) {
         Track tr = getLpApi().getTrackManager().getTrack(track);
+        Group gr = getLpApi().getGroupManager().getGroup(group);
+        if (tr == null) {
+            ArcaneBungee.getInstance().getLogger().warning("Track '" + track + "' does not exist!");
+            return false;
+        }
+        if (gr == null) {
+            ArcaneBungee.getInstance().getLogger().warning("Group '" + group + "' does not exist!");
+            return false;
+        }
+
+/*
         if (tr != null) {
             PromotionResult res = tr.promote(user, QueryOptions.nonContextual().context());
             boolean success = res.wasSuccessful();
@@ -30,7 +42,24 @@ public class PermissionsModule {
             }
             return success;
         }
-        return false;
+*/
+
+        // TODO: This kept not working.
+        //PromotionResult res = tr.promote(user, QueryOptions.nonContextual().context());
+        //boolean success = res.wasSuccessful();
+
+        // Workaround:
+        String oldGroup = tr.getPrevious(gr);
+        Node oldGrNode = InheritanceNode.builder(oldGroup).build();
+        Node grNode = InheritanceNode.builder(gr).build();
+        boolean success = user.data().remove(oldGrNode).wasSuccessful() && user.data().add(grNode).wasSuccessful();
+        // Workaround end
+        if (success) {
+            user.setPrimaryGroup(group);
+            getLpApi().getUserManager().saveUser(user);
+        }
+
+        return success;
     }
 
     public CompletableFuture<UUID> getUUID(String string) {
